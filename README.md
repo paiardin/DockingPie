@@ -26,8 +26,9 @@ DockingPie has been developed and tested on official PyMOL builds distributed by
 (n.b. Some incompatibilities may arise with the usage of PyMOL version 2.5.x if ‘undo’ function is enabled, which in PyMOL 2.5.2 (latest version), still shows some shortcomings. Therefore, when the plugin is opened, the ‘undo’ function is automatically disabled and it is strongly suggested to keep it disabled when using the plugin.)
 
 ## License 
-    
 
+ GPL-3.0 License 
+    
 
 ## References
 
