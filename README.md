@@ -31,3 +31,27 @@ DockingPie has been developed and tested on official PyMOL builds distributed by
 
 n.b. Some incompatibilities may arise with the usage of PyMOL version 2.5.x if ‘undo’ function is enabled, which in PyMOL 2.5.2 (latest version), still shows some shortcomings. Therefore, when the plugin is opened, the ‘undo’ function is automatically disabled and it is strongly suggested to keep it disabled when using the plugin.
     
+
+
+    References
+
+[1]DeLano, WL. (2002). “The PyMOL Molecular Graphics System on World Wide Web.” CCP4 Newsletter On Protein Crystallography
+
+[2]Ruiz-Carmona, S., Alvarez-Garcia, D., Foloppe, N., Garmendia-Doval, A. B., Juhos, S., Schmidtke, P., Barril, X., Hubbard, R. E., & Morley, S. D. (2014). rDock: a fast, versatile and open source program for docking ligands to proteins and nucleic acids. PLoS computational biology, 10(4), e1003571. https://doi.org/10.1371/journal.pcbi.1003571
+
+[3]O. Trott, A. J. Olson, AutoDock Vina: improving the speed and accuracy of docking with a new scoring function, efficient optimization and multithreading, Journal of Computational Chemistry 31 (2010) 455-461
+
+[4]Koes, David Ryan et al. “Lessons learned in empirical scoring with smina from the CSAR 2011 benchmarking exercise.”Journal of chemical information and modeling vol. 53,8 (2013): 1893-904. doi:10.1021/ci300604z
+
+[5]Ravindranath PA, Forli S, Goodsell DS, Olson AJ, Sanner MF. AutoDockFR: Advances in Protein-Ligand Docking with Explicitly Specified Binding Site Flexibility. PLoS Comput Biol. 2015;11(12):e1004586. Published 2015 Dec 2. doi:10.1371/journal.pcbi.1004586
+
+[6]Morris, G. M., Huey, R., Lindstrom, W., Sanner, M. F., Belew, R. K., Goodsell, D. S., & Olson, A. J. (2009). AutoDock4 and AutoDockTools4: Automated docking with selective receptor flexibility. Journal of Computational Chemistry, 30(16), 2785–2791.
+
+[7]O'Boyle, N.M., Banck, M., James, C.A. et al. Open Babel: An open chemical toolbox. J Cheminform 3, 33 (2011). https://doi.org/10.1186/1758-2946-3-33
+
+[8]Meli, R., Biggin, P.C. spyrmsd: symmetry-corrected RMSD calculations in Python. J Cheminform 12, 49 (2020). https://doi.org/10.1186/s13321-020-00455-2
+
+[9]Sdsorter
+
+[10] Anaconda Software Distribution. (2020). Anaconda Documentation. Anaconda Inc. Retrieved from https://docs.anaconda.com/
+ 
