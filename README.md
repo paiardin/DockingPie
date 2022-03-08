@@ -6,10 +6,11 @@ Introduction --
 
 ## Requirements
 
+A recent version of PyMOL installed on your computer (required PyMOL version >= 2.3.0). DockingPie is compatible with incentive PyMOL builds distributed by [Schrodinger](https://pymol.org/2/ "Schrodinger website")
+
+
 DockingPie is distributed freely to the public and it has been tested and runs on Windows, macOS and Linux versions of PyMOL.
 
-It works as a plugin pf PyMOL, thus the only requirement to start using DockingPIe is to have PyMOL installed on your computer.
-It is compatible with incentive PyMOL builds distributed by [Schrodinger](https://pymol.org/2/ "Schrodinger website")
 
 ## Download
 
