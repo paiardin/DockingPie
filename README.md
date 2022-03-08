@@ -12,11 +12,15 @@ Minimal requirement: a recent version of PyMOL installed on your computer (requi
 DockingPie is distributed freely to the public and it has been tested and runs on Windows, macOS and Linux versions of PyMOL.
 
 
+(n.b. Some incompatibilities may arise with the usage of PyMOL version 2.5.x if ‘undo’ function is enabled, which in PyMOL 2.5.2 still shows some shortcomings. Therefore, when the plugin is opened, the ‘undo’ function is automatically disabled and it is strongly suggested to keep it disabled when using the plugin.)
+
+
 ## Download
 
 DockingPie plugin ZIP file: [download from here](https://github.com/paiardin/DockingPie "DockingPie plugin ZIP file direct download") TODO: link diretto al download
 
 DockingPie GitHub repository [here](https://github.com/paiardin/DockingPie)
+
 
 ## How to use DockingPie
 A detailed explanation on how to use DockingPie, some videos and tutorials can be found at the following links.
@@ -27,24 +31,22 @@ User's Guide GitHub Wiki: [here]()
 
 Website: [to be updated] http://schubert.bio.uniroma1.it/
 
+
 ## Installation 
     
 DockingPie is installed, as any other PyMOL [1] plugin, via the PyMOL plugin manager:
 
-* First download the latest version of the plugin ZIP file (see **Download** section)
+* First download the latest version of the plugin ZIP file [here](https://github.com/paiardin/DockingPie "DockingPie plugin ZIP file direct download") TODO: link diretto al download
 
-* Launch PyMOL and use the Plugin → Plugin Manager command from the main menu of PyMOL. The plugin manager window of PyMOL will open.
+* Launch PyMOL and use the *Plugin* → *Plugin Manager* command from the main menu of PyMOL. The plugin manager window of PyMOL will open.
 
-* Click on "Install New Plugin" and press the "Choose File…" button. Select the DockingPie ZIP file which you have downloaded before. You will be asked to give the path of the directory in which to install the plugin files. Just select the default option if you are unsure about what to do (the location of the plugin files does not make any difference when running the plugin).
+* Click on *Install New Plugin* and press the *Choose File…* button. Select the **DockingPie ZIP file** which you have downloaded before. 
+You will be asked to give the path of the directory in which to install the plugin files. Just select the default option if you are unsure about what to do (the location of the plugin files does not make any difference when running the plugin).
 
-
-DockingPie has been developed and tested on official PyMOL builds distributed by Schrodinger (available at https://pymol.org/2/) and it is fully compatible with PyMOL 2.3 or higher. 
-
-(n.b. Some incompatibilities may arise with the usage of PyMOL version 2.5.x if ‘undo’ function is enabled, which in PyMOL 2.5.2 (latest version), still shows some shortcomings. Therefore, when the plugin is opened, the ‘undo’ function is automatically disabled and it is strongly suggested to keep it disabled when using the plugin.)
 
 ## License 
 
- GPL-3.0 License 
+DockingPie is distributed under **GPL-3.0 License** 
     
 
 ## References
