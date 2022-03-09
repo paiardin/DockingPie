@@ -19,15 +19,13 @@ DockingPie is distributed freely to the public and it has been tested and runs o
 
 DockingPie plugin ZIP file: [download from here](https://github.com/paiardin/DockingPie "DockingPie plugin ZIP file direct download") TODO: link diretto al download
 
-DockingPie GitHub repository [here](https://github.com/paiardin/DockingPie)
-
 
 ## How to use DockingPie
 A detailed explanation on how to use DockingPie, some videos and tutorials can be found at the following links.
 
 User's Guide: [download from here]( "DockingPie User's guide") TODO: link diretto al download
 
-User's Guide GitHub Wiki: [Home](https://github.com/paiardin/DockingPie/wiki); [User's Guide](https://github.com/paiardin/DockingPie/wiki/User's-Guide); [Tutorials](https://github.com/paiardin/DockingPie/wiki/Tutorials)
+DockingPie GitHub Wiki: [Home](https://github.com/paiardin/DockingPie/wiki); [User's Guide](https://github.com/paiardin/DockingPie/wiki/User's-Guide); [Tutorials](https://github.com/paiardin/DockingPie/wiki/Tutorials)
 
 Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniroma1.it/)
 
