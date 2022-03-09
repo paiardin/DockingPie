@@ -20,16 +20,6 @@ DockingPie is distributed freely to the public and it has been tested and runs o
 DockingPie plugin ZIP file: [download from here](https://github.com/paiardin/DockingPie "DockingPie plugin ZIP file direct download") TODO: link diretto al download
 
 
-## How to use DockingPie
-A detailed explanation on how to use DockingPie, some videos and tutorials can be found at the following links.
-
-User's Guide: [download from here]( "DockingPie User's guide") TODO: link diretto al download
-
-DockingPie GitHub Wiki: [Home](https://github.com/paiardin/DockingPie/wiki); [User's Guide](https://github.com/paiardin/DockingPie/wiki/User's-Guide); [Tutorials](https://github.com/paiardin/DockingPie/wiki/Tutorials)
-
-Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniroma1.it/)
-
-
 ## Installation 
     
 DockingPie is installed, as any other PyMOL [1] plugin, via the PyMOL plugin manager:
@@ -40,6 +30,30 @@ DockingPie is installed, as any other PyMOL [1] plugin, via the PyMOL plugin man
 
 * Click on *Install New Plugin* and press the *Choose File…* button. Select the **DockingPie ZIP file** which you have downloaded before. 
 You will be asked to give the path of the directory in which to install the plugin files. Just select the default option if you are unsure about what to do (the location of the plugin files does not make any difference when running the plugin).
+
+
+## How to use DockingPie
+A detailed explanation on how to use DockingPie, some videos and tutorials can be found at the following links.
+
+User's Guide: [download from here]( "DockingPie User's guide") TODO: link diretto al download
+
+DockingPie GitHub Wiki: [Home](https://github.com/paiardin/DockingPie/wiki); [User's Guide](https://github.com/paiardin/DockingPie/wiki/User's-Guide); [Tutorials](https://github.com/paiardin/DockingPie/wiki/Tutorials)
+
+Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniroma1.it/)
+
+
+## Tested platforms 
+
+| PyMOL version | PyMOL build |          Operating system          |
+|:-------------:|:-----------:|:----------------------------------:|
+|     2.5.2     |  Incentive  | Linux (Ubuntu 20.04.3 LTS), 64-bit |
+|     2.5.1     |  Incentive  |    Linux (Ubuntu 21.04), 64-bit    |
+|     2.5.2     |  Incentive  | Linux (Ubuntu 18.04.2 LTS), 64-bit |
+|     2.4.1     |  Incentive  |    Windows  (v.10 Home), 64-bit    |
+|               |  Incentive  |     Windows (v.10 Pro), 64-bit     |
+|               |             |                                    |
+|               |             |                                    |
+|               |             |                                    |
 
 
 ## License 
