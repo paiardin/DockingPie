@@ -25,11 +25,11 @@ DockingPie GitHub repository [here](https://github.com/paiardin/DockingPie)
 ## How to use DockingPie
 A detailed explanation on how to use DockingPie, some videos and tutorials can be found at the following links.
 
-User's Guide: [download from here]( "DockingPie User's guide")
+User's Guide: [download from here]( "DockingPie User's guide") TODO: link diretto al download
 
-User's Guide GitHub Wiki: [here]()
+User's Guide GitHub Wiki: [Home](https://github.com/paiardin/DockingPie/wiki); [User's Guide](https://github.com/paiardin/DockingPie/wiki/User's-Guide); [Tutorials](https://github.com/paiardin/DockingPie/wiki/Tutorials)
 
-Website: [to be updated] http://schubert.bio.uniroma1.it/
+Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniroma1.it/)
 
 
 ## Installation 
