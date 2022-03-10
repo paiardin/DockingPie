@@ -1,4 +1,4 @@
-# DockingPie
+# DockingPie: a Consensus Docking plugin for PyMOL
 
 Introduction --
 
