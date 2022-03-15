@@ -57,7 +57,7 @@ Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniro
 |               |             |                                    |
 
 
-## License 
+## Licence
 
 DockingPie is distributed under **GPL-3.0 License** 
     
