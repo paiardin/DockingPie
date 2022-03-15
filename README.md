@@ -52,7 +52,7 @@ Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniro
 |     2.5.2     |  Incentive  | Linux (Ubuntu 18.04.2 LTS), 64-bit |
 |     2.4.1     |  Incentive  |    Windows  (v.10 Home), 64-bit    |
 |               |  Incentive  |     Windows (v.10 Pro), 64-bit     |
-|               |             |                                    |
+|               |             |   MacOS (High Sierra v.10.13.6)    |
 |               |             |                                    |
 |               |             |                                    |
 
