@@ -20,14 +20,14 @@ DockingPie is distributed freely to the public and it has been tested and runs o
 
 ## Download
 
-DockingPie plugin ZIP file: [download from here](https://github.com/paiardin/DockingPie "DockingPie plugin ZIP file direct download") TODO: link diretto al download
+DockingPie plugin ZIP file: [download from here](https://github.com/paiardin/DockingPie/archive/refs/heads/main.zip "DockingPie plugin ZIP file direct download") TODO: link diretto al download
 
 
 ## Installation 
     
 DockingPie is installed, as any other PyMOL [1] plugin, via the PyMOL plugin manager:
 
-* First download the latest version of the plugin ZIP file [here](https://github.com/paiardin/DockingPie "DockingPie plugin ZIP file direct download") TODO: link diretto al download
+* First download the latest version of the plugin ZIP file [here](https://github.com/paiardin/DockingPie "DockingPie plugin ZIP file direct download") 
 
 * Launch PyMOL and use the *Plugin* → *Plugin Manager* command from the main menu of PyMOL. The plugin manager window of PyMOL will open.
 
@@ -38,7 +38,7 @@ You will be asked to give the path of the directory in which to install the plug
 ## How to use DockingPie
 A detailed explanation on how to use DockingPie, some videos and tutorials can be found at the following links.
 
-User's Guide: [download from here]( "DockingPie User's guide") TODO: link diretto al download
+User's Guide: [download from here](https://github.com/paiardin/DockingPie/archive/refs/heads/main.zip "DockingPie User's guide")
 
 DockingPie GitHub Wiki: [Home](https://github.com/paiardin/DockingPie/wiki); [User's Guide](https://github.com/paiardin/DockingPie/wiki/User's-Guide); [Tutorials](https://github.com/paiardin/DockingPie/wiki/Tutorials)
 
