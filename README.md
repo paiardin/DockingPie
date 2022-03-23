@@ -2,8 +2,16 @@
 
 ![immagine](https://user-images.githubusercontent.com/68196372/158363199-aaaabe39-ce47-4a3e-b794-e57e088c2cce.png)
 
-Introduction --
+**DockingPie** is a plugin of the popular molecular graphics system PyMOL that offers a versatile and user-friendly graphical user interface for assisting molecular and consensus docking analyses. 
 
+It has been thought to create an interactive interface between PyMOL and any open-source docking program, so as to provide a platform for the integration of tools used for molecular visualization, molecular docking configuration and the analyses of the results. 
+
+At the current, and first release, the implemented docking programs are **Smina**, **Autodock Vina**, **RxDock** and **ADFR**. As it can be noticed, DockingPie distances itself from the implementation of AutoDock and/or AutoDock Vina, which have countless already developed GUIs, and from the implementation of a single docking program. Preciselt to exploit this latter feature, DockingPie provides the possibility to carry out combined analyses, term by which it is intended the application of alternative scoring schemes, also called Consensus Scoring functions, that take into consideration the results of different docking programs at once. 
+
+Comprehensively, with a view to creating a tool exploitable by all, independently from the expertise, it has been designed to: 
+* guide the users step-by-step throughout the whole docking process, by making use of PyMOL for an interactive visualization; 
+* provide an easy way to setup the processing of multiple docking runs at once;
+* provide the first ever user interface for re-ranking the results using a consensus scoring approach.
 
 
 ## Requirements
