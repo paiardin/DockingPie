@@ -91,7 +91,7 @@ DockingPie is distributed under **GPL-3.0 License**
 
 [8] Meli, R., Biggin, P.C. spyrmsd: symmetry-corrected RMSD calculations in Python. J Cheminform 12, 49 (2020). https://doi.org/10.1186/s13321-020-00455-2
 
-[9] Sdsorter
+[9] https://sourceforge.net/projects/sdsorter/
 
 [10] Anaconda Software Distribution. (2020). Anaconda Documentation. Anaconda Inc. Retrieved from https://docs.anaconda.com/
  
