@@ -6,7 +6,9 @@
 
 It has been thought to create an interactive interface between PyMOL and any open-source docking program, so as to provide a platform for the integration of tools used for molecular visualization, molecular docking configuration and the analyses of the results. 
 
-At the current, and first release, the implemented docking programs are **Smina**, **Autodock Vina**, **RxDock** and **ADFR** [2-5]. As it can be noticed, DockingPie distances itself from the implementation of AutoDock and/or AutoDock Vina, which have countless already developed GUIs, and from the implementation of a single docking program. Preciselt to exploit this latter feature, DockingPie provides the possibility to carry out combined analyses, term by which it is intended the application of alternative scoring schemes, also called Consensus Scoring functions, that take into consideration the results of different docking programs at once. 
+At the current, and first release, the implemented docking programs are **Smina**, **Autodock Vina**, **RxDock** and **ADFR** [2-5]. 
+
+As it can be noticed, DockingPie distances itself from the implementation of AutoDock and/or AutoDock Vina, which have countless already developed GUIs, and from the implementation of a single docking program. Preciselt to exploit this latter feature, DockingPie provides the possibility to carry out combined analyses, term by which it is intended the application of alternative scoring schemes, also called Consensus Scoring functions, that take into consideration the results of different docking programs at once. 
 
 Comprehensively, with a view to creating a tool exploitable by all, independently from the expertise, it has been designed to: 
 * guide the users step-by-step throughout the whole docking process, by making use of PyMOL for an interactive visualization; 
