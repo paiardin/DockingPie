@@ -1,0 +1,13 @@
+RxDock [1,2]
+
+"RxDock is a fast and versatile open-source docking program that can be used to dock small molecules against proteins and nucleic acids [1].
+RxDock started in 2019 as a fork of rDock [2]"
+
+[1] https://www.rxdock.org/
+[2] Ruiz-Carmona, S., Alvarez-Garcia, D., Foloppe, N., Garmendia-Doval, A. B., Juhos S., et al. (2014) rDock: A Fast, Versatile and Open Source Program for Docking Ligands to Proteins and Nucleic Acids. PLoS Comput Biol 10(4): e1003571. doi:10.1371/journal.pcbi.1003571
+
+
+RxDock in DockingPie
+By clicking the "Install" button, RxDock bioconda release will be installed in the PyMOL Conda Environment.
+
+RxDock is not available for Windows

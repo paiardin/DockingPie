@@ -1,0 +1,9 @@
+sPyRMSD [1]
+
+sPyRMSD is a is a Python tool for symmetry-corrected RMSD calculations.
+
+[1] Meli, R., Biggin, P.C. spyrmsd: symmetry-corrected RMSD calculations in Python. J Cheminform 12, 49 (2020). https://doi.org/10.1186/s13321-020-00455-2
+
+
+sPyRMSD in DockingPie
+By clicking the "Install" button, sPyRMSD conda-forge release will be installed in the PyMOL Conda Environment.

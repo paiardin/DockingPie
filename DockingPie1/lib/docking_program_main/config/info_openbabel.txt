@@ -1,0 +1,11 @@
+Openbabel
+
+Open Babel is a chemical toolbox designed to speak the many languages of chemical data.
+It's an open, collaborative project allowing anyone to search, convert, analyze,
+or store data from molecular modeling, chemistry, solid-state materials, biochemistry, or related areas [1].
+
+[1] O'Boyle, N.M., Banck, M., James, C.A. et al. Open Babel: An open chemical toolbox. J Cheminform 3, 33 (2011). https://doi.org/10.1186/1758-2946-3-33
+
+
+Openbabel in DockingPie
+By clicking the "Install" button, Openbabel conda-forge release will be installed in the PyMOL Conda Environment.

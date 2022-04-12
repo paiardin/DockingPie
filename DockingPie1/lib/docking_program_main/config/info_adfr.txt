@@ -1,0 +1,10 @@
+ADFR [1,2]
+
+"AutoDockFR (or ADFR in short) is a protein-ligand docking program developed in the Sanner laboratory at Scripps Research under the AutoDock umbrella."
+
+[1] https://ccsb.scripps.edu/adfr/
+[2] Ravindranath PA, Forli S, Goodsell DS, Olson AJ, Sanner MF. AutoDockFR: Advances in Protein-Ligand Docking with Explicitly Specified Binding Site Flexibility. PLoS Comput Biol. 2015;11(12):e1004586. Published 2015 Dec 2. doi:10.1371/journal.pcbi.1004586
+
+
+ADFR in DockingPie
+By clicking the "Install" button, ADFR will be installed in Config directory with an Academic Installation

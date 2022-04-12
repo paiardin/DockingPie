@@ -1,0 +1,12 @@
+sdsorter
+
+sdsorter is a tool for manipulating molecular data within an sdf file
+based on the contents of the sd tags.
+
+[1] https://sourceforge.net/projects/sdsorter/
+
+
+sdsorter in DockingPie
+
+The binaries for macOS are directly provided in DockingPie source code.
+By clicking the "Install" button, sdsorter will be made executable.
