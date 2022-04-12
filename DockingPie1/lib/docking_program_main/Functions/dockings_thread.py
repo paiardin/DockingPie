@@ -800,7 +800,7 @@ class Dockings_thread(QtCore.QThread):
                         f.close()
                     except:
                         f.close()
-                        os.delete(str(self.tab.last_docking.results_file_name + ".sd"))
+                        os.remove(str(self.tab.last_docking.results_file_name + ".sd"))
                         os.rename("results_tmp_name.sd", str(self.tab.last_docking.results_file_name + ".sd"))
                     
             if self.tab.last_docking.interrupt == False:
