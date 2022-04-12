@@ -204,12 +204,13 @@ class Calculate_RMSD:
 
         self.warning = warning
 
-        self.find_rmsd()
-
+        try: 
+            self.find_rmsd()
+        except NameError:
+            print("Openbabel is required for RMSD computing")
 
     def find_rmsd(self):
-
-
+        
         ref = io.loadmol(self.pdb_reference_file)						# Read crystal pose
         mols = io.loadallmols(self.sdf_docked_file)					# Read poses
         ref.strip()											# Strip Hydrogens of X-ray
