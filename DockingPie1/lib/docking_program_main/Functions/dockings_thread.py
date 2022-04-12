@@ -794,10 +794,15 @@ class Dockings_thread(QtCore.QThread):
                 # subprocess.run(["obabel", "-i", "sd", "results_tmp_name.sd", "-o", "sdf", "-O", "results_tmp_name.sdf"])
                 # subprocess.run(["obabel", "results_tmp_name.sdf", "-O", str(self.results_file_name + ".sdf"), "--sort", "SCORE"])
 
-                    f = open(str(self.tab.last_docking.results_file_name + ".sd"), "w")
-                    subprocess.run(["sdsort", "-n", "-fSCORE", "results_tmp_name.sd"], stdout = f, check = True)
-                    f.close()
-
+                    try:         
+                        f = open(str(self.tab.last_docking.results_file_name + ".sd"), "w")
+                        subprocess.run(["sdsort", "-n", "-fSCORE", "results_tmp_name.sd"], stdout = f, check = True)
+                        f.close()
+                    except:
+                        f.close()
+                        os.delete(str(self.tab.last_docking.results_file_name + ".sd"))
+                        os.rename("results_tmp_name.sd", str(self.tab.last_docking.results_file_name + ".sd"))
+                    
             if self.tab.last_docking.interrupt == False:
 
                 self.check_docking_completed.emit(docking_programs.rxdock_runs,
