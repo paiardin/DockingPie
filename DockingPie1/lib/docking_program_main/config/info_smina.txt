@@ -1,0 +1,14 @@
+Smina [1]
+
+A fork of AutoDock Vina that is customized to better support scoring function development and high-performance energy minimization.
+
+[1] Koes, David Ryan et al. “Lessons learned in empirical scoring with smina from the CSAR 2011 benchmarking exercise.”
+Journal of chemical information and modeling vol. 53,8 (2013): 1893-904. doi:10.1021/ci300604z
+
+
+Smina in DockingPie
+
+The binaries for macOS and Linux are directly provided in DockingPie source code.
+By clicking the "Install" button, Smina will be made executable.
+
+Smina is not available for Windows

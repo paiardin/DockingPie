@@ -1,0 +1,14 @@
+AutoDock Vina [1,2]
+
+"AutoDock Vina is an open-source program for doing molecular docking.
+It was originally designed and implemented by Dr. Oleg Trott
+in the Molecular Graphics Lab (now CCSB) at The Scripps Research Institute [1]"
+
+[1] https://vina.scripps.edu/
+[2] O. Trott, A. J. Olson, AutoDock Vina: improving the speed and accuracy of docking with a new scoring function, efficient optimization and multithreading, Journal of Computational Chemistry 31 (2010) 455-461
+
+
+AutoDock Vina in DockingPie
+
+The binaries for macOS, Linux and Windows are directly provided in DockingPie source code.
+By clicking the "Install" button, Vina will be made executable.

@@ -1,0 +1,17 @@
+WHAT IS A CONSENSUS SCORING ANALYSIS?
+
+A rescoring method
+
+
+WHICH ARE THE PURPOSES OF THIS METHOD?
+
+To combine the results of different scoring functions.
+Such combination of Scoring Function is aimed to have a much more accurate ranking of the predicted bio-active molecules.
+
+
+WHICH ARE THE STEPS TO PERFORM SUCH ANALYSIS?
+
+- Run Dockings on the same system with different Docking programs
+- Compare the poses of a Docking Run with the poses of the other Docking Run
+- Compute the RMSD for each comparison
+- Define a threshold of RMSD under which the two compared poses are defined as being 'in consensus'
