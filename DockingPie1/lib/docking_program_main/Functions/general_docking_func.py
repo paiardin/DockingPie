@@ -204,7 +204,10 @@ class Calculate_RMSD:
 
         self.warning = warning
 
-        self.find_rmsd()
+        try: 
+            self.find_rmsd()
+        except NameError:
+            print("Openbabel is required for RMSD computing")
 
 
     def find_rmsd(self):
