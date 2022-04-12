@@ -15,6 +15,7 @@ import subprocess
 import time
 import zipfile
 from pathlib import Path
+import io as io
 
 # PyMOL.
 import pymol
