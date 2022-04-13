@@ -755,6 +755,7 @@ class ConfigurationTab(QtWidgets.QWidget):
 
         ### Check ADFR ###
         if sys.platform == "win32":
+            self.adfr_installed = False
             path_to_adfr = os.path.join(self.docking_programs.path_to_ADFR)
 
             try:
