@@ -1036,7 +1036,7 @@ class Dockings_thread(QtCore.QThread):
 
         for file in os.listdir(self.tab.docking_programs_child_tabs.docking_programs.adfr_tmp_dir):
             temp = re.search("_out", file)
-            temp2 = re.search(".log", file)
+            temp2 = re.search("_grid.log", file)
             if temp:
                 os.rename(file, self.file_path)
             if temp2:
