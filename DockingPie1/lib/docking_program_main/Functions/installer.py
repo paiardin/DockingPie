@@ -652,6 +652,7 @@ class Installation():
             subprocess.run(["chmod", "755", archos], check = True)
 
         if sys.platform == "win32":
+            self.installation_completed = False
             try:
                 output = subprocess.run(["adfr"], shell = True, capture_output=True)
             except Exception as e:
