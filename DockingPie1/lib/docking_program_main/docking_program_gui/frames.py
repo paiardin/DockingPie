@@ -336,7 +336,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
                            "Copyright (C): 2022 Serena Rosignoli, Alessandro Paiardini\n"
                            "Contacts: serena.rosignoli@uniroma1.it, alessandro.paiardini@uniroma1.it\n"
                            "For information on DockingPie 1.0 visit:\n"
-                           "link\n\n"
+                           "https://github.com/paiardin/DockingPie\n\n"
 
                            "# DockingPie\n"
                            "- Version: " + "1.0" + "\n"
