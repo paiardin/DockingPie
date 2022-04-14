@@ -651,49 +651,13 @@ class Installation():
 
             subprocess.run(["chmod", "755", archos], check = True)
 
-        if sys.platform == "win32":
-            self.installation_completed = False
+            path_to_adfr = os.path.join(self.tab.docking_programs.path_to_ADFR)
+
             try:
-                output = subprocess.run(["adfr"], shell = True, capture_output=True)
-            except Exception as e:
+                result = subprocess.run([path_to_adfr], stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+            except PermissionError as e:
                 self.s = str(e)
                 self.installation_completed = False
-
-        path_to_adfr = os.path.join(self.tab.docking_programs.path_to_ADFR)
-
-        try:
-            result = subprocess.run([path_to_adfr], stdout=subprocess.PIPE, stderr = subprocess.PIPE)
-        except PermissionError as e:
-            self.s = str(e)
-            self.installation_completed = False
-
-            # os.rename('adfr', 'adfr_tmp')
-            # input = open("adfr_tmp", "rt")
-            # output = open("adfr", "wt")
-            #
-            # for line in input:
-            #     if line.startswith("ADS_ROOT="):
-            #         output.write(line.replace("root_path_to_be_set", str(tmp_path_adfr)))
-            #     else:
-            #         output.write(line)
-            # output.close()
-            #
-            # ###
-            #
-            # os.rename('agfr', 'agfr_tmp')
-            # input = open("agfr_tmp", "rt")
-            # output = open("agfr", "wt")
-            #
-            # for line in input:
-            #     if line.startswith("ADS_ROOT="):
-            #         output.write(line.replace("root_path_to_be_set", str(tmp_path_adfr)))
-            #     else:
-            #         output.write(line)
-            # output.close()
-            #
-            # subprocess.run(["chmod", "777", "agfr"])
-            # subprocess.run(["chmod", "777", "adfr"])
-            # subprocess.run(["chmod", "777", "archosv"])
 
 
     def start_vina_installation(self):
