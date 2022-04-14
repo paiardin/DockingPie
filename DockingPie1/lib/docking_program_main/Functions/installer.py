@@ -555,7 +555,10 @@ class Installation():
             self.detailed_info_window.show()
 
         else:
-            QtWidgets.QMessageBox.about(self.tab, "DockingPie", str(self.program_to_install) + " installation completed")
+            if self.program_to_install == "ADFR":
+                QtWidgets.QMessageBox.about(self.tab, "DockingPie", str(self.program_to_install) + " installation completed\n Please Restart PyMOL")
+            else:
+                QtWidgets.QMessageBox.about(self.tab, "DockingPie", str(self.program_to_install) + " installation completed")
 
         self.tab.check_installation()
 
