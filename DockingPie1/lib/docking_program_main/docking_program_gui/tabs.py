@@ -755,14 +755,9 @@ class ConfigurationTab(QtWidgets.QWidget):
 
         ### Check ADFR ###
         if sys.platform == "win32":
-            self.adfr_installed = False
-            path_to_adfr = os.path.join(self.docking_programs.path_to_ADFR)
 
-            try:
-                output = subprocess.run(["adfr"], shell = True, capture_output=True)
-
-                #result = subprocess.run(["adfr"], stdout=subprocess.PIPE, stderr = subprocess.PIPE)
-            except Exception as e:
+            a = shutil.which('adfr')
+            if a is None:
                 self.adfr_installed = False
 
         else:
