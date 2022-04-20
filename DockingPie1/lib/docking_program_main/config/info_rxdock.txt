@@ -11,3 +11,5 @@ RxDock in DockingPie
 By clicking the "Install" button, RxDock bioconda release will be installed in the PyMOL Conda Environment.
 
 RxDock is not available for Windows
+
+Acknowledgments: the authors are grateful to Vedran Miletić for assistance with RxDock.
