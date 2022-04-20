@@ -529,7 +529,12 @@ class Installation():
             self.about_text_area = QtWidgets.QPlainTextEdit()
             self.about_text_area.setReadOnly(True)
 
-            self.about_text_area.setPlainText(str(self.s))
+            additional_text = " "
+
+            if re.search('EnvironmentNotWritableError', str(self.s)):
+                additional_text = "\n!! Please Read Below !!\n \nPossible solutions:\n- Run PyMOL with administrator privileges\n- Install PyMOL without administrator priviliges"
+
+            self.about_text_area.setPlainText(str(self.s) + additional_text)
 
             self.detailed_info_window = NewWindow(parent = self.tab,
             title = "Warning", upper_frame_title = "Conda Install Error",
