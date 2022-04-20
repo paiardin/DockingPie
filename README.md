@@ -96,3 +96,8 @@ DockingPie is distributed under **GPL-3.0 License**
 
 [10] Anaconda Software Distribution. (2020). Anaconda Documentation. Anaconda Inc. Retrieved from https://docs.anaconda.com/
  
+ 
+## Acknowledgments 
+
+The authors are grateful to Giacomo Janson for assistance with Python.
+The authors are grateful to Vedran Miletić for assistance with RxDock.
