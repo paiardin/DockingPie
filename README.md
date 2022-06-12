@@ -72,6 +72,18 @@ Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniro
 ## Licence
 
 DockingPie is distributed under **GPL-3.0 License** 
+
+
+## Version 
+
+**Current Release: DockingPie 1.0.1**
+
+### Version legend
+Major changes **(1.x.x)**: a complete new version of the plugin is provided. Re-installation is needed.
+
+Minor changes **(x.0.x)**: bug fixes, minor GUI changes, minor added functionalities. Re-installation is needed.
+
+Micro changes **(x.x.1)**: external tools update (e.g. Vina, Smina, ADFR). The *Check for Updates* function can be used to update the plugin. See the [User's Guide](https://github.com/paiardin/DockingPie/releases/download/Files_v1.0.0/DockingPie_User_Guide.pdf "DockingPie User's guide") for further details. 
     
 
 ## References
