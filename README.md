@@ -25,7 +25,7 @@ DockingPie is compatible with incentive PyMOL builds distributed by [Schrodinger
 DockingPie is distributed freely to the public and it has been tested and runs on Windows, macOS and Linux versions of PyMOL.
 
 
-(n.b. Some incompatibilities may arise with the usage of PyMOL version 2.5.x if ‘undo’ function is enabled, which in PyMOL 2.5.2 still shows some shortcomings. Therefore, when the plugin is opened, the ‘undo’ function is automatically disabled and it is strongly suggested to keep it disabled when using the plugin.)
+(Some incompatibilities may arise with the usage of PyMOL version 2.5.x if ‘undo’ function is enabled, which in PyMOL 2.5.2 still shows some shortcomings. Therefore, when the plugin is opened, the ‘undo’ function is automatically disabled and it is strongly suggested to keep it disabled when using the plugin.)
 
 
 ## Download
