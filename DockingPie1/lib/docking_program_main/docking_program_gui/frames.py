@@ -474,7 +474,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
             available_updates = False
             os.remove(last_version_file)
 
-            QtWidgets.QMessageBox.about(self.tab, "DockingPie", "External tools are up to date")
+            QtWidgets.QMessageBox.about(self.main_window, "DockingPie", "External tools are up to date")
 
         # If the version is not the same
         else:
