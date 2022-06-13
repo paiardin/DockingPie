@@ -49,7 +49,7 @@ You will be asked to give the path of the directory in which to install the plug
 
 A detailed explanation on how to use DockingPie, some videos and tutorials can be found at the following links.
 
-User's Guide: [download from here](https://github.com/paiardin/DockingPie/releases/download/Files_v1.0.0/DockingPie_User_Guide.pdf "DockingPie User's guide")
+User's Guide: [download from here](https://github.com/paiardin/DockingPie/releases/download/versioning/DockingPie_User_Guide.pdf "DockingPie User's guide")
 
 DockingPie GitHub Wiki: [Home](https://github.com/paiardin/DockingPie/wiki); [User's Guide](https://github.com/paiardin/DockingPie/wiki/User's-Guide); [Tutorials](https://github.com/paiardin/DockingPie/wiki/Tutorials)
 
