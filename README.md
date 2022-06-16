@@ -58,15 +58,23 @@ Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniro
 
 ## Tested platforms 
 
-| PyMOL version |          Operating system          |
-|:-------------:|:----------------------------------:|
-|     2.5.2     | Linux (Ubuntu 20.04.3 LTS), 64-bit |
-|     2.5.1     | Linux (Ubuntu 21.04), 64-bit       |
-|     2.5.2     | Linux (Ubuntu 18.04.2 LTS), 64-bit |
-|     2.4.1     | Windows  (v.10 Home), 64-bit       |
-|     2.5.2     | Windows (v.10 Pro), 64-bit         |
-|     2.5.2     | MacOS (High Sierra v.10.13.6)      |
-|     2.5.2     | MacOS (Monterey v.12.2.1)          |
+| PyMOL version |          Operating system          |         PyMOL source             |      
+|:-------------:|:----------------------------------:|:--------------------------------:|
+|     2.5.2     | Linux (Ubuntu 20.04.3 LTS), 64-bit |          Incentive               |
+|     2.5.1     | Linux (Ubuntu 21.04), 64-bit       |   Incentive (Conda package)      |
+|     2.5.2     | Linux (Ubuntu 18.04.2 LTS), 64-bit |          Incentive               |
+|     2.4.1     | Windows  (v.10 Home), 64-bit       |          Incentive               |
+|     2.5.2     | Windows (v.10 Pro), 64-bit         |          Incentive               |
+|     2.5.2     | MacOS (High Sierra v.10.13.6)      |          Incentive               |
+|     2.5.2     | MacOS (Monterey v.12.2.1)          |          Incentive               |
+|     2.5.0     | Linux (Ubuntu 21.04), 64-bit       |   Open source (Conda package)    |
+|               | MacOS (High Sierra v.10.13.6)      |  Open source (manually compiled) |
+
+
+## DockingPie in open-source PyMOL version
+
+DockingPie is fully compatible with open-source PyMOL version. 
+However, since the “Conda Package Manager” is not integrated in open-source PyMOL, the automatic installation of the dependencies is not fully supported from within DockingPie. Thought that RxDock, sPyRMSD and OpenBabel would be manually installed by the User, we have added a section in the User’s Guide to help handling DockingPie and its dependencies on open-source PyMOL (work in progress). 
 
 
 ## Licence
