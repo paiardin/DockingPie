@@ -149,7 +149,10 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
         pymol_version = float(".".join(cmd.get_version()[0].split(".")[0:2]))
 
         if pymol_version >= 2.5:
-            cmd.undo_disable()
+            try:
+                cmd.undo_disable()
+            except:
+                pass
 
         cmd.set("cartoon_fancy_helices", 1)
         cmd.set("cartoon_highlight_color", "grey50")
