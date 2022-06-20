@@ -79,8 +79,20 @@ except ImportError:
 
 
 # Sets the version of the plugin.
-__docking_program_version__ = "1.0"
-__revision__ = "1"
+current_path = (os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+config_path = os.path.join(current_path, "DockingPie1", "lib", "docking_program_main", "config")
+version_file = os.path.join(config_path, "version.txt")
+
+with open(version_file) as f:
+    files_version = f.readline().rstrip()
+
+v = files_version.replace("Files_v", "")
+major = v.split(".")[0]
+minor = v.split(".")[1]
+
+__docking_program_version__ = major + "." + minor
+__revision__ = v.split(".")[2]
+
 __version__ = float(__docking_program_version__ + __revision__.replace(".", ""))
 docking_program_plugin_name = "DockingPie " + __docking_program_version__
 
