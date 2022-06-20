@@ -4,16 +4,21 @@
 
 **DockingPie** is a plugin of the popular molecular graphics system PyMOL [1] that offers a versatile and user-friendly graphical user interface for assisting molecular and consensus docking analyses. 
 
-It has been thought to create an interactive interface between PyMOL and any open-source docking program, so as to provide a platform for the integration of tools used for molecular visualization, molecular docking configuration and the analyses of the results. 
-
 At the current, and first release, the implemented docking programs are **Smina**, **Autodock Vina**, **RxDock** and **ADFR** [2-5]. 
 
-As it can be noticed, DockingPie distances itself from the implementation of AutoDock and/or AutoDock Vina, which have countless already developed GUIs, and from the implementation of a single docking program. Preciselt to exploit this latter feature, DockingPie provides the possibility to carry out combined analyses, term by which it is intended the application of alternative scoring schemes, also called Consensus Scoring functions, that take into consideration the results of different docking programs at once. 
+Providing an easy interface to four docking programs, DockingPie is particularly suited as a platform to carry out **consensus docking and scoring analyses**.
 
 Comprehensively, with a view to creating a tool exploitable by all, independently from the expertise, it has been designed to: 
 * guide the users step-by-step throughout the whole docking process, by making use of PyMOL for an interactive visualization; 
 * provide an easy way to setup the processing of multiple docking runs at once;
 * provide the first ever user interface for re-ranking the results using a consensus scoring approach.
+
+The main DockingPie’s features are the following: 
+* simplified installation and configuration of the external tools (Vina, Smina, ADFR, RxDock, AutoDockTools and Openbabel) through the ‘CONFIGURATION’ tab;
+* preparation of input files: protonation, handling of non-standard residues and water molecules, setting of active torsions, setup of search space and generation of grid maps, which are interactively visualized in PyMOL;
+* inspection of the results: interactive tabular formats and docked conformations shown in PyMOL;
+* RMSD with reference ligands, RMSD vs Score scatter plots;
+* consensus docking analysis: the results of different docking programs can be rescored according to one of the available consensus protocols, and interactively visualized in PyMOL.
 
 
 ## Requirements
