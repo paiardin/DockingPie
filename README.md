@@ -68,12 +68,14 @@ Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniro
 |     2.5.2     | Linux (Ubuntu 20.04.3 LTS), 64-bit |          Incentive               |
 |     2.5.1     | Linux (Ubuntu 21.04), 64-bit       |   Incentive (Conda package)      |
 |     2.5.2     | Linux (Ubuntu 18.04.2 LTS), 64-bit |          Incentive               |
-|     2.4.1     | Windows  (v.10 Home), 64-bit       |          Incentive               |
+|     2.5.0     | Linux (Ubuntu 21.04), 64-bit       |   Open source (Conda package)    |
+|     2.4.1     | Windows (v.10 Home), 64-bit        |          Incentive               |
 |     2.5.2     | Windows (v.10 Pro), 64-bit         |          Incentive               |
 |     2.5.2     | MacOS (High Sierra v.10.13.6)      |          Incentive               |
+|     2.4.0     | MacOS (High Sierra v.10.13.6)      |  Open source (manually compiled) |
 |     2.5.2     | MacOS (Monterey v.12.2.1)          |          Incentive               |
-|     2.5.0     | Linux (Ubuntu 21.04), 64-bit       |   Open source (Conda package)    |
-|               | MacOS (High Sierra v.10.13.6)      |  Open source (manually compiled) |
+|     2.5.2     | MacOS (Big Sur v.11.6.5)           |          Incentive               |
+
 
 
 ## DockingPie in open-source PyMOL version
