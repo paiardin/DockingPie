@@ -83,7 +83,7 @@ Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniro
 ## DockingPie in open-source PyMOL version
 
 DockingPie is fully compatible with open-source PyMOL version. 
-However, since the “Conda Package Manager” is not integrated in open-source PyMOL, the automatic installation of the dependencies is not fully supported from within DockingPie. Thought that RxDock, sPyRMSD and OpenBabel would be manually installed by the User, we have added a section in the User’s Guide to help handling DockingPie and its dependencies on open-source PyMOL (work in progress). 
+However, since the “Conda Package Manager” is not integrated in open-source PyMOL, the automatic installation of the dependencies is not fully supported from within DockingPie. Thought that RxDock, sPyRMSD and OpenBabel would be manually installed by the User, we have added a section in the User’s Guide to help handling DockingPie and its dependencies on open-source PyMOL. 
 
 
 ## Licence
@@ -100,7 +100,7 @@ Major changes **(1.x.x)**: a complete new version of the plugin is provided. Re-
 
 Minor changes **(x.0.x)**: bug fixes, minor GUI changes, minor added functionalities. Re-installation is needed.
 
-Micro changes **(x.x.1)**: external tools update (e.g. Vina, Smina, ADFR). The *Check for Updates* function can be used to update the plugin. See the [User's Guide](https://github.com/paiardin/DockingPie/releases/download/versioning/DockingPie_User_Guide.pdf "DockingPie User's guide") for further details (work in progress). 
+Micro changes **(x.x.1)**: external tools update (e.g. Vina, Smina, ADFR). The *Check for Updates* function can be used to update the plugin. See the [User's Guide](https://github.com/paiardin/DockingPie/releases/download/versioning/DockingPie_User_Guide.pdf "DockingPie User's guide") for further details. 
     
 
 ## References
