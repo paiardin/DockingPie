@@ -769,7 +769,10 @@ class Installation():
             from contextlib import redirect_stderr
             #with open('conda_filename.log', 'w') as stderr, redirect_stderr(stderr):
             with io.StringIO() as stderr, redirect_stderr(stderr):
-                r = conda.cli.main('conda', *args)
+                try:
+                    r = conda.cli.main('conda', *args)
+                except:
+                    r = conda.cli.main(*args)
                 self.s = stderr.getvalue()
             if not r:
                 print(' conda finished with success')
