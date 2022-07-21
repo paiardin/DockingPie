@@ -20,6 +20,11 @@ The main DockingPie’s features are the following:
 * RMSD with reference ligands, RMSD vs Score scatter plots;
 * consensus docking analysis: the results of different docking programs can be rescored according to one of the available consensus protocols, and interactively visualized in PyMOL.
 
+## Publication
+
+If you find DockingPie useful, please cite:
+
+Rosignoli, S. and Paiardini, A. DockingPie: a consensus docking plugin for PyMOL, Bioinformatics, 2022, btac452, [DOI](https://doi.org/10.1093/bioinformatics/btac452 "Rosignoli et al., Bioinformatics, 2022")
 
 ## Requirements
 
