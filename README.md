@@ -24,7 +24,7 @@ The main DockingPie’s features are the following:
 
 If you find DockingPie useful, please cite:
 
-Serena Rosignoli, Alessandro Paiardini, DockingPie: a consensus docking plugin for PyMOL, Bioinformatics, 2022, btac452, [DOI](https://doi.org/10.1093/bioinformatics/btac452 "Rosignoli et al., Bioinformatics, 2022")
+Serena Rosignoli and Alessandro Paiardini, DockingPie: a consensus docking plugin for PyMOL, Bioinformatics, 2022, btac452, [DOI](https://doi.org/10.1093/bioinformatics/btac452 "Rosignoli et al., Bioinformatics, 2022")
 
 ## Requirements
 
