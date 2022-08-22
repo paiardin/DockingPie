@@ -770,7 +770,7 @@ class Installation():
             #with open('conda_filename.log', 'w') as stderr, redirect_stderr(stderr):
             versione = cmd.get_version()
 
-            if str(versione[0]) == "2.5.3":
+            if str(versione[0]) == "2.5.3" or str(versione[0]) == "2.5.4":
                 with io.StringIO() as stderr, redirect_stderr(stderr):
                     r = conda.cli.main(*args)
                     self.s = stderr.getvalue()
