@@ -420,15 +420,36 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
         with open(str(os.path.join(config_path, "version.txt"))) as f:
             self.files_version = f.readline().rstrip()
 
-        if sys.platform == "linux":
-            dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_linux.zip"
-            dir_name = "external_tools_linux"
-        if sys.platform == "darwin":
-            dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_macOS.zip"
-            dir_name = "external_tools_macOS"
-        if sys.platform == "win32":
-            dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_windows.zip"
-            dir_name = "external_tools_windows"
+        try:
+            urllib.request.urlopen("https://github.com/paiardin/DockingPie")
+            github_accessible = True
+        except:
+            github_accessible = False
+
+        if github_accessible:
+
+            if sys.platform == "linux":
+                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_linux.zip"
+                dir_name = "external_tools_linux"
+            if sys.platform == "darwin":
+                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_macOS.zip"
+                dir_name = "external_tools_macOS"
+            if sys.platform == "win32":
+                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_windows.zip"
+                dir_name = "external_tools_windows"
+
+        else:
+
+            if sys.platform == "linux":
+                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) + "/external_tools_linux.zip"
+                dir_name = "external_tools_linux"
+            if sys.platform == "darwin":
+                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_macOS.zip"
+                dir_name = "external_tools_macOS"
+            if sys.platform == "win32":
+                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_windows.zip"
+                dir_name = "external_tools_windows"
+
 
         # Show the external components download dialog.
         install_dialog = External_components_dialog(self,
@@ -446,18 +467,42 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
 
 
     def check_for_updates_func(self):
+        
+        
+        ## This function check for external tools updates ##
 
-        # This function check for external tools updates
+        # Read current version of the plugin #
+        config_path = self.main_window.docking_programs.config_path
+        with open(str(os.path.join(config_path, "version.txt"))) as f:
+            self.files_version = f.readline().rstrip()
 
         available_updates = False
 
-        # Download a file from GitHub were the version of the external tools is stored
-        response = urllib.request.urlopen("https://github.com/paiardin/DockingPie/releases/download/versioning/last_version.txt")
-        data = response.read()
-        filename = os.path.join(self.main_window.docking_programs.config_path, "last_version.txt")
-        file_ = open(filename, 'wb')
-        file_.write(data)
-        file_.close()
+        try:
+            urllib.request.urlopen("https://github.com/paiardin/DockingPie")
+            github_accessible = True
+        except:
+            github_accessible = False
+
+        if github_accessible:
+
+            # Download a file from GitHub were the version of the external tools is stored
+            response = urllib.request.urlopen("https://github.com/paiardin/DockingPie/releases/download/versioning/last_version.txt")
+            data = response.read()
+            filename = os.path.join(self.main_window.docking_programs.config_path, "last_version.txt")
+            file_ = open(filename, 'wb')
+            file_.write(data)
+            file_.close()
+
+        else:
+
+            # Download a file from GitHub were the version of the external tools is stored
+            response = urllib.request.urlopen("http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) + "/last_version.txt")
+            data = response.read()
+            filename = os.path.join(self.main_window.docking_programs.config_path, "last_version.txt")
+            file_ = open(filename, 'wb')
+            file_.write(data)
+            file_.close()
 
         # Check last version available
         last_version_file = str(os.path.join(self.main_window.docking_programs.config_path, "last_version.txt"))
