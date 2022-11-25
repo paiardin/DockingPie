@@ -339,6 +339,12 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
 
         has_pymol_conda = str(hasattr(pymol, "externing") and hasattr(pymol.externing, "conda"))
 
+        config_path = self.main_window.docking_programs.config_path
+        with open(str(os.path.join(config_path, "version.txt"))) as f:
+            read_version = f.readline().rstrip()
+
+        version = (read_version.split("_")[1]).replace("v", "")
+
 
         additional_text = ("INFO and CONTACTS\n"
                            "Copyright (C): 2022 Serena Rosignoli, Alessandro Paiardini\n"
@@ -347,8 +353,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
                            "https://github.com/paiardin/DockingPie\n\n"
 
                            "# DockingPie\n"
-                           "- Version: " + "1.0" + "\n"
-                           "- Revision: " + "0" + "\n"
+                           "- Version: " + version + "\n"
                            "- Plugin path: " + self._get_path_string(plugin_path) + " \n"
                            "- Config directory: " + self._get_path_string(self.main_window.docking_programs.config_path) + "\n\n"
 
