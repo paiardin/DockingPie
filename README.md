@@ -8,17 +8,18 @@ At the current, and first release, the implemented docking programs are **Smina*
 
 Providing an easy interface to four docking programs, DockingPie is particularly suited as a platform to carry out **consensus docking and scoring analyses**.
 
-Comprehensively, with a view to creating a tool exploitable by all, independently from the expertise, it has been designed to: 
-* guide the users step-by-step throughout the whole docking process, by making use of PyMOL for an interactive visualization; 
-* provide an easy way to setup the processing of multiple docking runs at once;
-* provide the first ever user interface for re-ranking the results using a consensus scoring approach.
 
-The main DockingPie’s features are the following: 
-* simplified installation and configuration of the external tools (Vina, Smina, ADFR, RxDock, AutoDockTools and Openbabel) through the ‘CONFIGURATION’ tab;
-* preparation of input files: protonation, handling of non-standard residues and water molecules, setting of active torsions, setup of search space and generation of grid maps, which are interactively visualized in PyMOL;
-* inspection of the results: interactive tabular formats and docked conformations shown in PyMOL;
-* RMSD with reference ligands, RMSD vs Score scatter plots;
-* consensus docking analysis: the results of different docking programs can be rescored according to one of the available consensus protocols, and interactively visualized in PyMOL.
+## NEWS 
+
+26 November 2022 - Release of DockingPie 1.2.1
+
+- Fixed inaccessible configuration resources from GitHub (GitHub censorship)
+- Now compatible with Vina 1.2.3 
+
+
+## Known Issue 
+
+"Check for updates" functionality in the CONFIGURATION TAB is currently out of use. 
 
 ## Cite
 
