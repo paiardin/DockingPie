@@ -103,6 +103,8 @@ class Consensus_layout(QtWidgets.QWidget):
         self.remove_btn = QtWidgets.QPushButton("Remove")
         self.layout.addWidget(self.remove_btn, 1, 0, 1, 2)
         self.remove_btn.clicked.connect(lambda: self.remove(self.list_widget))
+        
+        self.remove_btn.hide()
 
         self.label_poses = QtWidgets.QLabel("Poses threshold: ")
         self.label_box = QtWidgets.QComboBox()
@@ -1746,6 +1748,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
         self.middle_right_layout.addWidget(self.set)
         self.middle_right_layout.addWidget(self.remove)
+        
+        self.remove.hide()
 
         # Functions
         self.rec_text_set2.clicked.connect(self.generate_receptor_func)
@@ -2022,6 +2026,8 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.remove = QtWidgets.QPushButton("Remove")
         self.middle_right_layout.addWidget(self.set)
         self.middle_right_layout.addWidget(self.remove)
+        
+        self.remove.hide()
 
         # Functions
         self.set.clicked.connect(self.add_to_other_tabs)
