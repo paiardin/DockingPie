@@ -636,7 +636,7 @@ class StructuresFrame(QtWidgets.QFrame, PyMOLInteractions):
                              "}"
                              )
 
-
+        self.delete.hide()
 
     def show_het_func(self):
 
