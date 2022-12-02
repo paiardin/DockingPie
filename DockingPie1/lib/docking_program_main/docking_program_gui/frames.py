@@ -795,7 +795,7 @@ class LigandsFrame(QtWidgets.QFrame, PyMOLInteractions):
                              "background-color : rgb(160,160,160);"
                              "}"
                              )
-
+        self.delete.hide()
 
     def delete_from_frame_func(self):
 
