@@ -195,7 +195,7 @@ class Vina_Parse_Results:
 
 
     """
-    A class to parse the Smina results file
+    A class to parse the Vina results file
     """
 
 
@@ -214,6 +214,8 @@ class Vina_Parse_Results:
         self.SCORE = float(00.00)
 
         self.docked_ligands_list = []
+        
+        self.check_output_file()
 
         input = open(str(self.results_file_name + ".pdbqt"), "rt")
 
@@ -266,3 +268,28 @@ class Vina_Parse_Results:
                      return False
         else:
             return True
+            
+            
+    def check_output_file(self):
+
+        # Check whether some blank spaces in the file may lead to a misreading of the results
+
+        src = (str(self.results_file_name + ".pdbqt"))
+        dst = "temp_file.pdbqt"
+
+        shutil.copyfile(src, dst)
+        os.remove(src)
+
+        out_file = open(str(self.results_file_name + ".pdbqt"), "wt")
+
+        with open("temp_file.pdbqt",'r') as file:
+            for line in file:
+                if re.search("[a-zA-Z]", line):
+                    out_file.write(line)
+                else:
+                    pass
+
+        out_file.close()
+
+        os.remove(dst)
+
