@@ -55,6 +55,14 @@ DockingPie is installed, as any other PyMOL [1] plugin, via the PyMOL plugin man
 * Click on *Install New Plugin* and press the *Choose File…* button. Select the **DockingPie ZIP file** which you have downloaded before. 
 You will be asked to give the path of the directory in which to install the plugin files. Just select the default option if you are unsure about what to do (the location of the plugin files does not make any difference when running the plugin).
 
+## Configuration 
+
+DockingPie, at the current and first release, integrates four different docking programs: RxDock [2], Vina [3], Smina [4] and ADFR [5]; several chemo-informatics python modules (i.e. AutoDockTools [6], Openbabel [7], sPyRMSD [8]) and other external tools like sdsorter [9]. The CONFIGURATION tab provides an easy way for the installation of the needed tools from within the plugin in two steps, as reported next.
+
+    Configure external tools: CONFIGURATION tab → Configure → Start Download → Finish Download
+
+    Install external tools: If the needed tools are not currently installed on the user’s machine, the Install button is enabled and it can be used to install the external components as follows. RxDock, Openbabel and sPyRMSD are installed in the PyMOL Conda Environment [10]. Vina, Smina and sdsorter executable are directly provided; the installation checks and, if possible, enables user permissions. Although DockingPie is cross-platform, RxDock and Smina are, by their own, not distributed for their usage on Windows.
+
 
 ## How to use DockingPie
 
