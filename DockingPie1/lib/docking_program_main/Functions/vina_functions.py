@@ -92,10 +92,7 @@ class Vina_docking():
         self.results_file_name = str("Run_" + str(self.tab.docking_programs_child_tabs.docking_programs.vina_runs) + "_Vina")
         self.results_file_name_ext = str(self.results_file_name + ".pdbqt")
 
-        if float(self.vina_version[:3]) > 1.1:
-            self.log_file_name = None
-        else:
-            self.log_file_name = str(self.results_file_name + "_log.txt")
+        self.log_file_name = str(self.results_file_name + "_log.txt")
 
         # Change directory --> Vina tmp dir
         os.chdir(self.tab.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
