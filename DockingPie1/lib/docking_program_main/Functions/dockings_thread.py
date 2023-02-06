@@ -725,7 +725,11 @@ class Dockings_thread(QtCore.QThread):
             self.update_single_docking_progressbar.emit(int(51))
 
             ferr.close()
-            os.remove('stdout.txt')
+            
+            if os.path.isfile(self.tab.last_docking.log_file_name):
+                os.remove('stdout.txt')
+            else:
+                os.rename('stdout.txt', self.tab.last_docking.log_file_name)
 
             if self.tab.last_docking.interrupt == False:
 
