@@ -746,7 +746,7 @@ class Installation():
         #     print(self.installation_completed)
 
 
-    def rosconda(self, command):
+     def rosconda(self, command):
 
 
         self.conda_installation = True
@@ -770,23 +770,38 @@ class Installation():
             #with open('conda_filename.log', 'w') as stderr, redirect_stderr(stderr):
             versione = cmd.get_version()
 
-            if str(versione[0]) == "2.5.3" or str(versione[0]) == "2.5.4":
+            with io.StringIO() as stderr, redirect_stderr(stderr):
+                r = conda.cli.main('conda', *args)
+                self.s = stderr.getvalue()
+
+            if r and re.search("CommandNotFoundError", self.s):
                 with io.StringIO() as stderr, redirect_stderr(stderr):
                     r = conda.cli.main(*args)
                     self.s = stderr.getvalue()
-                if not r:
-                    print(' conda finished with success')
-                else:
-                    self.installation_completed = False
 
+            if not r:
+                print(' conda finished with success')
             else:
-                with io.StringIO() as stderr, redirect_stderr(stderr):
-                    r = conda.cli.main('conda', *args)
-                    self.s = stderr.getvalue()
-                if not r:
-                    print(' conda finished with success')
-                else:
-                    self.installation_completed = False
+                self.installation_completed = False
+
+            # if str(versione[0]) == "2.5.3" or str(versione[0]) == "2.5.4":
+            #     with io.StringIO() as stderr, redirect_stderr(stderr):
+            #         r = conda.cli.main(*args)
+            #         self.s = stderr.getvalue()
+            #     if not r:
+            #         print(' conda finished with success')
+            #     else:
+            #         self.installation_completed = False
+            #
+            # else:
+            #     with io.StringIO() as stderr, redirect_stderr(stderr):
+            #         r = conda.cli.main('conda', *args)
+            #         self.s = stderr.getvalue()
+            #     if not r:
+            #         print(' conda finished with success')
+            #     else:
+            #         self.installation_completed = False
 
         else:
             self.installation_completed = False
+
