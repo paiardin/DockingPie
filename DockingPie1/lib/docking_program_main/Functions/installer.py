@@ -775,10 +775,10 @@ class Installation():
                 self.s = stderr.getvalue()
 
             if r and re.search("CommandNotFoundError", self.s):
-                print("not found")
-                # with io.StringIO() as stderr, redirect_stderr(stderr):
-                #     r = conda.cli.main(*args)
-                #     self.s = stderr.getvalue()
+                #print("not found")
+                with io.StringIO() as stderr, redirect_stderr(stderr):
+                    r = conda.cli.main(*args)
+                    self.s = stderr.getvalue()
 
             if not r:
                 print(' conda finished with success')
