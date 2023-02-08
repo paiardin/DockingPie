@@ -422,7 +422,7 @@ class Generate_Object:
             cmd.h_add(strc)
 
         if self.tab.structure_frame.remove_nonstd.isChecked():
-            self.receptors_settings.extend(["-e" "'True'"])
+            self.receptors_settings.extend(["-e", "'True'"])
 
         elif self.tab.structure_frame.remove_water.isChecked():
             self.receptors_settings.extend(["-U", "'waters'"])
