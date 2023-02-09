@@ -1,0 +1,23 @@
+{
+ "kind": "compute#imageList",
+ "selfLink": "https://www.googleapis.com/compute/v1/projects/project_name/global/images",
+ "id": "projects/project_name/global/images",
+ "items": [
+  {
+
+   "kind": "compute#image",
+   "selfLink": "https://www.googleapis.com/compute/v1/projects/project_name/global/images/aws-ubuntu",
+   "id": "15632509721401584263",
+   "creationTimestamp": "2014-12-09T09:26:27.234-08:00",
+   "name": "aws-ubuntu",
+   "sourceType": "RAW",
+   "rawDisk": {
+    "source": "",
+    "containerType": "TAR"
+   },
+   "status": "READY",
+   "archiveSizeBytes": "243720274",
+   "diskSizeGb": "10"
+  }
+ ]
+}

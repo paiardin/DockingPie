@@ -68,6 +68,7 @@ class Vina_docking():
 
         self.exhaustiveness = self.tab.exhaustiveness_box.value()
         self.energy = self.tab.energy_box.value()
+        self.scoring_function = self.tab.scoring_box.currentText()
 
         if cavity is not None:
 
@@ -92,6 +93,9 @@ class Vina_docking():
         self.results_file_name = str("Run_" + str(self.tab.docking_programs_child_tabs.docking_programs.vina_runs) + "_Vina")
         self.results_file_name_ext = str(self.results_file_name + ".pdbqt")
 
+        # if float(self.vina_version[:3]) > 1.1:
+        #     self.log_file_name = None
+        # else:
         self.log_file_name = str(self.results_file_name + "_log.txt")
 
         # Change directory --> Vina tmp dir
@@ -128,6 +132,9 @@ class Vina_docking():
         "--exhaustiveness", str(self.exhaustiveness),
         "--num_modes", str(self.poses),
         "--energy_range", str(self.energy)]
+
+        if self.scoring_function == "Vinardo":
+            self.run_docking_vina_settings.extend(["--scoring", "vinardo"])
 
         if float(self.vina_version[:3]) > 1.1:
             pass
@@ -211,7 +218,7 @@ class Vina_Parse_Results:
         self.SCORE = float(00.00)
 
         self.docked_ligands_list = []
-        
+
         self.check_output_file()
 
         input = open(str(self.results_file_name + ".pdbqt"), "rt")
@@ -265,8 +272,8 @@ class Vina_Parse_Results:
                      return False
         else:
             return True
-            
-            
+
+
     def check_output_file(self):
 
         # Check whether some blank spaces in the file may lead to a misreading of the results
@@ -289,4 +296,3 @@ class Vina_Parse_Results:
         out_file.close()
 
         os.remove(dst)
-

@@ -46,12 +46,11 @@ from lib.docking_program_main.Functions.adfr_functions import ADFR_docking, ADFR
 from lib.docking_program_main.Functions.vina_functions import Vina_docking, Vina_Parse_Results
 from lib.docking_program_main.Functions.handle_widgets import HandleWidgets
 from lib.docking_program_main.Functions.consensus_protocol import *
-from lib.docking_program_main.docking_program_gui.new_windows import NewWindow, Import_from_pymol_window_qt
+from lib.docking_program_main.docking_program_gui.new_windows import NewWindow, Import_from_pymol_window_qt, InfoWindow, WelcomeWindow2
 from lib.docking_program_main.docking_program_gui.dialogs import *
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
 from lib.docking_program_main.Functions.general_docking_func import Generate_Object, Calculate_RMSD
-from lib.docking_program_main.Functions.general_functions import OpenFromFile, Check_current_tab, Save_to_Csv, SelectAll
-from lib.docking_program_main.Functions.installer import Installation, External_tools_installation_thread, External_tools_download_thread, External_components_dialog
+from lib.docking_program_main.Functions.general_functions import OpenFromFile, Check_current_tab, Save_to_Csv, SelectAll, check_configuration
 from lib.docking_program_main.Functions.installer import Installation, External_tools_installation_thread, External_tools_download_thread, External_components_dialog
 from lib.docking_program_main.Functions.dockings_thread import _dialog_mixin, Dockings_dialog, Dockings_thread
 from lib.docking_program_main.docking_program_gui.frames import *
@@ -103,8 +102,8 @@ class Consensus_layout(QtWidgets.QWidget):
         self.remove_btn = QtWidgets.QPushButton("Remove")
         self.layout.addWidget(self.remove_btn, 1, 0, 1, 2)
         self.remove_btn.clicked.connect(lambda: self.remove(self.list_widget))
-        
-        self.remove_btn.hide()
+
+        #self.remove_btn.hide()
 
         self.label_poses = QtWidgets.QLabel("Poses threshold: ")
         self.label_box = QtWidgets.QComboBox()
@@ -599,19 +598,15 @@ class ConfigurationTab(QtWidgets.QWidget):
         self.config_scroll_layout = QtWidgets.QGridLayout()
         self.config_widget.setLayout(self.config_scroll_layout)
 
-        # Add Welcome Message to CONFIGURATION TAB
-
-
-
-
-
         # Create a Frame for each program to install
         self.programs_to_install = {}
 
         self.continue_check_installation = False
 
         for programs in ["Config", "RxDock", "Vina", "Smina", "ADFR", "Openbabel", "sPyRMSD", "sdsorter"]:
+
             self.installation_frame = InstallationFrames(parent=None, main_window=self, program_name=programs)
+
             # Add frames to the Scroll Area
             self.config_scroll_layout.addWidget(self.installation_frame)
             self.programs_to_install[programs] = self.installation_frame
@@ -679,6 +674,84 @@ class ConfigurationTab(QtWidgets.QWidget):
             self.programs_to_install["sdsorter"].installation_btn.setText("Configure External Tools to proceed with \nsdsorter installation")
 
 
+    def configure_external_tools_directory(self):
+
+        config_path = self.docking_programs.config_path
+
+        with open(str(os.path.join(config_path, "version.txt"))) as f:
+            self.files_version = f.readline().rstrip()
+
+        try:
+            urllib.request.urlopen("https://github.com/paiardin/DockingPie")
+            github_accessible = True
+        except:
+            github_accessible = False
+
+        if github_accessible:
+
+            if sys.platform == "linux":
+                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_linux.zip"
+                dir_name = "external_tools_linux"
+            if sys.platform == "darwin":
+                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_macOS.zip"
+                dir_name = "external_tools_macOS"
+            if sys.platform == "win32":
+                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_windows.zip"
+                dir_name = "external_tools_windows"
+
+        else:
+
+            if sys.platform == "linux":
+                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) + "/external_tools_linux.zip"
+                dir_name = "external_tools_linux"
+            if sys.platform == "darwin":
+                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_macOS.zip"
+                dir_name = "external_tools_macOS"
+            if sys.platform == "win32":
+                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_windows.zip"
+                dir_name = "external_tools_windows"
+
+        # Show the external components download dialog.
+        install_dialog = External_components_dialog(self,
+                                                    url=dir_link,
+                                                    os_arch="64",
+                                                    dir_name = dir_name,
+                                                    local_mode=False)
+        install_dialog.setModal(True)
+        install_dialog.exec_()
+
+        # Finishes the installation.
+        if install_dialog.complete_status:
+            self.check_installation()
+            self.check_external_tools()
+
+    def check_external_tools(self):
+
+        if sys.platform == "linux":
+            dir_name = "external_tools_linux"
+        if sys.platform == "darwin":
+            dir_name = "external_tools_macOS"
+        if sys.platform == "win32":
+            dir_name = "external_tools_windows"
+
+        ext_tools_path = os.path.join(self.docking_programs.config_path, dir_name)
+
+        if os.path.isdir(ext_tools_path):
+            config_frame = self.programs_to_install['Config']
+            config_frame.configure_line_edit.setText(ext_tools_path)
+            config_frame.configure_btn.setEnabled(False)
+            self.continue_check_installation = True
+            config_frame.check_for_updates.setEnabled(True)
+
+        else:
+            config_frame.configure_line_edit.setText("Not Found")
+            config_frame.configure_btn.setEnabled(True)
+            self.continue_check_installation = False
+            config_frame.check_for_updates.setEnabled(False)
+
+
+    def close_welcome_window(self):
+        self.welcome_message_window.close()
 
     def installations_func(self, program_to_install):
 
@@ -1677,13 +1750,13 @@ class GridTab_RxDock(QtWidgets.QWidget, PyMOLInteractions):
 
 class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_from_Pymol):
 
-    def __init__(self, main_window):
+    def __init__(self, main_window, current_tab):
         super().__init__(main_window)
         self.docking_programs_child_tabs = main_window
 
-        self.initUI()
+        self.initUI(current_tab)
 
-    def initUI(self):
+    def initUI(self, current_tab):
 
         # Receptor Tab Layout
         self.layout_receptor_tab = QtWidgets.QVBoxLayout()
@@ -1722,6 +1795,22 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
         self.prepare_structures_frame_layout = QtWidgets.QFormLayout()
         self.main_page_interior.setLayout(self.prepare_structures_frame_layout)
 
+        # Add pdbqt options
+        if current_tab == "RxDock":
+            pass
+        else:
+            self.pdbqt_options_dict = {}
+            self.pdbqt_options_dict["add_h"] = True
+            self.pdbqt_options_dict["remove_nonstd"] = False
+            self.pdbqt_options_dict["remove_water"] = True
+            self.pdbqt_options_dict["remove_lone_pairs"] = False
+            self.pdbqt_options_dict["remove_non_polar_H"] = False
+            self.pdbqt_options_dict["remove_non_protein"] = False
+
+            self.pdbqt_options_pushbutton = QtWidgets.QPushButton("PDBQT Advanced Options")
+            self.prepare_structures_frame_layout.addRow(self.pdbqt_options_pushbutton)
+            self.pdbqt_options_pushbutton.clicked.connect(self.show_pdbqt_options_window)
+
         # Add Select All Option
         self.select_all_btn = QtWidgets.QCheckBox("All")
         self.prepare_structures_frame_layout.addRow(self.select_all_btn)
@@ -1729,7 +1818,7 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
         self.middle_btn_layout = QtWidgets.QVBoxLayout()
         self.prepare_receptors_layout.addLayout(self.middle_btn_layout)
-        self.rec_text_set2 = QtWidgets.QPushButton("Generate receptor")
+        self.rec_text_set2 = QtWidgets.QPushButton("Generate Receptor")
 
         self.middle_btn_layout.addStretch()
         self.middle_btn_layout.addWidget(self.rec_text_set2)
@@ -1748,8 +1837,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
         self.middle_right_layout.addWidget(self.set)
         self.middle_right_layout.addWidget(self.remove)
-        
-        self.remove.hide()
+
+        #self.remove.hide()
 
         # Functions
         self.rec_text_set2.clicked.connect(self.generate_receptor_func)
@@ -1813,48 +1902,95 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
            self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage("Selected Items added to other tabs", 3000)
 
 
+    def show_pdbqt_options_window(self):
+
+        self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
+        title = "PDBQT options window", upper_frame_title = "Select Options",
+        submit_command = self.apply_pdbqt_options, submit_button_text= "Set",
+        with_scroll = True)
+
+        self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+        self.remove_nonstd = QtWidgets.QCheckBox("Remove ALL non-standard residues")
+        self.remove_water = QtWidgets.QCheckBox("Remove Water")
+        self.remove_lone_pairs = QtWidgets.QCheckBox("Remove Lone Pairs")
+        self.remove_non_polar_H = QtWidgets.QCheckBox("Remove Non-Polar Hydrogens")
+        self.remove_non_protein = QtWidgets.QCheckBox("Remove All Non-Protein chains")
+
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_nonstd)
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_water)
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_lone_pairs)
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_polar_H)
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_protein)
+
+        self.add_h.setChecked(self.pdbqt_options_dict["add_h"])
+        self.remove_nonstd.setChecked(self.pdbqt_options_dict["remove_nonstd"])
+        self.remove_water.setChecked(self.pdbqt_options_dict["remove_water"])
+        self.remove_lone_pairs.setChecked(self.pdbqt_options_dict["remove_lone_pairs"])
+        self.remove_non_polar_H.setChecked(self.pdbqt_options_dict["remove_non_polar_H"])
+        self.remove_non_polar_H.setChecked(self.pdbqt_options_dict["remove_non_polar_H"])
+        self.remove_non_protein.setChecked(self.pdbqt_options_dict["remove_non_protein"])
+
+        self.pdbqt_options_window.show()
+
+
+    def apply_pdbqt_options(self):
+
+        self.pdbqt_options_dict["add_h"] = self.add_h.isChecked()
+        self.pdbqt_options_dict["remove_nonstd"] = self.remove_nonstd.isChecked()
+        self.pdbqt_options_dict["remove_water"] = self.remove_water.isChecked()
+        self.pdbqt_options_dict["remove_lone_pairs"] = self.remove_lone_pairs.isChecked()
+        self.pdbqt_options_dict["remove_non_polar_H"] = self.remove_non_polar_H.isChecked()
+        self.pdbqt_options_dict["remove_non_protein"] = self.remove_non_protein.isChecked()
+
+        self.pdbqt_options_window.close()
+
     def generate_receptor_func(self):
 
-        Check_current_tab.check_docking_program_current_tab(self)
+        if not check_configuration(self, self.docking_programs_child_tabs.docking_programs):
+            QtWidgets.QMessageBox.warning(self.docking_programs_child_tabs, "Warning", "Please check DockingPie configuration!")
 
-        if self.is_vina_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
-            generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_receptors_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_receptors_prepared,
-            format = "pdb",
-            docking_program_name = "Vina",
-            generate_pdbqt = True,
-            is_receptor = True)
+        else:
+            Check_current_tab.check_docking_program_current_tab(self)
 
-        if self.is_rxdock_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
-            generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_prepared,
-            format = "mol2",
-            docking_program_name = "RxDock",
-            generate_pdbqt = False,
-            is_receptor = True)
+            if self.is_vina_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
+                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_receptors_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_receptors_prepared,
+                format = "pdb",
+                docking_program_name = "Vina",
+                generate_pdbqt = True,
+                is_receptor = True)
 
-        if self.is_smina_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
-            generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_receptors_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_receptors_prepared,
-            format = "pdb",
-            docking_program_name = "Smina",
-            generate_pdbqt = True,
-            is_receptor = True)
+            if self.is_rxdock_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
+                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_prepared,
+                format = "mol2",
+                docking_program_name = "RxDock",
+                generate_pdbqt = False,
+                is_receptor = True)
 
-        if self.is_adfr_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
-            generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_receptors_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_receptors_prepared,
-            format = "pdb",
-            docking_program_name = "ADFR",
-            generate_pdbqt = True,
-            is_receptor = True)
+            if self.is_smina_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
+                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_receptors_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_receptors_prepared,
+                format = "pdb",
+                docking_program_name = "Smina",
+                generate_pdbqt = True,
+                is_receptor = True)
 
-        if generated_receptor.generated_object:
-            self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + generated_receptor.new_strc_name + "'"), 3000)
+            if self.is_adfr_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
+                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_receptors_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_receptors_prepared,
+                format = "pdb",
+                docking_program_name = "ADFR",
+                generate_pdbqt = True,
+                is_receptor = True)
+
+            if generated_receptor.generated_object:
+                self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + generated_receptor.new_strc_name + "'"), 3000)
 
 
     def remove_rec_from_list(self):
@@ -1902,20 +2038,20 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
         # Update info in Receptors dictionary
         dict[strc]["frame"] = self.structure_frame
 
-        if self.is_vina_tab or self.is_smina_tab or self.is_adfr_tab:
-
-            # Add some options only to Vina Receptors' frames
-            self.structure_frame.add_h = QtWidgets.QCheckBox("Add Hydrogens")
-            self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.add_h, 1, 1)
-            self.structure_frame.add_h.setEnabled(False)
-
-            self.structure_frame.remove_nonstd = QtWidgets.QCheckBox("Remove ALL non-standard residues")
-            self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.remove_nonstd, 2, 1)
-            self.structure_frame.remove_nonstd.setEnabled(False)
-
-            self.structure_frame.remove_water = QtWidgets.QCheckBox("Remove Water")
-            self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.remove_water, 3, 1)
-            self.structure_frame.remove_water.setEnabled(False)
+        # if self.is_vina_tab or self.is_smina_tab or self.is_adfr_tab:
+        #
+        #     # Add some options only to Vina Receptors' frames
+        #     self.structure_frame.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+        #     self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.add_h, 1, 1)
+        #     self.structure_frame.add_h.setEnabled(False)
+        #
+        #     self.structure_frame.remove_nonstd = QtWidgets.QCheckBox("Remove ALL non-standard residues")
+        #     self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.remove_nonstd, 2, 1)
+        #     self.structure_frame.remove_nonstd.setEnabled(False)
+        #
+        #     self.structure_frame.remove_water = QtWidgets.QCheckBox("Remove Water")
+        #     self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.remove_water, 3, 1)
+        #     self.structure_frame.remove_water.setEnabled(False)
 
         # Add some options only to Receptors' frames
         self.tot_rows = 5
@@ -2026,8 +2162,8 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.remove = QtWidgets.QPushButton("Remove")
         self.middle_right_layout.addWidget(self.set)
         self.middle_right_layout.addWidget(self.remove)
-        
-        self.remove.hide()
+
+        #self.remove.hide()
 
         # Functions
         self.set.clicked.connect(self.add_to_other_tabs)
@@ -2176,46 +2312,50 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
     def generate_ligand_func(self):
 
-        Check_current_tab.check_docking_program_current_tab(self)
+        if not check_configuration(self, self.docking_programs_child_tabs.docking_programs):
+            QtWidgets.QMessageBox.warning(self.docking_programs_child_tabs, "Warning", "Please check DockingPie configuration!")
+        else:
 
-        if self.is_vina_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
-            generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_ligands_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_ligands_prepared,
-            format = "sdf",
-            docking_program_name = "Vina",
-            generate_pdbqt = True,
-            is_receptor = False)
+            Check_current_tab.check_docking_program_current_tab(self)
 
-        if self.is_rxdock_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
-            generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_prepared,
-            format = "sdf",
-            docking_program_name = "RxDock",
-            generate_pdbqt = False,
-            is_receptor = False)
+            if self.is_vina_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
+                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_ligands_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_ligands_prepared,
+                format = "sdf",
+                docking_program_name = "Vina",
+                generate_pdbqt = True,
+                is_receptor = False)
 
-        if self.is_smina_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
-            generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_ligands_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_ligands_prepared,
-            format = "sdf",
-            docking_program_name = "Smina",
-            generate_pdbqt = True,
-            is_receptor = False)
+            if self.is_rxdock_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
+                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_prepared,
+                format = "sdf",
+                docking_program_name = "RxDock",
+                generate_pdbqt = False,
+                is_receptor = False)
 
-        if self.is_adfr_tab:
-            os.chdir(self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
-            generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_ligands_dict,
-            prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_ligands_prepared,
-            format = "sdf",
-            docking_program_name = "ADFR",
-            generate_pdbqt = True,
-            is_receptor = False)
+            if self.is_smina_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
+                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_ligands_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_ligands_prepared,
+                format = "sdf",
+                docking_program_name = "Smina",
+                generate_pdbqt = True,
+                is_receptor = False)
 
-        if generated_ligand.generated_object:
-            self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + generated_ligand.new_strc_name + "'"), 3000)
+            if self.is_adfr_tab:
+                os.chdir(self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
+                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_ligands_dict,
+                prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_ligands_prepared,
+                format = "sdf",
+                docking_program_name = "ADFR",
+                generate_pdbqt = True,
+                is_receptor = False)
+
+            if generated_ligand.generated_object:
+                self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + generated_ligand.new_strc_name + "'"), 3000)
 
 
     def add_to_other_tabs(self):
@@ -2298,11 +2438,13 @@ class DockingTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.options_frame_canonical.options_frame_layout.addWidget(self.loaded_cavities, 1, 0, 1, 2)
 
         self.ready_receptors_list_text = QtWidgets.QLabel("Receptor(s)")
+
         # Create the Scroll Area update_current_ready_objectsfor the Table
         widget = QtWidgets.QWidget()
         self.ready_receptors_list = QtWidgets.QScrollArea()
         self.ready_receptors_list.setWidgetResizable(True)
         self.ready_receptors_list.setWidget(widget)
+
         # Set the layout of the Scroll Area for the Table
         self.receptors_scroll_layout = QtWidgets.QGridLayout()
         widget.setLayout(self.receptors_scroll_layout)
@@ -2317,6 +2459,7 @@ class DockingTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.ready_ligands_list = QtWidgets.QScrollArea()
         self.ready_ligands_list.setWidgetResizable(True)
         self.ready_ligands_list.setWidget(widget)
+
         # Set the layout of the Scroll Area for the Table
         self.ligand_scroll_layout = QtWidgets.QGridLayout()
         widget.setLayout(self.ligand_scroll_layout)
@@ -2324,38 +2467,9 @@ class DockingTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.options_frame_canonical.options_frame_layout.addWidget(self.ready_ligands_list_text, 2, 1)
         self.options_frame_canonical.options_frame_layout.addWidget(self.ready_ligands_list, 3, 1)
 
-        # self.ready_receptors_list = QtWidgets.QComboBox()
-        # self.ready_receptors_list_text = QtWidgets.QLabel("Receptor")
-        # self.ready_receptors_list.currentTextChanged.connect(lambda: HandleWidgets.combobox_orient_current_item_pymol(self = self, widget = self.ready_receptors_list))
-        # self.ready_receptors_list.view().pressed.connect(lambda: HandleWidgets.combobox_orient_current_item_pymol(self = self, widget = self.ready_receptors_list))
-        #
-        # # self.group_docking_layout.addWidget(self.ready_receptors_list_text, 0, 0)
-        # # self.group_docking_layout.addWidget(self.ready_receptors_list, 1, 0)
-        #
-        # self.ready_ligands_list = QtWidgets.QComboBox()
-        # self.ready_ligands_list_text = QtWidgets.QLabel("Ligand(s)")
-        # self.ready_ligands_list.currentTextChanged.connect(lambda: HandleWidgets.combobox_orient_current_item_pymol(self = self, widget = self.ready_ligands_list))
-        # self.ready_ligands_list.view().pressed.connect(lambda: HandleWidgets.combobox_orient_current_item_pymol(self = self, widget = self.ready_ligands_list))
-        #
-        # # self.group_docking_layout.addWidget(self.ready_ligands_list_text, 2, 0)
-        # # self.group_docking_layout.addWidget(self.ready_ligands_list, 3, 0)
-        # self.loaded_cavities = QtWidgets.QComboBox()
-        # self.loaded_cavities_text = QtWidgets.QLabel("Available cavities")
-        # self.loaded_cavities.currentTextChanged.connect(lambda: HandleWidgets.combobox_orient_current_item_pymol(self = self, widget = self.loaded_cavities))
-        # self.loaded_cavities.view().pressed.connect(lambda: HandleWidgets.combobox_orient_current_item_pymol(self = self, widget = self.loaded_cavities))
-        #
         self.run_btn = QtWidgets.QPushButton("Run Docking")
         self.run_btn.clicked.connect(self.run_docking_func)
         self.group_docking_layout.addWidget(self.run_btn, 9, 0, 1, 2)
-
-        # self.options_frame_canonical.options_frame_layout.addWidget(self.loaded_cavities_text)
-        # self.options_frame_canonical.options_frame_layout.addWidget(self.loaded_cavities)
-        #
-        # self.options_frame_canonical.options_frame_layout.addWidget(self.ready_receptors_list_text)
-        # self.options_frame_canonical.options_frame_layout.addWidget(self.ready_receptors_list)
-        #
-        # self.options_frame_canonical.options_frame_layout.addWidget(self.ready_ligands_list_text)
-        # self.options_frame_canonical.options_frame_layout.addWidget(self.ready_ligands_list)
 
         self.create_options_frame(current_tab)
 
@@ -2615,6 +2729,7 @@ class DockingTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         # It creates a specific OptionsFrame for each Docking Program
         #---------------
 
+
         if current_tab == "ADFR":
 
             self.options_frame_all = OptionsFrame(parent=None,
@@ -2758,6 +2873,15 @@ class DockingTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
             self.choose_flex_manually.clicked.connect(self.show_choose_flex_manually_options)
             self.choose_flex_selection.clicked.connect(self.show_choose_flex_selection_options)
+
+
+        if current_tab == "Vina":
+            self.scoring_label = QtWidgets.QLabel("Scoring Function")
+            self.scoring_box = QtWidgets.QComboBox()
+            self.scoring_box.addItems(["Standard", "Vinardo"])
+
+            self.options_frame_all.options_frame_layout.addWidget(self.scoring_label, 3, 0)
+            self.options_frame_all.options_frame_layout.addWidget(self.scoring_box, 3, 1)
 
 
         if current_tab == "Smina":
@@ -3306,11 +3430,21 @@ class DockingTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         HandleWidgets.combobox_check_if_empty(self=self,
         widgets_list=[self.ready_ligands_list, self.ready_receptors_list, self.loaded_cavities])
 
-        if self.receptors_to_dock == [] or self.ligands_to_dock == []:
+
+        if self.receptors_to_dock == [] and self.ligands_to_dock == []:
             self.is_empty = True
+            text = "Missing Receptor and Ligand"
+
+        elif self.receptors_to_dock == []:
+            self.is_empty = True
+            text = "Missing Receptor"
+
+        elif self.ligands_to_dock == []:
+            self.is_empty = True
+            text = "Missing Ligand"
 
         if self.is_empty:
-            QtWidgets.QMessageBox.warning(self.docking_programs_child_tabs, "Warning", "There aren't enough parameters")
+            QtWidgets.QMessageBox.warning(self.docking_programs_child_tabs, "Warning", text)
         else:
             self.tab_docking_runs_scroll_layout = self.docking_programs_child_tabs.docking_programs.data_analysis_layout.docking_runs_scroll_layout
 

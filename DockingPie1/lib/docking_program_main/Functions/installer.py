@@ -71,11 +71,10 @@ class External_components_dialog(Installer_dialog_mixin, QtWidgets.QDialog):
 
         self.tab = tab
 
-
         QtWidgets.QDialog.__init__(self, parent=self.tab)
 
-        download_path = os.path.join(self.tab.main_window.docking_programs.config_path, "external_tools_linux.zip")
-        download_dir = self.tab.main_window.docking_programs.config_path
+        download_path = os.path.join(self.tab.docking_programs.config_path, "external_tools_linux.zip")
+        download_dir = self.tab.docking_programs.config_path
         self.local_mode = local_mode
 
         # Performs "local" installation.
@@ -805,4 +804,3 @@ class Installation():
 
         else:
             self.installation_completed = False
-

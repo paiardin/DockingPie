@@ -725,11 +725,12 @@ class Dockings_thread(QtCore.QThread):
             self.update_single_docking_progressbar.emit(int(51))
 
             ferr.close()
-            
+
             if os.path.isfile(self.tab.last_docking.log_file_name):
                 os.remove('stdout.txt')
             else:
                 os.rename('stdout.txt', self.tab.last_docking.log_file_name)
+            # os.remove('stdout.txt')
 
             if self.tab.last_docking.interrupt == False:
 
@@ -798,7 +799,7 @@ class Dockings_thread(QtCore.QThread):
                 # subprocess.run(["obabel", "-i", "sd", "results_tmp_name.sd", "-o", "sdf", "-O", "results_tmp_name.sdf"])
                 # subprocess.run(["obabel", "results_tmp_name.sdf", "-O", str(self.results_file_name + ".sdf"), "--sort", "SCORE"])
 
-                    try:         
+                    try:
                         f = open(str(self.tab.last_docking.results_file_name + ".sd"), "w")
                         subprocess.run(["sdsort", "-n", "-fSCORE", "results_tmp_name.sd"], stdout = f, check = True)
                         f.close()
@@ -806,7 +807,7 @@ class Dockings_thread(QtCore.QThread):
                         f.close()
                         os.remove(str(self.tab.last_docking.results_file_name + ".sd"))
                         os.rename("results_tmp_name.sd", str(self.tab.last_docking.results_file_name + ".sd"))
-                    
+
             if self.tab.last_docking.interrupt == False:
 
                 self.check_docking_completed.emit(docking_programs.rxdock_runs,

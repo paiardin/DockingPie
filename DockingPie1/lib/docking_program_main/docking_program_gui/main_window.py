@@ -29,6 +29,42 @@ from .tabs import DockingTab
 from .tabs import ResultsTab
 from .tabs import ConfigurationTab, DataAnalysisTab
 
+def welcomewindow(title, message, parent=None, buttons_text=None):
+    """
+    Wrapper to a Yes/no dialog in PyQt. If 'buttons_text' is 'None', the default
+    "Yes" and "No" buttons will be used. If 'buttons_text' is a list with two
+    strings, the first string will be the text of the "Yes" button and the second
+    one will be the text of the "No" button.
+    """
+
+    dialog = QtWidgets.QMessageBox(parent)
+    dialog.setWindowTitle(title)
+    dialog.setText(message)
+
+    count = dialog.layout().count()
+
+    # for i in range(count):
+    #     item = dialog.layout().itemAt(i)
+    #     print(item)
+
+    if len(buttons_text) == 1:
+        start_button = dialog.addButton(buttons_text[0], QtWidgets.QMessageBox.AcceptRole)
+        dialog.setStyleSheet('QLabel { font-size: 13pt; padding: 15px}')
+        answer = dialog.exec_()
+
+    else:
+
+        yesbutton = dialog.addButton(buttons_text[0], QtWidgets.QMessageBox.YesRole)
+        nobutton = dialog.addButton(buttons_text[1], QtWidgets.QMessageBox.NoRole)
+        dialog.setStyleSheet('QLabel { font-size: 13pt; padding: 15px}')
+        yesbutton.setStyleSheet('QPushButton {font-weight: bold; border-color: green}')
+
+        answer = dialog.exec_()
+        return dialog.clickedButton() is yesbutton
+
+
+
+
 
 
 class DockingProgram_main_window_main_menu:
@@ -143,6 +179,172 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
         # Initialize User Interface.
         self.initUI()
 
+        ## Check if the configuration is completed
+        configuration = self.check_configuration(self.main_docking_programs_tabs)
+        configuration_completed = configuration[1]
+        self.run_configuration = False
+# """ We are thrilled to have you as a user. Our goal is to provide you with a seamless and efficient experience with Molecular Docking. If you need any assistance, please contact us at: serena.rosignoli@uniroma1.it. Follow our GitHub to be always up to date with the new releases and bug fixes: https://github.com/paiardin/DockingPie Thank you for choosing DockingPie!"""
+
+        if not configuration_completed:
+            ## Check if all the dependencies are installed - only if the configuration is completed
+            # TODO
+            print(configuration_completed)
+
+            # Add Welcome Message to CONFIGURATION TAB
+            title = "Welcome to DockingPie"
+            message = """We are thrilled to have you as a user! Our goal is to provide you with a seamless and efficient experience with Molecular Docking.
+
+It seems that DockingPie need to be configured,
+do you want to proceed? """
+            choice = welcomewindow(title,
+                                 message,
+                                 parent=self,
+                                 buttons_text = ["Yes, CONFIGURE IT! (Best choice)", "No, I will do it later (You will forget ...)"])
+
+            if choice:
+                self.run_configuration = True
+                # print(dir(self.main_docking_programs_tabs.docking_programs_tabs.tabText(0)))
+                # print(self.main_docking_programs_tabs.docking_programs_tabs.tabBar().tabText(0))
+                # #self.main_docking_programs_tabs.CONFIGURATION.installation_frame.configure_external_tools_directory()
+
+        else:
+            title = "Welcome to DockingPie"
+            message = """We are thrilled to have you as a user! Our goal is to provide you with a seamless and efficient experience with Molecular Docking.
+
+DockingPie is properly configured!
+Please check that any dependency is installed before continuing.
+ """
+
+            choice = welcomewindow(title,
+                                 message,
+                                 parent=self,
+                                 buttons_text = ["Let's Start"])
+
+        if self.run_configuration:
+            self.main_docking_programs_tabs.CONFIGURATION_TAB.configure_external_tools_directory()
+
+    def check_configuration(self, main):
+
+        configuration = {"et": False,
+                        "adt": False,
+                        "vina_tree": False,
+                        "adfr_tree": False,
+                        "agfr_tree": False,
+                        "smina_tree": False,
+                        "sdsorter_tree": False,
+                        "pfr": False,
+                        "pl": False,
+                        "pr": False}
+
+        config_path = main.config_path
+
+        path_to_adt = os.path.join(config_path, "AutoDockTools")
+        path_to_et = os.path.join(config_path, main.et)
+        path_to_pfr = os.path.join(config_path, "prepare_flexreceptor4.py")
+        path_to_pl = os.path.join(config_path, "prepare_ligand4.py")
+        path_to_pr = os.path.join(config_path, "prepare_receptor4.py")
+
+        if os.path.isdir(path_to_adt):
+            configuration["adt"] = True
+        if os.path.isdir(path_to_et):
+            configuration["et"] = True
+
+        if os.path.isfile(path_to_pfr):
+            configuration["pfr"] = True
+        if os.path.isfile(path_to_pl):
+            configuration["pl"] = True
+        if os.path.isfile(path_to_pr):
+            configuration["pr"] = True
+
+        vina_tree_score = 1
+        for i in range(len(main.vina_tree)):
+            if i == 0:
+                new_path = os.path.join(path_to_et, main.vina_tree[i])
+            else:
+                new_path = os.path.join(new_path, main.vina_tree[i])
+
+            if os.path.isdir(new_path):
+                vina_tree_score += 1
+
+        if vina_tree_score == len(main.vina_tree):
+            configuration["vina_tree"] = True
+
+        adfr_tree_score = 1
+        for i in range(len(main.adfr_tree)):
+            if i == 0:
+                new_path = os.path.join(path_to_et, main.adfr_tree[i])
+            else:
+                new_path = os.path.join(new_path, main.adfr_tree[i])
+
+            if os.path.isdir(new_path):
+                adfr_tree_score += 1
+
+        if adfr_tree_score == len(main.adfr_tree):
+            configuration["adfr_tree"] = True
+
+        if main.agfr_tree is not None:
+            agfr_tree_score = 1
+            for i in range(len(main.agfr_tree)):
+                if i == 0:
+                    new_path = os.path.join(path_to_et, main.agfr_tree[i])
+                else:
+                    new_path = os.path.join(new_path, main.agfr_tree[i])
+
+                if os.path.isdir(new_path):
+                    agfr_tree_score += 1
+
+            if agfr_tree_score == len(main.agfr_tree):
+                configuration["agfr_tree"] = True
+
+        if main.smina_tree is not None:
+            smina_tree_score = 1
+            for i in range(len(main.smina_tree)):
+                if i == 0:
+                    new_path = os.path.join(path_to_et, main.smina_tree[i])
+                else:
+                    new_path = os.path.join(new_path, main.smina_tree[i])
+
+                if os.path.isdir(new_path):
+                    smina_tree_score += 1
+
+            if smina_tree_score == len(main.smina_tree):
+                configuration["smina_tree"] = True
+
+        if main.sdsorter_tree is not None:
+            sdsorter_tree_score = 1
+            for i in range(len(main.sdsorter_tree)):
+                if i == 0:
+                    new_path = os.path.join(path_to_et, main.sdsorter_tree[i])
+                else:
+                    new_path = os.path.join(new_path, main.sdsorter_tree[i])
+
+                if os.path.isdir(new_path):
+                    sdsorter_tree_score += 1
+
+            if sdsorter_tree_score == len(main.sdsorter_tree):
+                configuration["sdsorter_tree"] = True
+
+        configuration_completed = True
+
+        for key in configuration:
+            if configuration[key] == False:
+                configuration_completed = False
+
+        if not configuration_completed:
+            if os.path.isdir(path_to_adt):
+                shutil.rmtree(path_to_adt)
+            if os.path.isdir(path_to_et):
+                shutil.rmtree(path_to_et)
+
+            if os.path.isfile(path_to_pfr):
+                os.remove(path_to_pfr)
+            if os.path.isfile(path_to_pl):
+                os.remove(path_to_pl)
+            if os.path.isfile(path_to_pr):
+                os.remove(path_to_pr)
+
+        return configuration, configuration_completed
+
 
     def set_pymol_visualization_options(self):
 
@@ -173,7 +375,6 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
         self.qss = QSSHelper.open_qss(os.path.join(os.path.dirname(module_path), 'aqua', 'aqua.qss'))
         self.setStyleSheet(self.qss)
         self.show()
-
 
 
 class QSSHelper:
@@ -300,6 +501,13 @@ class Docking_Programs(QtWidgets.QWidget):
 
         # Paths
         if sys.platform == "win32":
+            self.et = "external_tools_windows"
+            self.vina_tree = ["vina_win32", "bin", "vina.exe"]
+            self.adfr_tree = ["adfr_win32"]
+            self.agfr_tree = None
+            self.smina_tree = None
+            self.sdsorter_tree = None
+
             self.path_sep = "\\"
             self.path_to_vina = (os.path.join(self.config_path, "external_tools_windows", "vina_win32", "bin", "vina.exe"))
             self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_windows", "adfr_win32"))
@@ -307,6 +515,13 @@ class Docking_Programs(QtWidgets.QWidget):
             # self.path_to_agfr = (os.path.join(self.config_path, "external_tools_windows", "ADFRsuite_win", "bin", "agfr.bat"))
 
         elif sys.platform == "linux":
+            self.et = "external_tools_linux"
+            self.vina_tree = ["vina_linux", "bin", "vina"]
+            self.adfr_tree = ["ADFRsuite_x86_64Linux_1.0", "bin", "adfr"]
+            self.agfr_tree = ["ADFRsuite_x86_64Linux_1.0", "bin", "agfr"]
+            self.smina_tree = ["smina_linux", "bin", "smina.static"]
+            self.sdsorter_tree = ["sdsorter_linux", "bin", "sdsorter.static"]
+
             self.path_sep = "/"
             self.path_to_vina = (os.path.join(self.config_path, "external_tools_linux", "vina_linux", "bin", "vina"))
             self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "adfr"))
@@ -315,6 +530,13 @@ class Docking_Programs(QtWidgets.QWidget):
             self.path_to_sdsorter = (os.path.join(self.config_path, "external_tools_linux", "sdsorter_linux", "bin", "sdsorter.static"))
 
         elif sys.platform == "darwin":
+            self.et = "external_tools_macOS"
+            self.vina_tree = ["vina_darwin", "bin", "vina"]
+            self.adfr_tree = ["ADFRsuite_x86_64Darwin_1.0", "bin", "adfr"]
+            self.agfr_tree = ["ADFRsuite_x86_64Darwin_1.0", "bin", "agfr"]
+            self.smina_tree = ["smina_darwin", "bin", "smina.osx"]
+            self.sdsorter_tree = ["sdsorter_darwin", "bin", "sdsorter.osx"]
+
             self.path_sep = "/"
             self.path_to_vina = (os.path.join(self.config_path, "external_tools_macOS", "vina_darwin", "bin", "vina"))
             self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "adfr"))
@@ -390,7 +612,8 @@ class Docking_Programs(QtWidgets.QWidget):
         # Create configuration tab
         self.CONFIGURATION = QtWidgets.QWidget()
         self.docking_programs_tabs.addTab(self.CONFIGURATION, "CONFIGURATION")
-        self.CONFIGURATION.setLayout(ConfigurationTab(self).layout_config_tab)
+        self.CONFIGURATION_TAB = ConfigurationTab(self)
+        self.CONFIGURATION.setLayout(self.CONFIGURATION_TAB.layout_config_tab)
 
 
                 ### Create Child Tabs for each Docking Program ###
@@ -450,7 +673,6 @@ class Docking_Programs(QtWidgets.QWidget):
         return self.docking_programs_tabs
 
 
-
 class Child_Tabs(QtWidgets.QWidget):
 
     """
@@ -475,7 +697,7 @@ class Child_Tabs(QtWidgets.QWidget):
         # ReceptorTab
         self.receptor = QtWidgets.QWidget()
         self.child_tabs.addTab(self.receptor, "Receptors")
-        self.receptor.setLayout(ReceptorTab(self).layout_receptor_tab)
+        self.receptor.setLayout(ReceptorTab(self, current_tab = tab).layout_receptor_tab)
 
         # LigandTab
         self.ligands = QtWidgets.QWidget()

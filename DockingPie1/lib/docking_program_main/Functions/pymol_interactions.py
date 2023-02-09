@@ -207,11 +207,6 @@ class Import_from_Pymol():
                 #         cmd.split_states(i)
                 #         cmd.delete(i)
 
-                self.list_of_pymol_objects = []
-
-                # If multiple states were present and splitted, the names of the objects have changed, hence a new list of PyMOL objects is needed
-                self.list_pymol_objects(self.list_of_pymol_objects)
-
                 for i in self.list_of_pymol_objects:
                     # Get PyMOL object type
                     type = cmd.get_type(i)
@@ -292,6 +287,7 @@ class Import_from_Pymol():
         if self.current_tab == "RxDock":
             self.is_rxdock_tab = True
 
+        self.pymol_rec_multiple_states = []
 
         if self.is_receptor: # if imported from Receptor tab
             self.selections_to_import = self.import_from_pymol_window.get_objects_to_import() # names list of checked options
@@ -303,21 +299,29 @@ class Import_from_Pymol():
 
         self.import_from_pymol_window.destroy()
 
+        if self.pymol_rec_multiple_states:
+
+            string = ' '.join(self.pymol_rec_multiple_states)
+            QtWidgets.QMessageBox.warning(self.tab, "Multiple states detected", "Only the current state has been imported for the following receptors: \n" + string)
+
 
     def import_selected_pymol_receptors(self):
 
         for pymol_obj in self.selections_to_import:
 
+            # Keep track of the imported receptors that have multiple states, just to give a warning to the user
+            states = cmd.count_states(pymol_obj)
+            if states > 1:
+                self.pymol_rec_multiple_states.append(pymol_obj)
+
             tmp_path_name = os.path.join(self.tab.parent().docking_programs.tmp_dir_path, str(pymol_obj + ".pdb"))
 
-            # This save-delete-load-copy-sleep-setname cycle fa veramente cagare i cani  is done to avoid errors while parsing of the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
+            # This save-delete-load is done to avoid errors while parsing  the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
             cmd.save(tmp_path_name, pymol_obj, format = 'pdb')
             cmd.delete(pymol_obj)
             cmd.load(tmp_path_name, pymol_obj)
-            # cmd.copy("temp_obj", pymol_obj)
-            # cmd.delete(pymol_obj)
-            # cmd.set_name("temp_obj", pymol_obj)
 
+            # The receptors are saved ccording to the file type that is needed for each docking program
             if self.is_vina_tab:
                 already_loaded = Load_Object.check_already_loaded_structure(self = self, pymol_obj = pymol_obj, objects_dict = self.tab.parent().docking_programs.vina_receptors_dict)
 
@@ -374,7 +378,6 @@ class Import_from_Pymol():
                     is_receptor = True)
 
 
-
     def import_selected_pymol_ligands(self):
 
         for pymol_lig in self.selections_to_import:
@@ -384,11 +387,8 @@ class Import_from_Pymol():
             cmd.save(tmp_path_name, pymol_lig, state = 0, format = 'pdb')
             cmd.delete(pymol_lig)
             cmd.load(tmp_path_name, pymol_lig)
-            cmd.copy("temp_obj", pymol_lig)
-            cmd.delete(pymol_lig)
-            cmd.set_name("temp_obj", pymol_lig)
 
-
+            # The ligands are saved ccording to the file type that is needed for each docking program
             if self.is_vina_tab:
                 already_loaded = Load_Object.check_already_loaded_structure(self = self, pymol_obj = pymol_lig, objects_dict = self.tab.parent().docking_programs.vina_ligands_dict)
 

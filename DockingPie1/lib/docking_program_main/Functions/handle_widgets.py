@@ -229,7 +229,9 @@ class HandleWidgets:
 
                     # remove from tmp_dir
                     name = str(items.text() + format)
-                    os.remove(os.path.join(tmp_dir, name))
+                    path = os.path.join(tmp_dir, name)
+                    if os.path.isfile(path):
+                        os.remove(path)
 
                     # remove from docking tab
                     for widgets in widgets_list:

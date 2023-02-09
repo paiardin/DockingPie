@@ -74,6 +74,11 @@ class ObjectParser():
 
     def parse_receptor_object(self):
 
+        protein = False
+        rna = False
+        dna = False
+        chain_dict = {}
+
         # Counts the states of the PyMOL Object
         self.num_states = cmd.count_states(self.file_name)
 
@@ -85,6 +90,8 @@ class ObjectParser():
         parsed_file_handle.close()
 
         ### Store residues and heteroresidues information ###
+
+        rec_type_list = []
 
         # Iterate over the biopython 'Structure' Object to get information
         for model in self.parsed_biopython_structure.get_list():
@@ -106,20 +113,33 @@ class ObjectParser():
                     else:
                         self.residues_list.append(resname)
 
+                        if resname in self.aa_list:
+                            protein = True
+                            string = "PROTEIN"
+                        else:
+                            if len(resname) == 2:
+                                dna = True
+                                string = "DNA"
+                            else:
+                                rna = True
+                                string = "RNA"
 
+                rec_type_list.append(str(chain.get_id()) + ": " + string)
+
+        self.receptor_type = '\n'.join(rec_type_list)
         ### Get the receptor type ###
 
-        found = False
-
-        for aa in self.aa_list:
-            if str(self.residues_list[0]) == str(aa):
-                self.receptor_type = "PROTEIN"
-                found = True
-                if found:
-                    break
-
-        if not found:
-            self.receptor_type = "POLYNUCLEOTIDE"
+        # found = False
+        #
+        # for aa in self.aa_list:
+        #     if str(self.residues_list[0]) == str(aa):
+        #         self.receptor_type = "PROTEIN"
+        #         found = True
+        #         if found:
+        #             break
+        #
+        # if not found:
+        #     self.receptor_type = "POLYNUCLEOTIDE"
 
 
 # class Calculate_RMSD_consensus:
@@ -204,7 +224,7 @@ class Calculate_RMSD:
 
         self.warning = warning
 
-        try: 
+        try:
             self.find_rmsd()
         except NameError:
             print("Openbabel is required for RMSD computing")
@@ -317,6 +337,8 @@ class Generate_Object:
                     self.prepared_objects_list.append(self.new_strc_name)
 
                     # Load in PyMOL
+                    print(self.new_receptor_file_path)
+                    print(self.new_strc_name)
                     cmd.load(self.new_receptor_file_path, self.new_strc_name)
 
                     if self.docking_program_name == "Vina":
@@ -361,8 +383,6 @@ class Generate_Object:
             if self.is_receptor:
 
                 self.generate_receptor_pdbqt(self.strc)
-
-                #self.generate_receptor_pdbqt(strc)
 
             else: # is ligand
 
@@ -417,15 +437,67 @@ class Generate_Object:
 
         self.receptors_settings = ["python", self.prepare_receptor_path, "-r", str(strc + ".pdb"), "-o", str(self.new_strc_name + ".pdbqt"), "-v"]
 
-        if self.tab.structure_frame.add_h.isChecked():
+        # If the User chose to add Hydrogens; default = None
+        """
+            [-A]  type(s) of repairs to make:
+             'bonds_hydrogens': build bonds and add hydrogens
+             'bonds': build a single bond from each atom with no bonds to its closest neighbor
+             'hydrogens': add hydrogens
+             'checkhydrogens': add hydrogens only if there are none already
+             'None': do not make any repairs
+             (default is 'None')
+        """
+        if self.tab.pdbqt_options_dict["add_h"]:
             self.receptors_settings.extend(["-A", "hydrogens"])
             cmd.h_add(strc)
 
-        if self.tab.structure_frame.remove_nonstd.isChecked():
+        # If the User chose to delete any non-standard residue from any chain
+        """
+            [-e]  delete every nonstd residue from any chain
+              'True': any residue whose name is not in this list:
+                      ['CYS','ILE','SER','VAL','GLN','LYS','ASN',
+                      'PRO','THR','PHE','ALA','HIS','GLY','ASP',
+                      'LEU', 'ARG', 'TRP', 'GLU', 'TYR','MET',
+                      'HID', 'HSP', 'HIE', 'HIP', 'CYX', 'CSS']
+              will be deleted from any chain.
+              NB: there are no  nucleic acid residue names at all
+              in the list and no metals.
+             (default is False which means not to do this)
+        """
+        if self.tab.pdbqt_options_dict["remove_nonstd"]:
             self.receptors_settings.extend(["-e", "'True'"])
 
-        elif self.tab.structure_frame.remove_water.isChecked():
-            self.receptors_settings.extend(["-U", "'waters'"])
+        ### -U options
+        """
+            [-U]  cleanup type:
+             'nphs': merge charges and remove non-polar hydrogens
+             'lps': merge charges and remove lone pairs
+             'waters': remove water residues
+             'nonstdres': remove chains composed entirely of residues of
+                      types other than the standard 20 amino acids
+             'deleteAltB': remove XX@B atoms and rename XX@A atoms->XX
+             (default is 'nphs_lps_waters_nonstdres')
+        """
+        U_options = []
+
+        # If the User chose to remove Water molecules
+        if self.tab.pdbqt_options_dict["remove_water"]:
+            U_options.append('waters')
+
+        if self.tab.pdbqt_options_dict["remove_lone_pairs"]:
+            U_options.append('lps')
+
+        if self.tab.pdbqt_options_dict["remove_non_polar_H"]:
+            U_options.append('nphs')
+
+        if self.tab.pdbqt_options_dict["remove_non_protein"]:
+            U_options.append('nonstdres')
+
+        U_options_string = '_'.join(U_options)
+
+        if U_options:
+            self.receptors_settings.extend(["-U", U_options_string])
+
 
         if sys.platform == "win32":
 

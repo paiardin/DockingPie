@@ -1,0 +1,32 @@
+BUILD 5 (Oct_28_19)
+-- fixed prepare_receptor4.py (select the first alternate location by default)
+-- in ADFR reverted to use AutoSite 1.0 by default
+-- Windows support for ADCP.
+
+BUILD 4 (Aug_27_19)
+
+-- fixed MacOSX version that failed locating included  openmp library.
+-- small fixes in the installation script of the tarball installer
+     (warning for unsupported arguments,  create intermediate directories as required when -d option is provided).
+
+BUILD 3 (Jul_24_19)
+
+-- fixed a bug in ADFR/utils/runAGFR - initialized cutOffVal.
+
+BUILD 2 (Jul_15_19)
+
+-- bin/autogrid4 - rebuilt Linux and MacOSX executables due to changes in source fixing a Segmentation Fault reported by a user. 
+   MacOSX version supports OpenMP now.
+   New version is AutoGrid 4.2.7.x.2019-07-11
+ 
+-- ADCP:
+   -  support starting on run from a mixture of helix/coil conformation with adcp --partition option.
+   -  add more comments to the code.
+
+-- prody:
+    - modified line 478 in _parsePDBLines() ---  if line[76:78]=='  ':   
+      added --- if line[76:78]=='  ' or len(line)<76:
+
+
+BUILD 1 (Jun_10_19)
+  - initial release build  

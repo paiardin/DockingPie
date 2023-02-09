@@ -198,7 +198,7 @@ class DockingsFrame(QtWidgets.QFrame, PyMOLInteractions):
 class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
 
     def __init__(self, parent, main_window,
-                 program_name,
+                 program_name, run_configuration = False,
                  *args, **configs):
 
         super(InstallationFrames, self).__init__(main_window, *args, **configs)
@@ -255,7 +255,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
             self.check_for_updates = QtWidgets.QPushButton("Check for Updates")
 
             self.show_info_btn.clicked.connect(self.show_detailed_info_window)
-            self.configure_btn.clicked.connect(self.configure_external_tools_directory)
+            self.configure_btn.clicked.connect(self.main_window.configure_external_tools_directory)
             self.check_for_updates.clicked.connect(self.check_for_updates_func)
 
             self.configure_line_edit.setEnabled(False)
@@ -349,7 +349,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
         additional_text = ("INFO and CONTACTS\n"
                            "Copyright (C): 2022 Serena Rosignoli, Alessandro Paiardini\n"
                            "Contacts: serena.rosignoli@uniroma1.it, alessandro.paiardini@uniroma1.it\n"
-                           "For information on DockingPie 1.0 visit:\n"
+                           "For information about DockingPie visit:\n"
                            "https://github.com/paiardin/DockingPie\n\n"
 
                            "# DockingPie\n"
@@ -385,7 +385,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
         self.about_text_area.setPlainText(additional_text)
 
         self.detailed_info_window = NewWindow(parent = self.main_window,
-        title = "DockingPie 1.0", upper_frame_title = "About",
+        title = "DockingPie 1", upper_frame_title = "About",
         submit_command = None, submit_button_text= None,
         with_scroll = True)
 
@@ -393,7 +393,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
 
         self.detailed_info_window.show()
 
-
+    #
     def check_external_tools(self):
 
         if sys.platform == "linux":
@@ -418,62 +418,62 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
             self.check_for_updates.setEnabled(False)
 
 
-    def configure_external_tools_directory(self):
-
-        config_path = self.main_window.docking_programs.config_path
-
-        with open(str(os.path.join(config_path, "version.txt"))) as f:
-            self.files_version = f.readline().rstrip()
-
-        try:
-            urllib.request.urlopen("https://github.com/paiardin/DockingPie")
-            github_accessible = True
-        except:
-            github_accessible = False
-
-        if github_accessible:
-
-            if sys.platform == "linux":
-                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_linux.zip"
-                dir_name = "external_tools_linux"
-            if sys.platform == "darwin":
-                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_macOS.zip"
-                dir_name = "external_tools_macOS"
-            if sys.platform == "win32":
-                dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_windows.zip"
-                dir_name = "external_tools_windows"
-
-        else:
-
-            if sys.platform == "linux":
-                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) + "/external_tools_linux.zip"
-                dir_name = "external_tools_linux"
-            if sys.platform == "darwin":
-                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_macOS.zip"
-                dir_name = "external_tools_macOS"
-            if sys.platform == "win32":
-                dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_windows.zip"
-                dir_name = "external_tools_windows"
-
-
-        # Show the external components download dialog.
-        install_dialog = External_components_dialog(self,
-                                                    url=dir_link,
-                                                    os_arch="64",
-                                                    dir_name = dir_name,
-                                                    local_mode=False)
-        install_dialog.setModal(True)
-        install_dialog.exec_()
-
-        # Finishes the installation.
-        if install_dialog.complete_status:
-            self.main_window.check_installation()
-            self.check_external_tools()
-
+    # def configure_external_tools_directory(self):
+    #
+    #     config_path = self.main_window.docking_programs.config_path
+    #
+    #     with open(str(os.path.join(config_path, "version.txt"))) as f:
+    #         self.files_version = f.readline().rstrip()
+    #
+    #     try:
+    #         urllib.request.urlopen("https://github.com/paiardin/DockingPie")
+    #         github_accessible = True
+    #     except:
+    #         github_accessible = False
+    #
+    #     if github_accessible:
+    #
+    #         if sys.platform == "linux":
+    #             dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_linux.zip"
+    #             dir_name = "external_tools_linux"
+    #         if sys.platform == "darwin":
+    #             dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_macOS.zip"
+    #             dir_name = "external_tools_macOS"
+    #         if sys.platform == "win32":
+    #             dir_link = "https://github.com/paiardin/DockingPie/releases/download/" + str(self.files_version) + "/external_tools_windows.zip"
+    #             dir_name = "external_tools_windows"
+    #
+    #     else:
+    #
+    #         if sys.platform == "linux":
+    #             dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) + "/external_tools_linux.zip"
+    #             dir_name = "external_tools_linux"
+    #         if sys.platform == "darwin":
+    #             dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_macOS.zip"
+    #             dir_name = "external_tools_macOS"
+    #         if sys.platform == "win32":
+    #             dir_link = "http://schubert.bio.uniroma1.it/temp/DockingPie_config_file/" + str(self.files_version) +"/external_tools_windows.zip"
+    #             dir_name = "external_tools_windows"
+    #
+    #
+    #     # Show the external components download dialog.
+    #     install_dialog = External_components_dialog(self,
+    #                                                 url=dir_link,
+    #                                                 os_arch="64",
+    #                                                 dir_name = dir_name,
+    #                                                 local_mode=False)
+    #     install_dialog.setModal(True)
+    #     install_dialog.exec_()
+    #
+    #     # Finishes the installation.
+    #     if install_dialog.complete_status:
+    #         self.main_window.check_installation()
+    #         self.check_external_tools()
+    #
 
     def check_for_updates_func(self):
-        
-        
+
+
         ## This function check for external tools updates ##
 
         # Read current version of the plugin #
@@ -607,11 +607,15 @@ class StructuresFrame(QtWidgets.QFrame, PyMOLInteractions):
 
     def build_use_structure_frame(self):
 
-        self.checkbox_text = str(self.strc_path + " (" + self.num_states + ") " + self.receptor_type)
-
-        self.strc_checkbox = QtWidgets.QCheckBox(self.checkbox_text) # Create checkboxes corresponding to the structure
+        #chbox_text = '\n'.join([self.strc_path, self.receptor_type]=
+        # Create checkboxes corresponding to the structure
+        self.strc_checkbox = QtWidgets.QCheckBox(self.strc_path)
+        self.strc_checkbox.setStyleSheet('QCheckBox { font-size: 13pt}')
         self.strc_checkbox.toggled.connect(self.click_on_structure_checkbutton) # When checkbox is clicked it shows other options
         self.structure_frame_layout.addWidget(self.strc_checkbox, 0, 0)
+
+        self.rec_type_label = QtWidgets.QLabel(self.receptor_type)
+        self.structure_frame_layout.addWidget(self.rec_type_label, 1, 0, 4, 1)
 
         self.show_from_frame = QtWidgets.QPushButton("Zoom in PyMOL")
         self.structure_frame_layout.addWidget(self.show_from_frame, 0, 1)
@@ -636,7 +640,7 @@ class StructuresFrame(QtWidgets.QFrame, PyMOLInteractions):
                              "}"
                              )
 
-        self.delete.hide()
+        #self.delete.hide()
 
     def show_het_func(self):
 
@@ -680,17 +684,17 @@ class StructuresFrame(QtWidgets.QFrame, PyMOLInteractions):
             self.show_het_btn.setEnabled(True)
             self.show_het_btn.setChecked(False)
 
-            if self.frame.is_vina_tab or self.frame.is_smina_tab:
-
-                self.add_h.setEnabled(True)
-                self.remove_nonstd.setEnabled(True)
-                self.remove_water.setEnabled(True)
-
-            if self.frame.is_adfr_tab:
-                self.add_h.setEnabled(False)
-                self.add_h.setChecked(True)
-                self.remove_nonstd.setEnabled(True)
-                self.remove_water.setEnabled(True)
+            # if self.frame.is_vina_tab or self.frame.is_smina_tab:
+            #
+            #     self.add_h.setEnabled(True)
+            #     self.remove_nonstd.setEnabled(True)
+            #     self.remove_water.setEnabled(True)
+            #
+            # if self.frame.is_adfr_tab:
+            #     self.add_h.setEnabled(False)
+            #     self.add_h.setChecked(True)
+            #     self.remove_nonstd.setEnabled(True)
+            #     self.remove_water.setEnabled(True)
 
         else:
             self.show_from_frame.setEnabled(False)
@@ -703,10 +707,10 @@ class StructuresFrame(QtWidgets.QFrame, PyMOLInteractions):
 
             self.het_id_text.hide()
 
-            if self.frame.is_vina_tab or self.frame.is_smina_tab or self.frame.is_adfr_tab:
-                self.add_h.setEnabled(False)
-                self.remove_nonstd.setEnabled(False)
-                self.remove_water.setEnabled(False)
+            # if self.frame.is_vina_tab or self.frame.is_smina_tab or self.frame.is_adfr_tab:
+            #     self.add_h.setEnabled(False)
+            #     self.remove_nonstd.setEnabled(False)
+            #     self.remove_water.setEnabled(False)
 
 
     def get_use_as_template_var(self):
@@ -795,7 +799,7 @@ class LigandsFrame(QtWidgets.QFrame, PyMOLInteractions):
                              "background-color : rgb(160,160,160);"
                              "}"
                              )
-        self.delete.hide()
+        #self.delete.hide()
 
     def delete_from_frame_func(self):
 
@@ -824,34 +828,34 @@ class LigandsFrame(QtWidgets.QFrame, PyMOLInteractions):
             self.show_from_frame.setEnabled(True)
             self.delete.setEnabled(True)
 
-            if self.frame.is_vina_tab or self.frame.is_smina_tab:
-                self.add_h.setEnabled(True)
-                self.add_h.setChecked(True)
-                self.active_torsions_group.setEnabled(True)
-                self.all_but_torsions.setChecked(True)
-                self.all_but_torsions.setEnabled(True)
-                self.all_torsions.setEnabled(True)
-                self.none_torsions.setEnabled(True)
-
-            if self.frame.is_adfr_tab:
-                self.add_h.setEnabled(False)
-                self.add_h.setChecked(True)
-                self.active_torsions_group.setEnabled(True)
-                self.all_but_torsions.setChecked(True)
-                self.all_but_torsions.setEnabled(True)
-                self.all_torsions.setEnabled(True)
-                self.none_torsions.setEnabled(True)
+            # if self.frame.is_vina_tab or self.frame.is_smina_tab:
+            #     self.add_h.setEnabled(True)
+            #     self.add_h.setChecked(True)
+            #     self.active_torsions_group.setEnabled(True)
+            #     self.all_but_torsions.setChecked(True)
+            #     self.all_but_torsions.setEnabled(True)
+            #     self.all_torsions.setEnabled(True)
+            #     self.none_torsions.setEnabled(True)
+            #
+            # if self.frame.is_adfr_tab:
+            #     self.add_h.setEnabled(False)
+            #     self.add_h.setChecked(True)
+            #     self.active_torsions_group.setEnabled(True)
+            #     self.all_but_torsions.setChecked(True)
+            #     self.all_but_torsions.setEnabled(True)
+            #     self.all_torsions.setEnabled(True)
+            #     self.none_torsions.setEnabled(True)
 
         else:
             self.show_from_frame.setEnabled(False)
             self.delete.setEnabled(False)
 
-            if self.frame.is_vina_tab or self.frame.is_smina_tab or self.frame.is_adfr_tab:
-                self.add_h.setEnabled(False)
-                self.active_torsions_group.setEnabled(False)
-                self.all_but_torsions.setEnabled(False)
-                self.all_torsions.setEnabled(False)
-                self.none_torsions.setEnabled(False)
+            # if self.frame.is_vina_tab or self.frame.is_smina_tab or self.frame.is_adfr_tab:
+            #     self.add_h.setEnabled(False)
+            #     self.active_torsions_group.setEnabled(False)
+            #     self.all_but_torsions.setEnabled(False)
+            #     self.all_torsions.setEnabled(False)
+            #     self.none_torsions.setEnabled(False)
 
 
     def get_use_as_template_var(self):
@@ -1016,23 +1020,36 @@ class ResultsFrame(QtWidgets.QFrame, PyMOLInteractions):
             main_window=self.docking_programs_child_tabs)
             self.results_frame_layout.addWidget(self.options_frame_all, 1, 1)
 
-            if Path(self.log_file).is_file():
+            if self.log_file is not None:
 
-                self.log_label = QtWidgets.QLabel("Log file")
-                self.options_frame_all.options_frame_layout.addWidget(self.log_label, 0, 0)
-                self.log_text_area = QtWidgets.QPlainTextEdit()
-                self.options_frame_all.options_frame_layout.addWidget(self.log_text_area, 1, 0)
-                self.log_text_area.setPlainText(open(str(self.log_file)).read())
-                self.log_text_area.setReadOnly(True)
+                if Path(self.log_file).is_file():
 
-            if Path(self.summary_file).is_file():
+                    self.log_label = QtWidgets.QLabel("Log file")
+                    self.options_frame_all.options_frame_layout.addWidget(self.log_label, 0, 0)
+                    self.log_text_area = QtWidgets.QPlainTextEdit()
+                    self.options_frame_all.options_frame_layout.addWidget(self.log_text_area, 1, 0)
+                    self.log_text_area.setPlainText(open(str(self.log_file)).read())
+                    self.log_text_area.setReadOnly(True)
 
-                self.summary_label = QtWidgets.QLabel("Summary")
-                self.options_frame_all.options_frame_layout.addWidget(self.summary_label, 0, 1)
-                self.summary_text_area = QtWidgets.QPlainTextEdit()
-                self.options_frame_all.options_frame_layout.addWidget(self.summary_text_area, 1, 1)
-                self.summary_text_area.setPlainText(open(str(self.summary_file)).read())
-                self.summary_text_area.setReadOnly(True)
+                if Path(self.summary_file).is_file():
+
+                    self.summary_label = QtWidgets.QLabel("Summary")
+                    self.options_frame_all.options_frame_layout.addWidget(self.summary_label, 0, 1)
+                    self.summary_text_area = QtWidgets.QPlainTextEdit()
+                    self.options_frame_all.options_frame_layout.addWidget(self.summary_text_area, 1, 1)
+                    self.summary_text_area.setPlainText(open(str(self.summary_file)).read())
+                    self.summary_text_area.setReadOnly(True)
+
+            else:
+
+                if Path(self.summary_file).is_file():
+
+                    self.summary_label = QtWidgets.QLabel("Summary")
+                    self.options_frame_all.options_frame_layout.addWidget(self.summary_label, 0, 1)
+                    self.summary_text_area = QtWidgets.QPlainTextEdit()
+                    self.options_frame_all.options_frame_layout.addWidget(self.summary_text_area, 1, 1)
+                    self.summary_text_area.setPlainText(open(str(self.summary_file)).read())
+                    self.summary_text_area.setReadOnly(True)
 
 
 
