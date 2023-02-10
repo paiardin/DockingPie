@@ -366,6 +366,7 @@ Please check that any dependency is installed before continuing.
         cmd.set("cartoon_ring_mode", 1)
         cmd.set("cartoon_ring_transparency", 0.5)
 
+
     def initUI(self):
 
         self.setWindowTitle(self.title)
@@ -702,7 +703,7 @@ class Child_Tabs(QtWidgets.QWidget):
         # LigandTab
         self.ligands = QtWidgets.QWidget()
         self.child_tabs.addTab(self.ligands, "Ligands")
-        self.ligands.setLayout(LigandTab(self).layout_ligand_tab)
+        self.ligands.setLayout(LigandTab(self, current_tab = tab).layout_ligand_tab)
 
         # GridTab
         self.grid_settings = QtWidgets.QWidget()

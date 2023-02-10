@@ -784,23 +784,5 @@ class Installation():
             else:
                 self.installation_completed = False
 
-            # if str(versione[0]) == "2.5.3" or str(versione[0]) == "2.5.4":
-            #     with io.StringIO() as stderr, redirect_stderr(stderr):
-            #         r = conda.cli.main(*args)
-            #         self.s = stderr.getvalue()
-            #     if not r:
-            #         print(' conda finished with success')
-            #     else:
-            #         self.installation_completed = False
-            #
-            # else:
-            #     with io.StringIO() as stderr, redirect_stderr(stderr):
-            #         r = conda.cli.main('conda', *args)
-            #         self.s = stderr.getvalue()
-            #     if not r:
-            #         print(' conda finished with success')
-            #     else:
-            #         self.installation_completed = False
-
         else:
             self.installation_completed = False

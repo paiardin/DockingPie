@@ -25,8 +25,7 @@ except:
     pass
 
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
-
-
+from lib.docking_program_main.docking_program_gui.new_windows import NewWindow
 
 class ObjectParser():
 
@@ -275,8 +274,10 @@ class Generate_Object:
     dict,
     prepared_objects_list,
     format,
+    tmp_path,
     docking_program_name,
     generate_pdbqt = False,
+    pdbqt_dict = {},
     is_receptor = False,
     ):
 
@@ -301,6 +302,12 @@ class Generate_Object:
         # Se to True if it is a receptor, else a ligand
         self.is_receptor = is_receptor
 
+        # Path to the temp directory of the specific docking program
+        self.tmp_path = tmp_path
+
+        # Dictionary of the pdbqt options
+        self.pdbqt_dict = pdbqt_dict
+
         self.generate_receptor()
 
 
@@ -308,116 +315,39 @@ class Generate_Object:
 
         self.generated_receptor = False
 
-        self.cwd = os.getcwd()
-
+        # For each object that is loaded in DockingPie
         for self.strc in self.dict:
 
-            # For each object that is checked
+            # If the object is checked
             obj = self.dict[self.strc]["frame"].strc_checkbox
-
             if obj.isChecked():
 
+                # Count the number of states
                 states = cmd.count_states(obj.text().split()[0])
 
-                if states > 1 and self.generate_pdbqt:
-                    self.generate_checked_object_multiple(states)
+                # TODO DEAL WITH MULTIPLE STATES
 
-                else:
-                    self.generate_checked_object()
-
-                #self.generated_receptor = True
-                self.generated_object = True
-
-                if self.generated_object:
-
-                    # Add to the listwidget
-                    self.listbtn = self.tab.listwidget.addItem(self.new_strc_name)
-
-                    # Add to the list of prepared files
-                    self.prepared_objects_list.append(self.new_strc_name)
-
-                    # Load in PyMOL
-                    print(self.new_receptor_file_path)
-                    print(self.new_strc_name)
-                    cmd.load(self.new_receptor_file_path, self.new_strc_name)
-
-                    if self.docking_program_name == "Vina":
-                        cmd.group("Vina", members=self.new_strc_name, action='auto', quiet=1)
-
-                    if self.docking_program_name == "RxDock":
-                        cmd.group("RxDock", members=self.new_strc_name, action='auto', quiet=1)
-
-                    if self.docking_program_name == "Smina":
-                        cmd.group("Smina", members=self.new_strc_name, action='auto', quiet=1)
-
-                    if self.docking_program_name == "ADFR":
-                        cmd.group("ADFR", members=self.new_strc_name, action='auto', quiet=1)
-
-
-                    # self.tab.docking_programs_child_tabs.docking_programs.statusBar().showMessage(str("Generated Object: " + self.new_strc_name), 3000)
-
-
-    def generate_checked_object_multiple(self, states):
-
-        new_name = self.create_new_name(self.strc)
-
-        index = str((len(self.prepared_objects_list)+1))
-        self.new_strc_name = str("0" + index + "_" + new_name + "_" + self.docking_program_name) # Name of the prepared receptor
-
-        for idx, i in enumerate(range(states)):
-            save_to = str(os.path.join(self.cwd, self.new_strc_name) + "_ML" + str(idx+1) + str("." + self.format))
-            self.new_receptor_file_path = str(os.path.join(self.cwd, self.new_strc_name) + "_ML" + str(idx+1) + str("." + self.format))
-
-            cmd.save(save_to, self.strc, format = str(self.format), state = idx+1)
-
-            self.prepare_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_receptor4.py")
-            self.prepare_ligand_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_ligand4.py")
-            save_to_pdb = str(os.path.join(self.cwd, self.new_strc_name) + "_ML" + str(idx+1) + ".pdb")
-            out_name = str(os.path.join(self.cwd, self.new_strc_name) + "_ML" + str(idx+1))
-            name = str(self.new_strc_name) + "_ML" + str(idx+1)
-            # self.receptor_file_path = os.path.join(self.cwd, str(self.strc + ".pdb"))
-
-            # Save the main file from PyMOL, its is done to be sure to work with the last modified object in PyMOL
-            cmd.save(save_to_pdb, self.strc, format = 'pdb', state = idx+1)
-
-            if self.is_receptor:
-
-                self.generate_receptor_pdbqt(self.strc)
-
-            else: # is ligand
-
-                self.generate_ligand_pdbqt(name, out_name)
-
-                #self.generate_ligand_pdbqt(strc)
-
-                old_name = str(name + ".pdbqt")
-                new_name = str(self.new_strc_name + ".pdbqt")
-                os.rename(old_name, new_name)
-
+                self.generate_checked_object()
 
     def generate_checked_object(self):
 
+        # Remove underscores in the original name, to avoid name conflicts
         new_name = self.create_new_name(self.strc)
 
+        # Get the new index from the list of prepared objects
         index = str((len(self.prepared_objects_list)+1))
-        self.new_strc_name = str("0" + index + "_" + new_name + "_" + self.docking_program_name) # Name of the prepared receptor
-        self.new_receptor_file_path = str(os.path.join(self.cwd, self.new_strc_name) + str("." + self.format))
+        # Create the new name of type "index-<name>-<docking_program>" (e.g. 01_1ol5_Vina)
+        self.new_strc_name = str("0" + index + "_" + new_name + "_" + self.docking_program_name)
+        # Create new name with format (e.g. 01_1ol5_Vina.pdb)
+        self.new_strc_name_format = self.new_strc_name + str("." + self.format)
+        # Create path to receptor in tmp directory (e.g. <tmp_path>/01_1ol5_Vina.pdb)
+        self.new_receptor_file_path = os.path.join(self.tmp_path, self.new_strc_name_format)
 
-        # Save the main file from PyMOL, its is done to be sure to work with the last modified object in PyMOL
-        #cmd.h_add(strc)
-        cmd.save(self.new_receptor_file_path, self.strc, format = str(self.format), state = 0)
-
-        ##
         ## For those programs that need the generation of the pdbqt file (Vina, Autodock etc ...)
-        ##
         if self.generate_pdbqt:
 
             self.prepare_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_receptor4.py")
             self.prepare_ligand_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_ligand4.py")
-            self.receptor_file_path = os.path.join(self.cwd, str(self.strc + ".pdb"))
-
-            # Save the main file from PyMOL, its is done to be sure to work with the last modified object in PyMOL
-            cmd.save(self.receptor_file_path, self.strc, format = 'pdb', state = 0)
 
             if self.is_receptor:
 
@@ -427,15 +357,26 @@ class Generate_Object:
 
                 self.generate_ligand_pdbqt(self.strc, self.strc)
 
-                old_name = str(self.strc + ".pdbqt")
-                new_name = str(self.new_strc_name + ".pdbqt")
-                os.rename(old_name, new_name)
+        else:
+
+            # TODO: adjsust parameters also for programs out of Vina, Smina and ADFR
+
+            # Save the main file from PyMOL, its is done to be sure to work with the last modified object in PyMOL \
+            #  PyMOL saves "self.strc" obj (e.g. 1ol5) as "<tmp_path>/01_1ol5_Vina.pdb". Only the current state is saved
+            cmd.save(self.new_receptor_file_path, self.strc, format = str(self.format), state = -1)
 
 
 
     def generate_receptor_pdbqt(self, strc):
 
-        self.receptors_settings = ["python", self.prepare_receptor_path, "-r", str(strc + ".pdb"), "-o", str(self.new_strc_name + ".pdbqt"), "-v"]
+        self.new_strc_name_format = str(self.new_strc_name + ".pdbqt")
+
+        self.new_receptor_file_path = os.path.join(self.tmp_path, self.new_strc_name_format)
+
+        # Log PDBQT
+        self.pdbqt_log_file_name = str(self.new_strc_name + "_PDBQT_LOG.txt")
+
+        self.receptors_settings = ["python", self.prepare_receptor_path, "-r", str(strc + ".pdb"), "-o", self.new_strc_name_format, "-v"]
 
         # If the User chose to add Hydrogens; default = None
         """
@@ -447,9 +388,15 @@ class Generate_Object:
              'None': do not make any repairs
              (default is 'None')
         """
-        if self.tab.pdbqt_options_dict["add_h"]:
+
+        if self.pdbqt_dict["add_h"] and self.pdbqt_dict["bonds"]:
+            self.receptors_settings.extend(["-A", "bonds_hydrogens"])
+
+        elif self.pdbqt_dict["add_h"]:
             self.receptors_settings.extend(["-A", "hydrogens"])
-            cmd.h_add(strc)
+
+        elif self.pdbqt_dict["bonds"]:
+            self.receptors_settings.extend(["-A", "bonds"])
 
         # If the User chose to delete any non-standard residue from any chain
         """
@@ -464,8 +411,17 @@ class Generate_Object:
               in the list and no metals.
              (default is False which means not to do this)
         """
-        if self.tab.pdbqt_options_dict["remove_nonstd"]:
-            self.receptors_settings.extend(["-e", "'True'"])
+        if self.pdbqt_dict["remove_nonstd"]:
+            self.receptors_settings.extend(["-e", "True"])
+
+        ### -C option: if the user do not chose to add Gasteiger charges
+        """
+        [-C]  preserve all input charges ie do not add new charges "
+        (default is addition of gasteiger charges)"
+        """
+
+        if not self.pdbqt_dict["add_gast"]:
+            self.receptors_settings.extend(["-C"])
 
         ### -U options
         """
@@ -481,88 +437,79 @@ class Generate_Object:
         U_options = []
 
         # If the User chose to remove Water molecules
-        if self.tab.pdbqt_options_dict["remove_water"]:
+        if self.pdbqt_dict["remove_water"]:
             U_options.append('waters')
 
-        if self.tab.pdbqt_options_dict["remove_lone_pairs"]:
+        if self.pdbqt_dict["remove_lone_pairs"]:
             U_options.append('lps')
 
-        if self.tab.pdbqt_options_dict["remove_non_polar_H"]:
+        if self.pdbqt_dict["remove_non_polar_H"]:
             U_options.append('nphs')
 
-        if self.tab.pdbqt_options_dict["remove_non_protein"]:
+        if self.pdbqt_dict["remove_non_protein"]:
             U_options.append('nonstdres')
 
         U_options_string = '_'.join(U_options)
 
         if U_options:
             self.receptors_settings.extend(["-U", U_options_string])
-
+        else:
+            U_options_string = ' '
+            self.receptors_settings.extend(["-U", U_options_string])
 
         if sys.platform == "win32":
 
-            try:
-                subprocess.run(self.receptors_settings,
-                shell = True)
-                self.generated_object = True
-
-            except subprocess.CalledProcessError as error:
-                print(error)
-                self.generated_object = False
+            with open(self.pdbqt_log_file_name, "w") as pdbqt_file:
+                try:
+                    subprocess.run(self.receptors_settings, stdout=pdbqt_file)
+                except subprocess.CalledProcessError as error:
+                    print(error)
 
         else:
 
-            try:
-                subprocess.run(self.receptors_settings)
-                self.generated_object = True
-
-            except subprocess.CalledProcessError as error:
-                print(error)
-                self.generated_object = False
+            with open(self.pdbqt_log_file_name, "w") as pdbqt_file:
+                try:
+                    subprocess.run(self.receptors_settings, stdout=pdbqt_file)
+                except subprocess.CalledProcessError as error:
+                    print(error)
 
 
     def generate_ligand_pdbqt(self, strc, output_name):
 
+        self.new_strc_name_format = str(self.new_strc_name + ".pdbqt")
 
-        self.ligands_settings = ["python", self.prepare_ligand_path, "-l", str(strc + ".pdb"), "-v"]
+        self.new_receptor_file_path = os.path.join(self.tmp_path, self.new_strc_name_format)
 
-        if self.tab.structure_frame.add_h.isChecked():
+        # Log PDBQT
+        self.pdbqt_log_file_name = str(self.new_strc_name + "_PDBQT_LOG.txt")
+
+        self.ligands_settings = ["python", self.prepare_ligand_path, "-l", str(strc + ".pdb"), "-o", self.new_strc_name_format, "-v"]
+
+        if self.pdbqt_dict["add_h"]:
             self.ligands_settings.extend(["-A", "hydrogens"])
             cmd.h_add(self.strc)
 
-        if self.tab.structure_frame.none_torsions.isChecked():
+        if self.pdbqt_dict["none_torsions"]:
             self.ligands_settings.extend(["-Z"])
 
-        elif self.tab.structure_frame.all_torsions.isChecked():
+        elif self.pdbqt_dict["all_torsions"]:
             self.ligands_settings.extend(["-B", "'amide'", "-B" "'guanidinium'"])
 
         if sys.platform == "win32":
 
-            try:
-
-                process = subprocess.run(self.ligands_settings,
-                shell = True)
-
-                # os.rename(str(strc + ".pdbqt"), output_name)
-
-                self.generated_object = True
-
-            except subprocess.CalledProcessError as error:
-                print(error)
-                self.generated_object = False
+            with open(self.pdbqt_log_file_name, "w") as pdbqt_file:
+                try:
+                    subprocess.run(self.ligands_settings, stdout=pdbqt_file)
+                except subprocess.CalledProcessError as error:
+                    print(error)
 
         else:
-            try:
 
-                process = subprocess.run(self.ligands_settings)
-
-                # os.rename(str(strc + ".pdbqt"), output_name)
-
-                self.generated_object = True
-
-            except subprocess.CalledProcessError as error:
-                print(error)
-                self.generated_object = False
+            with open(self.pdbqt_log_file_name, "w") as pdbqt_file:
+                try:
+                    subprocess.run(self.ligands_settings, stdout=pdbqt_file)
+                except subprocess.CalledProcessError as error:
+                    print(error)
 
 
 

@@ -1796,11 +1796,11 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
         self.main_page_interior.setLayout(self.prepare_structures_frame_layout)
 
         # Add pdbqt options
-        if current_tab == "RxDock":
-            pass
-        else:
+        if current_tab != "RxDock":
             self.pdbqt_options_dict = {}
             self.pdbqt_options_dict["add_h"] = True
+            self.pdbqt_options_dict["bonds"] = False
+            self.pdbqt_options_dict["add_gast"] = False
             self.pdbqt_options_dict["remove_nonstd"] = False
             self.pdbqt_options_dict["remove_water"] = True
             self.pdbqt_options_dict["remove_lone_pairs"] = False
@@ -1910,6 +1910,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
         with_scroll = True)
 
         self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+        self.bonds = QtWidgets.QCheckBox("Repair Bonds")
+        self.add_gast = QtWidgets.QCheckBox("Add Gasteiger Charges")
         self.remove_nonstd = QtWidgets.QCheckBox("Remove ALL non-standard residues")
         self.remove_water = QtWidgets.QCheckBox("Remove Water")
         self.remove_lone_pairs = QtWidgets.QCheckBox("Remove Lone Pairs")
@@ -1917,6 +1919,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
         self.remove_non_protein = QtWidgets.QCheckBox("Remove All Non-Protein chains")
 
         self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.bonds)
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.add_gast)
         self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_nonstd)
         self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_water)
         self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_lone_pairs)
@@ -1924,6 +1928,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
         self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_protein)
 
         self.add_h.setChecked(self.pdbqt_options_dict["add_h"])
+        self.bonds.setChecked(self.pdbqt_options_dict["bonds"])
+        self.bonds.setChecked(self.pdbqt_options_dict["add_gast"])
         self.remove_nonstd.setChecked(self.pdbqt_options_dict["remove_nonstd"])
         self.remove_water.setChecked(self.pdbqt_options_dict["remove_water"])
         self.remove_lone_pairs.setChecked(self.pdbqt_options_dict["remove_lone_pairs"])
@@ -1937,6 +1943,7 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
     def apply_pdbqt_options(self):
 
         self.pdbqt_options_dict["add_h"] = self.add_h.isChecked()
+        self.pdbqt_options_dict["bonds"] = self.bonds.isChecked()
         self.pdbqt_options_dict["remove_nonstd"] = self.remove_nonstd.isChecked()
         self.pdbqt_options_dict["remove_water"] = self.remove_water.isChecked()
         self.pdbqt_options_dict["remove_lone_pairs"] = self.remove_lone_pairs.isChecked()
@@ -1944,6 +1951,7 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
         self.pdbqt_options_dict["remove_non_protein"] = self.remove_non_protein.isChecked()
 
         self.pdbqt_options_window.close()
+
 
     def generate_receptor_func(self):
 
@@ -1954,43 +1962,88 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
             Check_current_tab.check_docking_program_current_tab(self)
 
             if self.is_vina_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
-                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_receptors_dict,
+
+                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_receptors_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.vina_tmp_dir,
                 format = "pdb",
                 docking_program_name = "Vina",
                 generate_pdbqt = True,
+                pdbqt_dict = self.pdbqt_options_dict,
                 is_receptor = True)
 
+                self.generated_object_update_gui()
+                cmd.group("Vina", members=self.generated_receptor.new_strc_name, action='auto', quiet=1)
+
             if self.is_rxdock_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
-                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_dict,
+                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir,
                 format = "mol2",
                 docking_program_name = "RxDock",
                 generate_pdbqt = False,
                 is_receptor = True)
 
+                self.generated_object_update_gui()
+                cmd.group("RxDock", members=self.generated_receptor.new_strc_name, action='auto', quiet=1)
+
             if self.is_smina_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
-                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_receptors_dict,
+                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_receptors_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.smina_tmp_dir,
                 format = "pdb",
                 docking_program_name = "Smina",
                 generate_pdbqt = True,
+                pdbqt_dict = self.pdbqt_options_dict,
                 is_receptor = True)
 
+                self.generated_object_update_gui()
+                cmd.group("Smina", members=self.generated_receptor.new_strc_name, action='auto', quiet=1)
+
             if self.is_adfr_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
-                generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_receptors_dict,
+                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_receptors_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir,
                 format = "pdb",
                 docking_program_name = "ADFR",
                 generate_pdbqt = True,
+                pdbqt_dict = self.pdbqt_options_dict,
                 is_receptor = True)
 
-            if generated_receptor.generated_object:
-                self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + generated_receptor.new_strc_name + "'"), 3000)
+                self.generated_object_update_gui()
+                cmd.group("ADFR", members=self.generated_receptor.new_strc_name, action='auto', quiet=1)
+
+
+    def generated_object_update_gui(self):
+
+        if os.path.isfile(self.generated_receptor.new_strc_name_format):
+
+            # Add to the listwidget
+            self.listbtn = self.listwidget.addItem(self.generated_receptor.new_strc_name)
+
+            # Add to the list of prepared files
+            self.generated_receptor.prepared_objects_list.append(self.generated_receptor.new_strc_name)
+
+            # Load in PyMOL
+            cmd.load(self.generated_receptor.new_receptor_file_path, self.generated_receptor.new_strc_name)
+
+            self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + self.generated_receptor.new_strc_name + "'"), 3000)
+
+        else:
+            if self.generated_receptor.generate_pdbqt:
+
+                self.about_text_area = QtWidgets.QPlainTextEdit()
+                self.about_text_area.setReadOnly(True)
+
+                self.about_text_area.setPlainText(open(self.pdbqt_log_file_name).read())
+
+                self.pdbqt_log = NewWindow(parent = self.tab,
+                title = "Warning", upper_frame_title = "PDBQT generation Error",
+                submit_command = None, with_scroll = True)
+
+                self.pdbqt_log.middle_layout_type.addWidget(self.about_text_area, 0, 0)
+
+                self.pdbqt_log.show()
 
 
     def remove_rec_from_list(self):
@@ -2090,13 +2143,13 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
 class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
-    def __init__(self, main_window):
+    def __init__(self, main_window, current_tab):
         super().__init__(main_window)
         self.docking_programs_child_tabs = main_window
-        self.initUI()
+        self.initUI(current_tab)
 
 
-    def initUI(self):
+    def initUI(self, current_tab):
 
         # Ligand Tab Layout
         self.layout_ligand_tab = QtWidgets.QVBoxLayout()
@@ -2141,6 +2194,18 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.prepare_ligands_frame_layout.addWidget(self.select_all_btn)
         self.select_all_btn.clicked.connect(self.get_list_of_current_cb)
 
+        # Add pdbqt options
+        if current_tab != "RxDock":
+            self.pdbqt_options_dict_lig = {}
+            self.pdbqt_options_dict_lig["add_h"] = True
+            self.pdbqt_options_dict_lig["none_torsions"] = False
+            self.pdbqt_options_dict_lig["all_torsions"] = False
+            self.pdbqt_options_dict_lig["all_but_ga"] = True
+
+            self.pdbqt_options_pushbutton = QtWidgets.QPushButton("PDBQT Advanced Options")
+            self.prepare_ligands_frame_layout.addRow(self.pdbqt_options_pushbutton)
+            self.pdbqt_options_pushbutton.clicked.connect(self.show_pdbqt_options_window)
+
         self.middle_btn_layout = QtWidgets.QVBoxLayout()
         self.prepare_ligands_layout.addLayout(self.middle_btn_layout)
         self.gen_lig_btn = QtWidgets.QPushButton("Generate Ligand")
@@ -2169,6 +2234,47 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.set.clicked.connect(self.add_to_other_tabs)
         self.remove.clicked.connect(self.remove_lig_from_list)
         self.import_btn.clicked.connect(self.import_lig_from_pymol_current_tab)
+
+
+    def show_pdbqt_options_window(self):
+
+        self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
+        title = "PDBQT options window", upper_frame_title = "Select Options",
+        submit_command = self.apply_pdbqt_options, submit_button_text= "Set",
+        with_scroll = True)
+
+        self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+
+        self.active_torsions_group = QtWidgets.QGroupBox("Active Torsions")
+        self.pdbqt_options_window.middle_layout_type.addWidget(self.active_torsions_group)
+        self.active_torsions_group_layout = QtWidgets.QVBoxLayout()
+        self.active_torsions_group.setLayout(self.active_torsions_group_layout)
+
+        self.none_torsions = QtWidgets.QRadioButton("None")
+        self.all_torsions = QtWidgets.QRadioButton("All")
+        self.all_but_ga = QtWidgets.QRadioButton("All But Guanidinium and Amide")
+
+        self.active_torsions_group_layout.addWidget(self.none_torsions)
+        self.active_torsions_group_layout.addWidget(self.all_torsions)
+        self.active_torsions_group_layout.addWidget(self.all_but_ga)
+
+        self.add_h.setChecked(self.pdbqt_options_dict_lig["add_h"])
+        self.none_torsions.setChecked(self.pdbqt_options_dict_lig["none_torsions"])
+        self.all_torsions.setChecked(self.pdbqt_options_dict_lig["all_torsions"])
+        self.all_but_ga.setChecked(self.pdbqt_options_dict_lig["all_but_ga"])
+
+        self.pdbqt_options_window.show()
+
+
+    def apply_pdbqt_options(self):
+
+        self.pdbqt_options_dict_lig["add_h"] = self.add_h.isChecked()
+        self.pdbqt_options_dict_lig["none_torsions"] = self.none_torsions.isChecked()
+        self.pdbqt_options_dict_lig["all_torsions"] = self.all_torsions.isChecked()
+        self.pdbqt_options_dict_lig["all_torsions"] = self.all_but_ga.isChecked()
+
+        self.pdbqt_options_window.close()
 
 
     def get_list_of_current_cb(self):
@@ -2319,44 +2425,87 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
             Check_current_tab.check_docking_program_current_tab(self)
 
             if self.is_vina_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
-                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_ligands_dict,
+                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_ligands_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.vina_tmp_dir,
                 format = "sdf",
                 docking_program_name = "Vina",
                 generate_pdbqt = True,
+                pdbqt_dict = self.pdbqt_options_dict_lig,
                 is_receptor = False)
 
+                self.generated_object_update_gui()
+                cmd.group("Vina", members=self.generated_ligand.new_strc_name, action='auto', quiet=1)
+
             if self.is_rxdock_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
-                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_dict,
+                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir,
                 format = "sdf",
                 docking_program_name = "RxDock",
                 generate_pdbqt = False,
                 is_receptor = False)
 
+                self.generated_object_update_gui()
+                cmd.group("RxDock", members=self.generated_ligand.new_strc_name, action='auto', quiet=1)
+
             if self.is_smina_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
-                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_ligands_dict,
+                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_ligands_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.smina_tmp_dir,
                 format = "sdf",
                 docking_program_name = "Smina",
                 generate_pdbqt = True,
+                pdbqt_dict = self.pdbqt_options_dict_lig,
                 is_receptor = False)
 
+                self.generated_object_update_gui()
+                cmd.group("Smina", members=self.generated_ligand.new_strc_name, action='auto', quiet=1)
+
             if self.is_adfr_tab:
-                os.chdir(self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
-                generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_ligands_dict,
+                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_ligands_prepared,
+                tmp_path = self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir,
                 format = "sdf",
                 docking_program_name = "ADFR",
                 generate_pdbqt = True,
+                pdbqt_dict = self.pdbqt_options_dict_lig,
                 is_receptor = False)
 
-            if generated_ligand.generated_object:
-                self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + generated_ligand.new_strc_name + "'"), 3000)
+                self.generated_object_update_gui()
+                cmd.group("ADFR", members=self.generated_ligand.new_strc_name, action='auto', quiet=1)
 
+
+    def generated_object_update_gui(self):
+
+        if os.path.isfile(self.generated_ligand.new_strc_name_format):
+
+            # Add to the listwidget
+            self.listbtn = self.listwidget.addItem(self.generated_ligand.new_strc_name)
+
+            # Add to the list of prepared files
+            self.generated_ligand.prepared_objects_list.append(self.generated_ligand.new_strc_name)
+
+            # Load in PyMOL
+            cmd.load(self.generated_ligand.new_receptor_file_path, self.generated_ligand.new_strc_name)
+
+            self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage(str("Generated Receptor '" + self.generated_ligand.new_strc_name + "'"), 3000)
+
+        else:
+            if self.generated_ligand.generate_pdbqt:
+
+                self.about_text_area = QtWidgets.QPlainTextEdit()
+                self.about_text_area.setReadOnly(True)
+
+                self.about_text_area.setPlainText(open(self.pdbqt_log_file_name).read())
+
+                self.pdbqt_log = NewWindow(parent = self.tab,
+                title = "Warning", upper_frame_title = "PDBQT generation Error",
+                submit_command = None, with_scroll = True)
+
+                self.pdbqt_log.middle_layout_type.addWidget(self.about_text_area, 0, 0)
+
+                self.pdbqt_log.show()
 
     def add_to_other_tabs(self):
 
@@ -2379,7 +2528,6 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
             pass
         else:
            self.docking_programs_child_tabs.docking_programs.main_window.statusBar().showMessage("Selected Items added to other tabs", 3000)
-
 
 
 class DockingTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
