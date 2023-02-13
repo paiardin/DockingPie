@@ -22,7 +22,7 @@ def check_configuration(self, docking_programs):
     if sys.platform == "win32":
         dir_name = "external_tools_windows"
 
-    ext_tools_path = os.path.join(docking_programs.config_path, dir_name)
+    ext_tools_path = os.path.join(docking_programs.dockingpie_extdir, dir_name)
 
     if os.path.isdir(ext_tools_path):
         is_configured = True

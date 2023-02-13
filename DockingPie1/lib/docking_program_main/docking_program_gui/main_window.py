@@ -111,6 +111,15 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
 
         """
 
+        if sys.platform == "win32":
+            self.path_sep = "\\"
+
+        elif sys.platform == "linux":
+            self.path_sep = "/"
+
+        elif sys.platform == "darwin":
+            self.path_sep = "/"
+
         # Initial settings.
         self.docking_program = docking_program
         self.title = self.docking_program.docking_program_plugin_name + "." + self.docking_program.docking_program_revision
@@ -125,8 +134,13 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
         # Creating a menu bar.
         #self.make_main_menu()
 
+        # Path where the plugin is located
+        current_path = (os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+        config_file = self.check_dockingpie_config_file(current_path)
+
         # Create the Tabwidget for all the Docking Programs and Configuration Tab. Each Docking Program has its own Tab.
-        self.main_docking_programs_tabs = Docking_Programs(self)
+        self.main_docking_programs_tabs = Docking_Programs(self, self.dockingpie_extdir)
         main_tab_bar = self.main_docking_programs_tabs.docking_programs_tabs.tabBar()
 
         # Creating central widget and setting it as central.
@@ -157,6 +171,9 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
             os.mkdir(self.main_docking_programs_tabs.adfr_tmp_dir)
             os.mkdir(self.main_docking_programs_tabs.consensus_tmp_dir)
 
+        if not os.path.isdir(self.main_docking_programs_tabs.dockingpie_extdir):
+            os.mkdir(self.main_docking_programs_tabs.dockingpie_extdir)
+
         # Clean and make a tmp directory
         shutil.rmtree(self.main_docking_programs_tabs.general_tmp_dir)
         os.mkdir(self.main_docking_programs_tabs.general_tmp_dir)
@@ -179,6 +196,9 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
         # Initialize User Interface.
         self.initUI()
 
+        # check if "DockingPie" directory already exists
+        dockingpie_extdir = self.check_dockingpie_config(current_path)
+
         ## Check if the configuration is completed
         configuration = self.check_configuration(self.main_docking_programs_tabs)
         configuration_completed = configuration[1]
@@ -187,8 +207,6 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
 
         if not configuration_completed:
             ## Check if all the dependencies are installed - only if the configuration is completed
-            # TODO
-            print(configuration_completed)
 
             # Add Welcome Message to CONFIGURATION TAB
             title = "Welcome to DockingPie"
@@ -223,6 +241,105 @@ Please check that any dependency is installed before continuing.
         if self.run_configuration:
             self.main_docking_programs_tabs.CONFIGURATION_TAB.configure_external_tools_directory()
 
+
+    def check_dockingpie_config_file(self, current_path):
+
+        # path to config directory
+        config_path = os.path.join(current_path, "config")
+
+        # path to config file (lib/docking_program_main/config/config.txt)
+        path_to_config_txt = os.path.join(config_path, "config.txt")
+
+        # If the config file exists, it means that it is not the first time that DockingPie is run
+        if os.path.isfile(path_to_config_txt):
+
+            # Read the file to get the location of the "DockingPie" directory
+            with open(path_to_config_txt, "r") as file:
+                for line in file:
+                    if line.startswith("#| DockingPie_dir:"):
+                        self.docking_pie_dir = (line.split(":")[1])
+
+            if os.path.isdir(self.docking_pie_dir):
+                return True
+            else:
+                return False
+
+        else:
+            return False
+
+
+    def check_dockingpie_config(self, current_path):
+
+        # # path to config directory
+        # config_path = os.path.join(current_path, "config")
+        #
+        # # path to config file (lib/docking_program_main/config/config.txt)
+        # path_to_config_txt = os.path.join(config_path, "config.txt")
+        #
+        #
+        # # If the config file exists, it means that it is not the first time that DockingPie is run
+        # if os.path.isfile(path_to_config_txt):
+        #
+        #     # Read the file to get the location of the "DockingPie" directory
+        #     with open(path_to_config_txt, "r") as file:
+        #         for line in file:
+        #             if line.startswith("#| DockingPie_dir:"):
+        #                 docking_pie_dir = (line.split(":")[1])
+        #
+        # else:
+        #
+        #     # If the config file does not exists OR
+        #     # If the config file exists but the directory does not (if the user deletes it by error)
+        #     # ask the user where to locate it
+        dir_path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose a Directory',
+            '\\', )
+
+        if dir_path:
+
+                # A "DockingPie" directory is going to be created in the chosen path
+            docking_pie_dir = os.path.join(dir_path, "DockingPie")
+
+            # If a "DockingPie" directory already exists, ask to chose another location
+            while os.path.isdir(docking_pie_dir):
+                QtWidgets.QMessageBox.warning(self, "Warning", "A directory called \"DockingPie\" is trying to be created in: " + dir_path + ", but it already exists.\n Please choose a different location")
+                dir_path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose a Directory',
+                    '\\', )
+                docking_pie_dir = os.path.join(dir_path, "DockingPie")
+
+            while self.check_path_for_spaces(dir_path):
+                QtWidgets.QMessageBox.warning(self, "Warning", "The chosen location must not have empty spaces")
+                dir_path = QtWidgets.QFileDialog.getExistingDirectory(self, 'Choose a Directory',
+                    '\\', )
+                docking_pie_dir = os.path.join(dir_path, "DockingPie")
+
+            if dir_path:
+                try:
+                    # Make "DockingPie" directory
+                    os.mkdir(docking_pie_dir)
+                    with open(path_to_config_txt, "a+") as file:
+                        file.write("#| DockingPie_dir:" + str(docking_pie_dir))
+
+                except Exception as e:
+                    print(e)
+
+                return docking_pie_dir
+
+        else:
+
+            return None
+
+
+    def check_path_for_spaces(self, path):
+        space = False
+        folders_list = path.split(self.path_sep)
+        for folder in folders_list:
+            if ' ' in folder:
+                space = True
+                break
+
+        return space
+
+
     def check_configuration(self, main):
 
         configuration = {"et": False,
@@ -236,7 +353,7 @@ Please check that any dependency is installed before continuing.
                         "pl": False,
                         "pr": False}
 
-        config_path = main.config_path
+        config_path = main.dockingpie_extdir
 
         path_to_adt = os.path.join(config_path, "AutoDockTools")
         path_to_et = os.path.join(config_path, main.et)
@@ -457,13 +574,13 @@ class Docking_Programs(QtWidgets.QWidget):
     A class to reppresent the Tab Widget of the Docking Programs.
     """
 
-    def __init__(self, main_window):
+    def __init__(self, main_window, dockingpie_extdir):
         super().__init__(main_window)
         self.main_window = main_window
 
-        self.create_child_tabs_for_docking_programs()
+        self.create_child_tabs_for_docking_programs(dockingpie_extdir)
 
-    def create_child_tabs_for_docking_programs(self):
+    def create_child_tabs_for_docking_programs(self, dockingpie_extdir):
 
         # Customize PyMOl visualization.
         self.main_window.set_pymol_visualization_options()
@@ -474,7 +591,7 @@ class Docking_Programs(QtWidgets.QWidget):
         self.current_path = (os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
         # Path to tmp
-        self.tmp_dir_path = (os.path.join(self.current_path, "tmp"))
+        self.tmp_dir_path = (os.path.join(dockingpie_extdir, "tmp"))
 
         # Path to general_tmp
         self.general_tmp_dir = os.path.join(self.tmp_dir_path, "General_tmp")
@@ -500,6 +617,10 @@ class Docking_Programs(QtWidgets.QWidget):
         # Path to config
         self.config_path = (os.path.join(self.current_path, "config"))
 
+        # Path to DockingPie config
+        self.dockingpie_extdir = (os.path.join(dockingpie_extdir, "CONFIG"))
+
+
         # Paths
         if sys.platform == "win32":
             self.et = "external_tools_windows"
@@ -510,8 +631,8 @@ class Docking_Programs(QtWidgets.QWidget):
             self.sdsorter_tree = None
 
             self.path_sep = "\\"
-            self.path_to_vina = (os.path.join(self.config_path, "external_tools_windows", "vina_win32", "bin", "vina.exe"))
-            self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_windows", "adfr_win32"))
+            self.path_to_vina = (os.path.join(self.dockingpie_extdir, "external_tools_windows", "vina_win32", "bin", "vina.exe"))
+            self.path_to_ADFR = (os.path.join(self.dockingpie_extdir, "external_tools_windows", "adfr_win32"))
             # self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_windows", "ADFRsuite_win", "bin", "adfr.bat"))
             # self.path_to_agfr = (os.path.join(self.config_path, "external_tools_windows", "ADFRsuite_win", "bin", "agfr.bat"))
 
@@ -524,11 +645,11 @@ class Docking_Programs(QtWidgets.QWidget):
             self.sdsorter_tree = ["sdsorter_linux", "bin", "sdsorter.static"]
 
             self.path_sep = "/"
-            self.path_to_vina = (os.path.join(self.config_path, "external_tools_linux", "vina_linux", "bin", "vina"))
-            self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "adfr"))
-            self.path_to_agfr = (os.path.join(self.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "agfr"))
-            self.path_to_smina = (os.path.join(self.config_path, "external_tools_linux", "smina_linux", "bin", "smina.static"))
-            self.path_to_sdsorter = (os.path.join(self.config_path, "external_tools_linux", "sdsorter_linux", "bin", "sdsorter.static"))
+            self.path_to_vina = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "vina_linux", "bin", "vina"))
+            self.path_to_ADFR = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "adfr"))
+            self.path_to_agfr = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "agfr"))
+            self.path_to_smina = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "smina_linux", "bin", "smina.static"))
+            self.path_to_sdsorter = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "sdsorter_linux", "bin", "sdsorter.static"))
 
         elif sys.platform == "darwin":
             self.et = "external_tools_macOS"
@@ -539,16 +660,16 @@ class Docking_Programs(QtWidgets.QWidget):
             self.sdsorter_tree = ["sdsorter_darwin", "bin", "sdsorter.osx"]
 
             self.path_sep = "/"
-            self.path_to_vina = (os.path.join(self.config_path, "external_tools_macOS", "vina_darwin", "bin", "vina"))
-            self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "adfr"))
-            self.path_to_agfr = (os.path.join(self.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "agfr"))
-            self.path_to_smina = (os.path.join(self.config_path, "external_tools_macOS", "smina_darwin", "bin", "smina.osx"))
-            self.path_to_sdsorter = (os.path.join(self.config_path, "external_tools_macOS", "sdsorter_darwin", "bin", "sdsorter.osx"))
+            self.path_to_vina = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "vina_darwin", "bin", "vina"))
+            self.path_to_ADFR = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "adfr"))
+            self.path_to_agfr = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "agfr"))
+            self.path_to_smina = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "smina_darwin", "bin", "smina.osx"))
+            self.path_to_sdsorter = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "sdsorter_darwin", "bin", "sdsorter.osx"))
 
         # Path to RxDock config files
-        self.path_to_cavity = (os.path.join(self.config_path, "RxDock", "Cavity"))
-        self.path_to_pharma = (os.path.join(self.config_path, "RxDock", "pharma.const"))
-        self.path_to_prm_file = (os.path.join(self.config_path, "RxDock", "standard_prm_file"))
+        self.path_to_cavity = (os.path.join(self.dockingpie_extdir, "RxDock", "Cavity"))
+        self.path_to_pharma = (os.path.join(self.dockingpie_extdir, "RxDock", "pharma.const"))
+        self.path_to_prm_file = (os.path.join(self.dockingpie_extdir, "RxDock", "standard_prm_file"))
 
         # Dictionaries to store informations about the ligands and structures that have been loaded.
         self.vina_receptors_dict = {}

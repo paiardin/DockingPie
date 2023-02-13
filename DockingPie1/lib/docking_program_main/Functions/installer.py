@@ -73,8 +73,8 @@ class External_components_dialog(Installer_dialog_mixin, QtWidgets.QDialog):
 
         QtWidgets.QDialog.__init__(self, parent=self.tab)
 
-        download_path = os.path.join(self.tab.docking_programs.config_path, "external_tools_linux.zip")
-        download_dir = self.tab.docking_programs.config_path
+        download_path = os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_linux.zip")
+        download_dir = self.tab.docking_programs.dockingpie_extdir
         self.local_mode = local_mode
 
         # Performs "local" installation.
@@ -567,8 +567,11 @@ class Installation():
 
             self.detailed_info_window.show()
 
-        elif self.installation_completed == False and self.has_conda == False:
+        elif self.installation_completed == False and self.has_conda == False and not self.program_to_install == "ADFR":
             QtWidgets.QMessageBox.warning(self.tab, "", str("Conda is not integrated in this PyMOL release. \n" + self.program_to_install + " can not be automatically installed"))
+
+        elif self.installation_completed == False and self.has_conda == False and self.program_to_install == "ADFR":
+            QtWidgets.QMessageBox.warning(self.tab, "", str("ADFR failed to be installed"))
 
         else:
             if self.program_to_install == "ADFR":
@@ -584,11 +587,11 @@ class Installation():
         self.conda_installation = False
 
         if sys.platform == "linux":
-            path_to_sdsorter = (os.path.join(self.tab.docking_programs.config_path, "external_tools_linux", "sdsorter_linux", "bin"))
+            path_to_sdsorter = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_linux", "sdsorter_linux", "bin"))
             name = "sdsorter.static"
 
         if sys.platform == "darwin":
-            path_to_sdsorter = (os.path.join(self.tab.docking_programs.config_path, "external_tools_macOS", "sdsorter_darwin", "bin"))
+            path_to_sdsorter = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_macOS", "sdsorter_darwin", "bin"))
             name = "sdsorter.osx"
 
         os.chdir(path_to_sdsorter)
@@ -654,14 +657,14 @@ class Installation():
 
         else:
             if sys.platform == "linux":
-                tmp_path_bin = (os.path.join(self.tab.docking_programs.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin"))
-                tmp_path_adfr = (os.path.join(self.tab.docking_programs.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0"))
-                archos = (os.path.join(self.tab.docking_programs.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "archosv"))
+                tmp_path_bin = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin"))
+                tmp_path_adfr = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0"))
+                archos = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "archosv"))
 
             if sys.platform == "darwin":
-                tmp_path_bin = (os.path.join(self.tab.docking_programs.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin"))
-                tmp_path_adfr = (os.path.join(self.tab.docking_programs.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0"))
-                archos = (os.path.join(self.tab.docking_programs.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "archosv"))
+                tmp_path_bin = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin"))
+                tmp_path_adfr = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0"))
+                archos = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "archosv"))
 
             os.chdir(tmp_path_adfr)
 
@@ -683,15 +686,15 @@ class Installation():
         self.conda_installation = False
 
         if sys.platform == "linux":
-            path_to_vina = (os.path.join(self.tab.docking_programs.config_path, "external_tools_linux", "vina_linux", "bin"))
+            path_to_vina = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_linux", "vina_linux", "bin"))
             name = "vina"
 
         if sys.platform == "darwin":
-            path_to_vina = (os.path.join(self.tab.docking_programs.config_path, "external_tools_macOS", "vina_darwin", "bin"))
+            path_to_vina = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_macOS", "vina_darwin", "bin"))
             name = "vina"
 
         if sys.platform == "win32":
-            path_to_vina = (os.path.join(self.tab.docking_programs.config_path, "external_tools_windows", "vina_win32", "bin"))
+            path_to_vina = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_windows", "vina_win32", "bin"))
             name = "vina.exe"
 
         os.chdir(path_to_vina)
@@ -717,11 +720,11 @@ class Installation():
         self.conda_installation = False
 
         if sys.platform == "linux":
-            path_to_smina = (os.path.join(self.tab.docking_programs.config_path, "external_tools_linux", "smina_linux", "bin"))
+            path_to_smina = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_linux", "smina_linux", "bin"))
             name = "smina.static"
 
         if sys.platform == "darwin":
-            path_to_smina = (os.path.join(self.tab.docking_programs.config_path, "external_tools_macOS", "smina_darwin", "bin"))
+            path_to_smina = (os.path.join(self.tab.docking_programs.dockingpie_extdir, "external_tools_macOS", "smina_darwin", "bin"))
             name = "smina.osx"
 
         os.chdir(path_to_smina)

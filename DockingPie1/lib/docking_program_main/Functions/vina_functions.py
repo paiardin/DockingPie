@@ -144,7 +144,7 @@ class Vina_docking():
         if self.use_flex_protocol:
 
             # Generate pdbqt file with flexible side chains
-            self.prepare_flex_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_flexreceptor4.py")
+            self.prepare_flex_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.dockingpie_extdir, "prepare_flexreceptor4.py")
             self.preapre_flex_receptors_settings = ["python",
             self.prepare_flex_receptor_path,
             "-r", str(self.receptor_to_dock + ".pdbqt"),

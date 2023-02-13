@@ -629,7 +629,7 @@ class ConfigurationTab(QtWidgets.QWidget):
                 # An exception may occur if for some reasons the Config directory was found but is not complete
                 self.external_tools_error = True
                 QtWidgets.QMessageBox.warning(self.docking_programs, "External Tools Error", str("This error is due to a wrong Configuration of the external tools.\nA possible cause could be an interruption during download.\nPlease Configure again External Tools.\nPress \"Ok\" to continue"))
-                path_to_config = os.path.join(self.docking_programs.config_path)
+                path_to_config = os.path.join(self.docking_programs.dockingpie_extdir)
                 adt_dir = os.path.join(path_to_config, "AutoDockTools")
                 et = os.path.join(path_to_config, self.dir_name)
                 flex = os.path.join(path_to_config, "prepare_flexreceptor4.py")
@@ -734,7 +734,7 @@ class ConfigurationTab(QtWidgets.QWidget):
         if sys.platform == "win32":
             dir_name = "external_tools_windows"
 
-        ext_tools_path = os.path.join(self.docking_programs.config_path, dir_name)
+        ext_tools_path = os.path.join(self.docking_programs.dockingpie_extdir, dir_name)
 
         if os.path.isdir(ext_tools_path):
             config_frame = self.programs_to_install['Config']
@@ -2388,29 +2388,29 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         # Update info in ligands dictionary
         dict[strc]["frame"] = self.structure_frame
 
-        if self.is_vina_tab or self.is_smina_tab or self.is_adfr_tab:
-
-            # Add some options only to Vina Ligands' frames
-            self.structure_frame.add_h = QtWidgets.QCheckBox("Add Hydrogens")
-            self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.add_h, 2, 1)
-            self.structure_frame.add_h.setEnabled(False)
-
-            self.structure_frame.active_torsions_group = QtWidgets.QGroupBox("Active Torsions")
-            self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.active_torsions_group, 1, 1)
-            self.structure_frame.active_torsions_layout = QtWidgets.QVBoxLayout()
-            self.structure_frame.active_torsions_group.setLayout(self.structure_frame.active_torsions_layout)
-
-            self.structure_frame.active_torsions_group.setEnabled(False)
-
-            self.structure_frame.all_but_torsions = QtWidgets.QRadioButton("All but Guanidinium and Amide")
-            self.structure_frame.all_torsions = QtWidgets.QRadioButton("All")
-            self.structure_frame.none_torsions = QtWidgets.QRadioButton("None")
-            self.structure_frame.active_torsions_layout.addWidget(self.structure_frame.all_but_torsions)
-            self.structure_frame.active_torsions_layout.addWidget(self.structure_frame.all_torsions)
-            self.structure_frame.active_torsions_layout.addWidget(self.structure_frame.none_torsions)
-            self.structure_frame.all_but_torsions.setEnabled(False)
-            self.structure_frame.all_torsions.setEnabled(False)
-            self.structure_frame.none_torsions.setEnabled(False)
+        # if self.is_vina_tab or self.is_smina_tab or self.is_adfr_tab:
+        #
+        #     # Add some options only to Vina Ligands' frames
+        #     self.structure_frame.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+        #     self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.add_h, 2, 1)
+        #     self.structure_frame.add_h.setEnabled(False)
+        #
+        #     self.structure_frame.active_torsions_group = QtWidgets.QGroupBox("Active Torsions")
+        #     self.structure_frame.structure_frame_layout.addWidget(self.structure_frame.active_torsions_group, 1, 1)
+        #     self.structure_frame.active_torsions_layout = QtWidgets.QVBoxLayout()
+        #     self.structure_frame.active_torsions_group.setLayout(self.structure_frame.active_torsions_layout)
+        #
+        #     self.structure_frame.active_torsions_group.setEnabled(False)
+        #
+        #     self.structure_frame.all_but_torsions = QtWidgets.QRadioButton("All but Guanidinium and Amide")
+        #     self.structure_frame.all_torsions = QtWidgets.QRadioButton("All")
+        #     self.structure_frame.none_torsions = QtWidgets.QRadioButton("None")
+        #     self.structure_frame.active_torsions_layout.addWidget(self.structure_frame.all_but_torsions)
+        #     self.structure_frame.active_torsions_layout.addWidget(self.structure_frame.all_torsions)
+        #     self.structure_frame.active_torsions_layout.addWidget(self.structure_frame.none_torsions)
+        #     self.structure_frame.all_but_torsions.setEnabled(False)
+        #     self.structure_frame.all_torsions.setEnabled(False)
+        #     self.structure_frame.none_torsions.setEnabled(False)
 
         # Add to the layout
         self.prepare_ligands_frame_layout.addRow(dict[strc]["frame"])

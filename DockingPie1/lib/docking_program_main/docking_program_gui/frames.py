@@ -403,7 +403,7 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
         if sys.platform == "win32":
             dir_name = "external_tools_windows"
 
-        ext_tools_path = os.path.join(self.main_window.docking_programs.config_path, dir_name)
+        ext_tools_path = os.path.join(self.main_window.docking_programs.dockingpie_extdir, dir_name)
 
         if os.path.isdir(ext_tools_path):
             self.configure_line_edit.setText(ext_tools_path)
@@ -536,23 +536,23 @@ class InstallationFrames(QtWidgets.QFrame, PyMOLInteractions):
             if qm == QtWidgets.QMessageBox.Yes:
 
                 if sys.platform == "linux":
-                    shutil.rmtree(str(os.path.join(self.main_window.docking_programs.config_path, "external_tools_linux")))
+                    shutil.rmtree(str(os.path.join(self.main_window.docking_programs.dockingpie_extdir, "external_tools_linux")))
                 if sys.platform == "win32":
-                    shutil.rmtree(str(os.path.join(self.main_window.docking_programs.config_path, "external_tools_windows")))
+                    shutil.rmtree(str(os.path.join(self.main_window.docking_programs.dockingpie_extdir, "external_tools_windows")))
                 if sys.platform == "darwin":
-                    shutil.rmtree(str(os.path.join(self.main_window.docking_programs.config_path, "external_tools_macOS")))
+                    shutil.rmtree(str(os.path.join(self.main_window.docking_programs.dockingpie_extdir, "external_tools_macOS")))
 
                 # Update
-                shutil.rmtree(str(os.path.join(self.main_window.docking_programs.config_path, "AutoDockTools")))
-                os.remove(str(os.path.join(self.main_window.docking_programs.config_path, "prepare_flexreceptor4.py")))
-                os.remove(str(os.path.join(self.main_window.docking_programs.config_path, "prepare_ligand4.py")))
-                os.remove(str(os.path.join(self.main_window.docking_programs.config_path, "prepare_receptor4.py")))
+                shutil.rmtree(str(os.path.join(self.main_window.docking_programs.dockingpie_extdir, "AutoDockTools")))
+                os.remove(str(os.path.join(self.main_window.docking_programs.dockingpie_extdir, "prepare_flexreceptor4.py")))
+                os.remove(str(os.path.join(self.main_window.docking_programs.dockingpie_extdir, "prepare_ligand4.py")))
+                os.remove(str(os.path.join(self.main_window.docking_programs.dockingpie_extdir, "prepare_receptor4.py")))
 
                 # Delete "version.txt" file
                 os.remove(current_version_file)
 
                 # Rename "last_version.txt" to "version.txt"
-                os.rename(last_version_file, os.path.join(self.main_window.docking_programs.config_path, "version.txt"))
+                os.rename(last_version_file, os.path.join(self.main_window.docking_programs.dockingpie_extdir, "version.txt"))
 
                 self.configure_external_tools_directory()
 

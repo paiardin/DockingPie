@@ -1,8 +1,0 @@
-alias adfr /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/adfr
-alias agfr /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/agfr
-alias agfrgui /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/agfrgui
-alias autosite /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/autosite
-alias about /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/about
-alias prepare_receptor /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/prepare_receptor
-alias prepare_ligand /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/prepare_ligand
-alias pythonsh /home/serena/bin/PyMOL-2.5.2_293-Linux-x86_64-py37/pymol/lib/python3.7/site-packages/pmg_tk/startup/Plugin/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/pythonsh
