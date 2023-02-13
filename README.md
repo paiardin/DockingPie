@@ -1,4 +1,4 @@
-   # This is a development branch - Please refers to the main branch for the official release
+   # **This is a development branch - Please refers to the main branch for the official release** 
    
    # DockingPie: a Consensus Docking plugin for PyMOL
 
