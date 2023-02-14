@@ -27,7 +27,7 @@ from .tabs import ReceptorTab
 from .tabs import LigandTab
 from .tabs import DockingTab
 from .tabs import ResultsTab
-from .tabs import ConfigurationTab, DataAnalysisTab
+from .tabs import ConfigurationTab, DataAnalysisTab, ConsensusScoringTab
 
 def welcomewindow(title, message, parent=None, buttons_text=None):
     """
@@ -134,13 +134,8 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
         # Creating a menu bar.
         #self.make_main_menu()
 
-        # Path where the plugin is located
-        current_path = (os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-        config_file = self.check_dockingpie_config_file(current_path)
-
         # Create the Tabwidget for all the Docking Programs and Configuration Tab. Each Docking Program has its own Tab.
-        self.main_docking_programs_tabs = Docking_Programs(self, self.dockingpie_extdir)
+        self.main_docking_programs_tabs = Docking_Programs(self)
         main_tab_bar = self.main_docking_programs_tabs.docking_programs_tabs.tabBar()
 
         # Creating central widget and setting it as central.
@@ -171,9 +166,6 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
             os.mkdir(self.main_docking_programs_tabs.adfr_tmp_dir)
             os.mkdir(self.main_docking_programs_tabs.consensus_tmp_dir)
 
-        if not os.path.isdir(self.main_docking_programs_tabs.dockingpie_extdir):
-            os.mkdir(self.main_docking_programs_tabs.dockingpie_extdir)
-
         # Clean and make a tmp directory
         shutil.rmtree(self.main_docking_programs_tabs.general_tmp_dir)
         os.mkdir(self.main_docking_programs_tabs.general_tmp_dir)
@@ -196,8 +188,8 @@ class DockingProgram_main_window_qt(QtWidgets.QMainWindow, DockingProgram_main_w
         # Initialize User Interface.
         self.initUI()
 
-        # check if "DockingPie" directory already exists
-        dockingpie_extdir = self.check_dockingpie_config(current_path)
+        # # check if "DockingPie" directory already exists
+        # dockingpie_extdir = self.check_dockingpie_config(current_path)
 
         ## Check if the configuration is completed
         configuration = self.check_configuration(self.main_docking_programs_tabs)
@@ -353,7 +345,7 @@ Please check that any dependency is installed before continuing.
                         "pl": False,
                         "pr": False}
 
-        config_path = main.dockingpie_extdir
+        config_path = main.config_path
 
         path_to_adt = os.path.join(config_path, "AutoDockTools")
         path_to_et = os.path.join(config_path, main.et)
@@ -574,13 +566,13 @@ class Docking_Programs(QtWidgets.QWidget):
     A class to reppresent the Tab Widget of the Docking Programs.
     """
 
-    def __init__(self, main_window, dockingpie_extdir):
+    def __init__(self, main_window):
         super().__init__(main_window)
         self.main_window = main_window
 
-        self.create_child_tabs_for_docking_programs(dockingpie_extdir)
+        self.create_child_tabs_for_docking_programs()
 
-    def create_child_tabs_for_docking_programs(self, dockingpie_extdir):
+    def create_child_tabs_for_docking_programs(self):
 
         # Customize PyMOl visualization.
         self.main_window.set_pymol_visualization_options()
@@ -591,7 +583,7 @@ class Docking_Programs(QtWidgets.QWidget):
         self.current_path = (os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
         # Path to tmp
-        self.tmp_dir_path = (os.path.join(dockingpie_extdir, "tmp"))
+        self.tmp_dir_path = (os.path.join(self.current_path, "tmp"))
 
         # Path to general_tmp
         self.general_tmp_dir = os.path.join(self.tmp_dir_path, "General_tmp")
@@ -617,8 +609,8 @@ class Docking_Programs(QtWidgets.QWidget):
         # Path to config
         self.config_path = (os.path.join(self.current_path, "config"))
 
-        # Path to DockingPie config
-        self.dockingpie_extdir = (os.path.join(dockingpie_extdir, "CONFIG"))
+        # # Path to DockingPie config
+        # self.config_path = (os.path.join(dockingpie_extdir, "CONFIG"))
 
 
         # Paths
@@ -631,8 +623,8 @@ class Docking_Programs(QtWidgets.QWidget):
             self.sdsorter_tree = None
 
             self.path_sep = "\\"
-            self.path_to_vina = (os.path.join(self.dockingpie_extdir, "external_tools_windows", "vina_win32", "bin", "vina.exe"))
-            self.path_to_ADFR = (os.path.join(self.dockingpie_extdir, "external_tools_windows", "adfr_win32"))
+            self.path_to_vina = (os.path.join(self.config_path, "external_tools_windows", "vina_win32", "bin", "vina.exe"))
+            self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_windows", "adfr_win32"))
             # self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_windows", "ADFRsuite_win", "bin", "adfr.bat"))
             # self.path_to_agfr = (os.path.join(self.config_path, "external_tools_windows", "ADFRsuite_win", "bin", "agfr.bat"))
 
@@ -645,11 +637,11 @@ class Docking_Programs(QtWidgets.QWidget):
             self.sdsorter_tree = ["sdsorter_linux", "bin", "sdsorter.static"]
 
             self.path_sep = "/"
-            self.path_to_vina = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "vina_linux", "bin", "vina"))
-            self.path_to_ADFR = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "adfr"))
-            self.path_to_agfr = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "agfr"))
-            self.path_to_smina = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "smina_linux", "bin", "smina.static"))
-            self.path_to_sdsorter = (os.path.join(self.dockingpie_extdir, "external_tools_linux", "sdsorter_linux", "bin", "sdsorter.static"))
+            self.path_to_vina = (os.path.join(self.config_path, "external_tools_linux", "vina_linux", "bin", "vina"))
+            self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "adfr"))
+            self.path_to_agfr = (os.path.join(self.config_path, "external_tools_linux", "ADFRsuite_x86_64Linux_1.0", "bin", "agfr"))
+            self.path_to_smina = (os.path.join(self.config_path, "external_tools_linux", "smina_linux", "bin", "smina.static"))
+            self.path_to_sdsorter = (os.path.join(self.config_path, "external_tools_linux", "sdsorter_linux", "bin", "sdsorter.static"))
 
         elif sys.platform == "darwin":
             self.et = "external_tools_macOS"
@@ -660,16 +652,16 @@ class Docking_Programs(QtWidgets.QWidget):
             self.sdsorter_tree = ["sdsorter_darwin", "bin", "sdsorter.osx"]
 
             self.path_sep = "/"
-            self.path_to_vina = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "vina_darwin", "bin", "vina"))
-            self.path_to_ADFR = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "adfr"))
-            self.path_to_agfr = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "agfr"))
-            self.path_to_smina = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "smina_darwin", "bin", "smina.osx"))
-            self.path_to_sdsorter = (os.path.join(self.dockingpie_extdir, "external_tools_macOS", "sdsorter_darwin", "bin", "sdsorter.osx"))
+            self.path_to_vina = (os.path.join(self.config_path, "external_tools_macOS", "vina_darwin", "bin", "vina"))
+            self.path_to_ADFR = (os.path.join(self.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "adfr"))
+            self.path_to_agfr = (os.path.join(self.config_path, "external_tools_macOS", "ADFRsuite_x86_64Darwin_1.0", "bin", "agfr"))
+            self.path_to_smina = (os.path.join(self.config_path, "external_tools_macOS", "smina_darwin", "bin", "smina.osx"))
+            self.path_to_sdsorter = (os.path.join(self.config_path, "external_tools_macOS", "sdsorter_darwin", "bin", "sdsorter.osx"))
 
         # Path to RxDock config files
-        self.path_to_cavity = (os.path.join(self.dockingpie_extdir, "RxDock", "Cavity"))
-        self.path_to_pharma = (os.path.join(self.dockingpie_extdir, "RxDock", "pharma.const"))
-        self.path_to_prm_file = (os.path.join(self.dockingpie_extdir, "RxDock", "standard_prm_file"))
+        self.path_to_cavity = (os.path.join(self.config_path, "RxDock", "Cavity"))
+        self.path_to_pharma = (os.path.join(self.config_path, "RxDock", "pharma.const"))
+        self.path_to_prm_file = (os.path.join(self.config_path, "RxDock", "standard_prm_file"))
 
         # Dictionaries to store informations about the ligands and structures that have been loaded.
         self.vina_receptors_dict = {}
@@ -765,6 +757,13 @@ class Docking_Programs(QtWidgets.QWidget):
         self.docking_programs_tabs.addTab(self.DATA_ANALYSIS, "DATA ANALYSIS")
         self.data_analysis_layout = DataAnalysisTab(self)
         self.DATA_ANALYSIS.setLayout(self.data_analysis_layout.layout_data_analysis_tab)
+
+                ### Create CONSENSUS SCORING Tab ###
+
+        self.CONSENSUS_SCORING = QtWidgets.QWidget()
+        self.docking_programs_tabs.addTab(self.CONSENSUS_SCORING, "CONSENSUS SCORING")
+        self.consensus_scoring_layout = ConsensusScoringTab(self)
+        self.CONSENSUS_SCORING.setLayout(self.consensus_scoring_layout.layout_data_analysis_tab)
 
 
                 ### Set the Layouts for GridTab ###

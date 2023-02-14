@@ -347,8 +347,8 @@ class Generate_Object:
         ## For those programs that need the generation of the pdbqt file (Vina, Autodock etc ...)
         if self.generate_pdbqt:
 
-            self.prepare_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.dockingpie_extdir, "prepare_receptor4.py")
-            self.prepare_ligand_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.dockingpie_extdir, "prepare_ligand4.py")
+            self.prepare_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_receptor4.py")
+            self.prepare_ligand_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_ligand4.py")
 
             if self.is_receptor:
 

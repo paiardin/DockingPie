@@ -80,6 +80,22 @@ except:
 import csv
 
 
+class ConsensusScoringTab(QtWidgets.QWidget):
+
+    def __init__(self, main_window):
+        super().__init__(main_window)
+        self.docking_programs = main_window
+
+        self.initUI()
+
+    def initUI(self):
+        # Tab Layout
+        self.layout_data_analysis_tab = QtWidgets.QGridLayout()
+
+        # Docking Runs QGroupBox
+        self.docking_runs_group = QtWidgets.QGroupBox("Receptor")
+        self.layout_data_analysis_tab.addWidget(self.docking_runs_group, 0, 0, 5, 1)
+
 
 class Consensus_layout(QtWidgets.QWidget):
 
@@ -629,7 +645,7 @@ class ConfigurationTab(QtWidgets.QWidget):
                 # An exception may occur if for some reasons the Config directory was found but is not complete
                 self.external_tools_error = True
                 QtWidgets.QMessageBox.warning(self.docking_programs, "External Tools Error", str("This error is due to a wrong Configuration of the external tools.\nA possible cause could be an interruption during download.\nPlease Configure again External Tools.\nPress \"Ok\" to continue"))
-                path_to_config = os.path.join(self.docking_programs.dockingpie_extdir)
+                path_to_config = os.path.join(self.docking_programs.config_path)
                 adt_dir = os.path.join(path_to_config, "AutoDockTools")
                 et = os.path.join(path_to_config, self.dir_name)
                 flex = os.path.join(path_to_config, "prepare_flexreceptor4.py")
@@ -734,7 +750,7 @@ class ConfigurationTab(QtWidgets.QWidget):
         if sys.platform == "win32":
             dir_name = "external_tools_windows"
 
-        ext_tools_path = os.path.join(self.docking_programs.dockingpie_extdir, dir_name)
+        ext_tools_path = os.path.join(self.docking_programs.config_path, dir_name)
 
         if os.path.isdir(ext_tools_path):
             config_frame = self.programs_to_install['Config']
