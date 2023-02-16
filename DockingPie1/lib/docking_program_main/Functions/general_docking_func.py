@@ -27,6 +27,7 @@ except:
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
 from lib.docking_program_main.docking_program_gui.new_windows import NewWindow
 
+
 class ObjectParser():
 
 

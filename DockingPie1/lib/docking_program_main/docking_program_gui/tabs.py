@@ -48,6 +48,7 @@ from lib.docking_program_main.Functions.handle_widgets import HandleWidgets
 from lib.docking_program_main.Functions.consensus_protocol import *
 from lib.docking_program_main.docking_program_gui.new_windows import NewWindow, Import_from_pymol_window_qt, InfoWindow, WelcomeWindow2
 from lib.docking_program_main.docking_program_gui.dialogs import *
+from lib.docking_program_main.docking_program_gui.widgets_utilities import *
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
 from lib.docking_program_main.Functions.general_docking_func import Generate_Object, Calculate_RMSD
 from lib.docking_program_main.Functions.general_functions import OpenFromFile, Check_current_tab, Save_to_Csv, SelectAll, check_configuration
@@ -80,7 +81,7 @@ except:
 import csv
 
 
-class ConsensusScoringTab(QtWidgets.QWidget):
+class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
 
     def __init__(self, main_window):
         super().__init__(main_window)
@@ -92,9 +93,124 @@ class ConsensusScoringTab(QtWidgets.QWidget):
         # Tab Layout
         self.layout_data_analysis_tab = QtWidgets.QGridLayout()
 
-        # Docking Runs QGroupBox
-        self.docking_runs_group = QtWidgets.QGroupBox("Receptor")
-        self.layout_data_analysis_tab.addWidget(self.docking_runs_group, 0, 0, 5, 1)
+        # Receptor QGroupBox
+        self.receptor_group_box = QtWidgets.QGroupBox("Receptor")
+        self.layout_data_analysis_tab.addWidget(self.receptor_group_box, 0, 0)
+        self.receptor_group_box.setLayout(QtWidgets.QGridLayout())
+
+        self.receptor_cb = QtWidgets.QComboBox()
+        self.rec_update = QtWidgets.QPushButton("Update from PyMOL")
+        self.rec_ao = QtWidgets.QPushButton("Advanced Options")
+        self.receptor_group_box.layout().addWidget(self.receptor_cb, 0, 0, 1, 2)
+        self.receptor_group_box.layout().addWidget(self.rec_update, 1, 0)
+        self.receptor_group_box.layout().addWidget(self.rec_ao, 1, 1)
+
+         # Ligands QGroupBox
+        self.ligand_group_box = QtWidgets.QGroupBox("Ligand(s)")
+        self.layout_data_analysis_tab.addWidget(self.ligand_group_box, 1, 0, 2, 1)
+        self.ligand_group_box.setLayout(QtWidgets.QGridLayout())
+
+        self.ligand_cb = QtWidgets.QListWidget()
+        self.lig_update = QtWidgets.QPushButton("Update from PyMOL")
+        self.lig_ao = QtWidgets.QPushButton("Advanced Options")
+        self.ligand_group_box.layout().addWidget(self.ligand_cb, 0, 0, 1, 2)
+        self.ligand_group_box.layout().addWidget(self.lig_update, 1, 0)
+        self.ligand_group_box.layout().addWidget(self.lig_ao, 1, 1)
+
+         # Grid QGroupBox
+        self.grid_group_box = QtWidgets.QGroupBox("Grid Settings")
+        self.layout_data_analysis_tab.addWidget(self.grid_group_box, 3, 0, 1, 3)
+        self.grid_layout = QtWidgets.QGridLayout()
+        self.grid_layout.setAlignment(QtCore.Qt.AlignCenter)
+        self.grid_group_box.setLayout(self.grid_layout)
+
+        self.spacing, self.spacing_scroll_vis, self.x, self.x_scroll_vis, self.y, self.y_scroll_vis, self.z, self.z_scroll_vis = grid_dimensions(self.scroll_changed)
+        self.x_pos, self.x_scroll, self.y_pos, self.y_scroll, self.z_pos, self.z_scroll = grid_position(self.scroll_changed)
+
+        self.update_grid = QtWidgets.QPushButton("Get coords from PyMOL object")
+        self.grid_layout.addWidget(self.update_grid, 3, 0)
+
+        # Grid Position widgets
+        self.grid_layout.addWidget(self.x_pos, 1, 1)
+        self.grid_layout.addWidget(self.x_scroll, 1, 2)
+
+        self.grid_layout.addWidget(self.y_pos, 1, 3)
+        self.grid_layout.addWidget(self.y_scroll, 1, 4)
+
+        self.grid_layout.addWidget(self.z_pos, 1, 5)
+        self.grid_layout.addWidget(self.z_scroll, 1, 6)
+
+        # Grid Dimension widgets
+        self.grid_layout.addWidget(self.spacing, 0, 0)
+        self.grid_layout.addWidget(self.spacing_scroll_vis, 0, 1)
+
+        self.grid_layout.addWidget(self.x, 0, 2)
+        self.grid_layout.addWidget(self.x_scroll_vis, 0, 3)
+
+        self.grid_layout.addWidget(self.y, 0, 4)
+        self.grid_layout.addWidget(self.y_scroll_vis, 0, 5)
+
+        self.grid_layout.addWidget(self.z, 0, 6)
+        self.grid_layout.addWidget(self.z_scroll_vis, 0, 7)
+
+        ####
+
+         # Settings
+        self.settings_group_box = QtWidgets.QGroupBox("Settings")
+        self.layout_data_analysis_tab.addWidget(self.settings_group_box, 0, 1, 3, 2)
+        self.settings_group_box.setLayout(QtWidgets.QGridLayout())
+
+        self.consensus_score_cb = QtWidgets.QComboBox()
+        self.settings_group_box.layout().addWidget(self.consensus_score_cb, 0, 0)
+
+        self.docking_program_check_list = []
+        idx = 0
+        for dp in ["RxDock", "Vina", "Smina", "ADFR"]:
+            self.cb = QtWidgets.QCheckBox(dp)
+            self.docking_program_check_list.append(self.cb)
+            idx += 1
+            self.settings_group_box.layout().addWidget(self.cb, idx, 0)
+
+        # Run Consensus Docking
+        self.run_consensus_docking_button = QtWidgets.QPushButton("Run Consensus Button")
+        self.show_results_summary = QtWidgets.QPushButton("Show Results Summary")
+        self.layout_data_analysis_tab.addWidget(self.run_consensus_docking_button, 4, 0)
+        self.layout_data_analysis_tab.addWidget(self.show_results_summary, 4, 1)
+
+
+
+    def scroll_changed(self):
+
+        # Docking Box is updated dinamically
+        x = self.x_scroll.value()
+        y = self.y_scroll.value()
+        z = self.z_scroll.value()
+        spacing = self.spacing_scroll_vis.value()
+        x_vis = self.x_scroll_vis.value()
+        y_vis = self.y_scroll_vis.value()
+        z_vis = self.z_scroll_vis.value()
+
+        spinbox = self.sender()
+
+        if spinbox is self.x_scroll:
+            x = self.x_scroll.value()
+        elif spinbox is self.y_scroll:
+            y = self.y_scroll.value()
+        elif spinbox is self.z_scroll:
+            z = self.z_scroll.value()
+        elif spinbox is self.spacing_scroll_vis:
+            spacing = self.spacing_scroll_vis.value()
+        elif spinbox is self.x_scroll_vis:
+            x_vis = self.x_scroll_vis.value()
+        elif spinbox is self.y_scroll_vis:
+            y_vis = self.y_scroll_vis.value()
+        elif spinbox is self.z_scroll_vis:
+            z_vis = self.z_scroll_vis.value()
+
+        # Show the center and the box each time the values are updated
+        self.show_crisscross_changed(x, y, z)
+        self.calculate_box_changed(x, y, z, spacing, x_vis, y_vis, z_vis)
+
 
 
 class Consensus_layout(QtWidgets.QWidget):
@@ -961,7 +1077,7 @@ class GridTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.group_config_file = QtWidgets.QGroupBox("Open Config File")
         self.visualize_grid_group = QtWidgets.QGroupBox("Grid Dimension")
 
-        # Add the group boxes to the Grid Tab Layot
+        # Add the group boxes to the Grid Tab Layout
         self.layout_grid_tab.addWidget(self.visualize_grid_group, 1, 0, 1, 2)
         self.layout_grid_tab.addWidget(self.grid_from_selection_group, 0, 0)
         self.layout_grid_tab.addWidget(self.group_grid_center, 2, 0, 1, 2)
@@ -997,43 +1113,16 @@ class GridTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
         # VISUALIZE GRID GROUP
 
+        self.spacing, self.spacing_scroll_vis, self.x, self.x_scroll_vis, self.y, self.y_scroll_vis, self.z, self.z_scroll_vis = grid_dimensions(self.scroll_changed)
+
         self.visualize_layout = QtWidgets.QHBoxLayout()
         self.visualize_layout.setAlignment(QtCore.Qt.AlignCenter)
         self.visualize_grid_group.setLayout(self.visualize_layout)
 
-        self.spacing = QtWidgets.QLabel("All:")
-        self.spacing_scroll_vis = QtWidgets.QDoubleSpinBox()
-        self.spacing_scroll_vis.setRange(0, 10)
-        self.spacing_scroll_vis.setSingleStep(0.01)
-        self.spacing_scroll_vis.setDecimals(3)
-        self.spacing_scroll_vis.setValue(0.375)
-        self.spacing_scroll_vis.valueChanged.connect(self.scroll_changed)
-        #
-        self.x = QtWidgets.QLabel("X:")
-        self.x_scroll_vis = QtWidgets.QSpinBox()
-        self.x_scroll_vis.setRange(1, 50)
-        self.x_scroll_vis.setSingleStep(1)
-        self.x_scroll_vis.setValue(4)
-        self.x_scroll_vis.valueChanged.connect(self.scroll_changed)
-
-        self.y = QtWidgets.QLabel("Y:")
-        self.y_scroll_vis = QtWidgets.QSpinBox()
-        self.y_scroll_vis.setRange(1, 50)
-        self.y_scroll_vis.setSingleStep(1)
-        self.y_scroll_vis.setValue(4)
-        self.y_scroll_vis.valueChanged.connect(self.scroll_changed)
-
-        self.z = QtWidgets.QLabel("Z:")
-        self.z_scroll_vis = QtWidgets.QSpinBox()
-        self.z_scroll_vis.setRange(1, 50)
-        self.z_scroll_vis.setSingleStep(1)
-        self.z_scroll_vis.setValue(4)
-        self.z_scroll_vis.valueChanged.connect(self.scroll_changed)
-
         self.visualize_layout.addWidget(self.spacing)
         self.visualize_layout.addWidget(self.spacing_scroll_vis)
         self.visualize_layout.addStretch()
-        #
+
         self.visualize_layout.addWidget(self.x)
         self.visualize_layout.addWidget(self.x_scroll_vis)
         self.visualize_layout.addStretch()
@@ -1052,24 +1141,7 @@ class GridTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
         self.grid_from_coord_layout.setAlignment(QtCore.Qt.AlignCenter)
         self.group_grid_center.setLayout(self.grid_from_coord_layout)
 
-        self.x = QtWidgets.QLabel("X:")
-        self.x_scroll = QtWidgets.QDoubleSpinBox()
-        self.x_scroll.setRange(-1000, 1000)
-        self.x_scroll.setSingleStep(00.10)
-        self.x_scroll.valueChanged.connect(self.scroll_changed)
-
-        self.y = QtWidgets.QLabel("Y:")
-        self.y_scroll = QtWidgets.QDoubleSpinBox()
-        self.y_scroll.setRange(-1000, 1000)
-        self.y_scroll.setSingleStep(00.10)
-        self.y_scroll.valueChanged.connect(self.scroll_changed)
-
-        self.z = QtWidgets.QLabel("Z:")
-        self.z_scroll = QtWidgets.QDoubleSpinBox()
-        self.z.setBuddy(self.z_scroll)
-        self.z_scroll.setRange(-1000, 1000)
-        self.z_scroll.setSingleStep(00.10)
-        self.z_scroll.valueChanged.connect(self.scroll_changed)
+        self.x, self.x_scroll, self.y, self.y_scroll, self.z, self.z_scroll = grid_position(self.scroll_changed)
 
         self.set_coords_btn = QtWidgets.QPushButton("Set in Docking Tab")
         self.set_coords_btn.clicked.connect(self.set_coords_func)

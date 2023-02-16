@@ -213,8 +213,7 @@ class Import_from_Pymol():
                     # If the PyMOL object is a molecule
                     if type == str("object:molecule"):
                         # count atoms
-                        atom_number = cmd.count_atoms(i, state = 1)
-                        if atom_number >= 150:
+                        if cmd.select("sele", i + " & (polymer)"):
                             # check for multiple staes of the object
                             self.scrolledlist_items.append(i)
 
@@ -240,8 +239,7 @@ class Import_from_Pymol():
                     # If the PyMOL object is a molecule
                     if type == str("object:molecule"):
                         # count atoms
-                        atom_number = cmd.count_atoms(i, state = 1)
-                        if atom_number < 150:
+                        if cmd.select("sele", i + " & (organic)"):
                             # check for multiple staes of the object
                             self.scrolledlist_items.append(i)
 
