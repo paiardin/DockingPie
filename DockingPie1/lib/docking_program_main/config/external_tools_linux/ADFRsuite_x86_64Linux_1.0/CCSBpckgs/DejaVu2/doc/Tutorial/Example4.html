@@ -1,0 +1,72 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.05C-SGI [en] (X11; I; IRIX64 6.5 IP30) [Netscape]">
+</HEAD>
+<BODY>
+&nbsp;
+<BR>&nbsp;
+<H3>
+Example Four:&nbsp; Callbacks and the event Manager</H3>
+This example illustrates the event Manager property of the camera.
+<BR>&nbsp;
+
+<P>First get a handle to the event manager:
+
+<P><TT>>>> ehm=MyViewer.cameras[0].eventManager</TT>
+
+<P>The eventManager is a property of an individual camera.&nbsp; You can
+get a complete listing off all the callback functions bound to keys strokes
+existing in the event Manager at any time:
+
+<P><TT>>>> ehm.ListBindings()</TT>
+
+<P>or the list of all callbacks bound to any specific key stroke:
+
+<P><TT>>>> ehm.ListBindings('&lt;Button-1>')</TT>
+<BR>&nbsp;
+
+<P>Predefined callback functions can be added to specific key strokes in
+the camera:
+
+<P><TT>>>> def mycallback1(event):</TT>
+<BR><TT>...&nbsp;&nbsp;&nbsp;&nbsp; print 'mycallback1 Event at %d %d'
+% (event.x, event.y)</TT>
+<BR><TT>&nbsp;</TT>
+<BR><TT>>>> def mycallback2(event):</TT>
+<BR><TT>...&nbsp;&nbsp;&nbsp;&nbsp; print 'mycallback2 Event at %d %d'
+% (event.x, event.y)</TT>
+
+<P><TT>>>> ehm.AddCallback("&lt;F1>", mycallback1)</TT>
+
+<P>Note that the callback function must have 'event' as its parameter and
+the key stroke must occur with the cursor over the camera.&nbsp; AddCallback
+adds this callback to whatever else may have been previously bound to this
+keystroke. Another function, SetCallback, replaces the previously bound
+funtions with the new one.&nbsp; It returns a list of the previous callbacks
+which can be stored and restored.
+
+<P><TT>>>> funcList = ehm.SetCallback("&lt;F1>", mycallback2)</TT>
+<BR>&nbsp;
+
+<P>Now, funcList is a list of what was previously bound to &lt;F1>:
+<BR>&nbsp;
+<BR><TT>>>> funcList</TT>
+
+<P><TT>[&lt;function mycallback1 at 102d1788>]</TT>
+<BR>&nbsp;
+
+<P>and mycallback2 is bound to F1.&nbsp; mycallback1 could be restored
+as follows:
+
+<P><TT>>>>&nbsp; ehm.SetCallback("&lt;F1>", funcList)</TT>
+
+<P>Callback functions can be removed:
+
+<P><TT>>>>&nbsp; ehm.RemoveCallback("&lt;F1>", funcList)</TT>
+<BR>&nbsp;
+
+<P>&nbsp;
+<BR>&nbsp;
+</BODY>
+</HTML>

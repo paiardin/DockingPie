@@ -1,0 +1,179 @@
+## MS March 14 force field trying to emulate AD4.2 as close as possible
+## 
+version    4.1 
+
+# AutoDock 4 free energy coefficients with respect to original (AD2) energetic parameters
+#  This model assumes that the bound and unbound conformations are the same.
+#  See Table 3 in Huey,Morris,Olson&Goodsell (2007) J Comput Chem 28: 1145-1152.
+#
+#               Free Energy Coefficient
+#               ------
+FE_coeff_vdW    0.1662
+FE_coeff_hbond  0.1209
+FE_coeff_estat  0.1406
+FE_coeff_desolv 0.1322
+FE_coeff_tors   0.2983
+
+# Default vdW potential exponents 
+vdw_n   12 
+vdw_m   6 
+# Default hydrogen bond potential exponents 
+hb_n   12 
+hb_m   10 
+
+# Max distance between atoms at which to bother calculating each kind of energy: 
+# TODO: Set these values.  Currently, for testing purposes, distance-bounding is 
+# turned off (by setting the values high): 
+max_dist_vdw    8.
+max_dist_hbond  5.
+max_dist_estat  10000. 
+max_dist_solv   10000.
+
+# If use_tables is 1 (true), we use precomputed tables for several distance-based 
+# energy functions (to save time). There will be a number of tables related to 
+# vdw/hb energy (each with values computed for dist up to tables_max_vdw (Angstroms), 
+# in increments of tables_increment), one table related to electrostatic energy 
+# (similar, except for distances up to tables_max_estat), and one table related 
+# to desolvation energy (similar, except for distances up to tables_max_solv). 
+# If tables_interpolate is 1 (true), our table-lookups linearly interpolate; 
+# otherwise we just return the nearest entry (faster but less accurate). 
+
+use_tables  1
+
+tables_interpolate  1  
+tables_increment  0.001  
+tables_max_vdw  15.  
+tables_max_estat  60.  
+tables_max_solv   30.  
+
+# To avoid over-rewarding precise matching of the ideal equilibrium distance 
+# between an atom pair (when calculating vdw or hb energy), we smooth distance 
+# so that all distances within dist_smoothing_width of the equilibrium distance 
+# look equally good.  You can turn off this feature by setting this value to zero: 
+dist_smoothing_width   0.25 
+
+# Collisions: During pairwise scoring, if an atom-pair are within collision_dist 
+# (Angstroms) of each other, we say that a collision has occurred. 
+# In this case, the distance between the atoms is clamped to collision_dist 
+# in our energy-calculations.  Moreover, if abort_if_num_collisions 
+# collisions occur during a pairwise scoring, we abort the pairwise scoring. 
+# Or set abort_if_num_collisions to -1 to disable the abort feature: 
+
+collision_dist    0.3 
+abort_if_num_collisions    -1 
+
+# Hbonding constants: 
+# When scoring directional hbonding, if either of the 
+# alpha and/or beta angles (which we want to be close to zero) is greater 
+# than hb_worst_angle (degrees), we clamp it to this maximum value. 
+# This assures that even badly-angled hbonding is scored as an energy-advantage. 
+# If you want to turn off the worst-angle feature, set hb_worst_angle to 90. 
+# Or if you want to entirely turn off directionality of hbond scoring 
+# (for debugging/testing purposes only), set hb_worst_angle to zero: 
+hb_worst_angle       75.
+
+# Desolvation constants: 
+qasp   0.01097 
+
+# - Atom Types: 
+# - Rii = sum of vdW radii of two like atoms (in Angstroms) 
+# - epsii = vdW well depth (in kcal/mol) 
+# - vol = atomic solvation volume (in Angstrom^3) 
+# - solpar = atomic solvation parameter 
+# - Rij_hb = H-bond radius of the heteroatom in contact with a hydrogen (in Angstroms) 
+# - epsij_hb = well depth of H-bond (in kcal/mol) 
+# - donor = hb donor type (-1 = not a donor, 0 = spherical, 1 = directional). 
+# - acceptor = hb acceptor type (-1 = not an acceptor, 0 = spherical, 
+#   1 = unidirectional (nitrogen-style), 2 = bidirectional (oxygen-style)). 
+# - bond_index = used in AutoDock to detect bonds; see 'mdist.h', enum {C,N,O,H,XX,P,S} 
+# - include_in_scoring = flag if the atom-type must be considered for internal ligand energy calculation (1:yes, 0:no) 
+# - element_symbol = atomic element of the atom-type (e.g., H for hydrogen, He for helium, 
+#   X for pseudo-atoms). 
+#
+# - To obtain the Rij value for non H-bonding atoms, calculate the 
+#        arithmetic mean of the Rii values for the two atom types. 
+#        Rij = (Rii + Rjj) / 2 
+# 
+# - To obtain the epsij value for non H-bonding atoms, calculate the 
+#        geometric mean of the epsii values for the two atom types. 
+#        epsij = sqrt( epsii * epsjj ) 
+#
+# - [[Note that the Rij_hb value is non-zero for heteroatoms only, and zero for H atoms; 
+#        to obtain the length of an H-bond, look up Rij_hb for the heteroatom only; 
+#        this is combined with the Rii value for H in the receptor, in AutoGrid. 
+#        For example, the Rij_hb for OA-HD H-bonds will be (1.9 + 1.0) Angstrom, 
+#        and epsij_hb will be 5.0 kcal/mol.]] 
+#   NOTE: The bracketed comment is old and currently not true.  The Rij_hb and 
+#         epsij_hb values are currently ignored.  Instead, every hbonding pair 
+#         must have an hb_pair line that explicitly gives its 
+#         equilibrium-distance and well-depth. 
+# 
+#        Atom   Rii                             Rij_hb                                                
+#        Type         epsii           solpar         epsij_hb                                         
+#                            vol                         donor       bond_index                       
+#                                                            acceptor   include_in_scoring            
+#                                                                         element_symbol              
+#        --     ----  -----  -------  --------  ---  --- --  --     --  -    --                       
+atom_par H      2.00  0.020   0.0000   0.00051  0.0  0.0 -1  -1      3  1 H  # Non H-bonding Hydrogen 
+atom_par HD     2.00  0.020   0.0000   0.00051  0.0  0.0  1  -1      3  1 H  # Donor 1 H-bond Hydrogen 
+atom_par HS     2.00  0.020   0.0000   0.00051  0.0  0.0  0  -1      3  1 H  # Donor S Spherical Hydrogen 
+atom_par C      4.00  0.150  33.5103  -0.00143  0.0  0.0 -1  -1      0  1 C  # Non H-bonding Aliphatic Carbon 
+atom_par A      4.00  0.150  33.5103  -0.00052  0.0  0.0 -1  -1      0  1 C  # Non H-bonding Aromatic Carbon 
+atom_par N      3.50  0.160  22.4493  -0.00162  0.0  0.0 -1  -1      1  1 N  # Non H-bonding Nitrogen 
+atom_par NA     3.50  0.160  22.4493  -0.00162  1.9  5.0 -1   1      1  1 N  # Acceptor 1 H-bond Nitrogen 
+atom_par NS     3.50  0.160  22.4493  -0.00162  1.9  5.0 -1   0      1  1 N  # Acceptor S Spherical Nitrogen 
+atom_par NX     3.50  0.160  22.4493  -0.00162  2.9  5.0  1  -1      1  1 N  # Directional Donor Nitrogen XXX (HW) TODO \n\
+atom_par OA     3.20  0.200  17.1573  -0.00251  1.9  5.0 -1   2      2  1 O  # Acceptor 2 H-bonds Oxygen 
+atom_par OS     3.20  0.200  17.1573  -0.00251  1.9  5.0 -1   0      2  1 O  # Acceptor S Spherical Oxygen 
+atom_par OX     3.20  0.200  17.1573  -0.00251  2.9  5.0  1   2      2  1 O  # Acceptor 2 H-bonds, DONOR  Oxygen \n\
+atom_par F      3.09  0.080  15.4480  -0.00110  0.0  0.0 -1  -1      4  1 F  # Non H-bonding Fluorine 
+atom_par Mg     1.30  0.875   1.5600  -0.00110  0.0  0.0 -1  -1      4  1 Mg # Non H-bonding Magnesium 
+atom_par MG     1.30  0.875   1.5600  -0.00110  0.0  0.0 -1  -1      4  1 Mg # Non H-bonding Magnesium 
+atom_par P      4.20  0.200  38.7924  -0.00110  0.0  0.0 -1  -1      5  1 P  # Non H-bonding Phosphorus 
+atom_par SA     4.00  0.200  33.5103  -0.00214  2.5  1.0 -1   2      6  1 S  # Acceptor 2 H-bonds Sulphur XXX TODO REMOVE XXX 
+atom_par S      4.00  0.200  33.5103  -0.00214  0.0  0.0 -1  -1      6  1 S  # Non H-bonding Sulphur 
+atom_par SX     4.00  0.200  33.5103  -0.00214  3.5  1.0  1   2      6  1 S  # Acceptor 2 H-bonds Sulphur XXX TODO REMOVE XXX \n\
+atom_par Cl     4.09  0.276  35.8235  -0.00110  0.0  0.0 -1  -1      4  1 Cl # Non H-bonding Chlorine 
+atom_par CL     4.09  0.276  35.8235  -0.00110  0.0  0.0 -1  -1      4  1 Cl # Non H-bonding Chlorine 
+atom_par Ca     1.98  0.550   2.7700  -0.00110  0.0  0.0 -1  -1      4  1 Ca # Non H-bonding Calcium 
+atom_par CA     1.98  0.550   2.7700  -0.00110  0.0  0.0 -1  -1      4  1 Ca # Non H-bonding Calcium 
+atom_par Mn     1.30  0.875   2.1400  -0.00110  0.0  0.0 -1  -1      4  1 Mn # Non H-bonding Manganese 
+atom_par MN     1.30  0.875   2.1400  -0.00110  0.0  0.0 -1  -1      4  1 Mn # Non H-bonding Manganese 
+atom_par Fe     1.30  0.010   1.8400  -0.00110  0.0  0.0 -1  -1      4  1 Fe # Non H-bonding Iron 
+atom_par FE     1.30  0.010   1.8400  -0.00110  0.0  0.0 -1  -1      4  1 Fe # Non H-bonding Iron 
+atom_par Zn     1.48  0.550   1.7000  -0.00110  0.0  0.0 -1  -1      4  1 Zn # Non H-bonding Zinc 
+atom_par ZN     1.48  0.550   1.7000  -0.00110  0.0  0.0 -1  -1      4  1 Zn # Non H-bonding Zinc 
+atom_par Br     4.33  0.389  42.5661  -0.00110  0.0  0.0 -1  -1      4  1 Br # Non H-bonding Bromine 
+atom_par BR     4.33  0.389  42.5661  -0.00110  0.0  0.0 -1  -1      4  1 Br # Non H-bonding Bromine 
+atom_par I      4.72  0.550  55.0585  -0.00110  0.0  0.0 -1  -1      4  1 I  # Non H-bonding Iodine 
+atom_par Z      4.00  0.150  33.5103  -0.00143  0.0  0.0 -1  -1      0  0 X  # Non H-bonding covalent map 
+atom_par G      4.00  0.150  33.5103  -0.00143  0.0  0.0 -1  -1      0  1 C  # Ring closure Glue Aliphatic Carbon  # SF \n\
+atom_par GA     4.00  0.150  33.5103  -0.00052  0.0  0.0 -1  -1      0  1 C  # Ring closure Glue Aromatic Carbon   # SF \n\
+atom_par J      4.00  0.150  33.5103  -0.00143  0.0  0.0 -1  -1      0  1 C  # Ring closure Glue Aliphatic Carbon  # SF \n\
+atom_par Q      4.00  0.150  33.5103  -0.00143  0.0  0.0 -1  -1      0  1 C  # Ring closure Glue Aliphatic Carbon  # SF \n\
+
+# TODO: We have a rule that there must be an hb_pair line for every pair of AtomTypes that can
+# hbond with each other.  Hence the following list of additional hb_pair lines.  Values are TEMP:
+hb_pair OX   NA  2.9     5.0     12      10      4       2
+hb_pair OX   NS  2.9     5.0     12      10      4       2
+hb_pair OX   OA  2.9     5.0     12      10      4       2
+hb_pair OX   OS  2.9     5.0     12      10      4       2
+hb_pair OX   OX  2.9     5.0     12      10      4       2
+hb_pair OX   SA  2.9     1.0     12      10      4       2
+hb_pair OX   SX  2.9     1.0     12      10      4       2
+
+hb_pair NX   NA  2.9     5.0     12      10      4       2
+hb_pair NX   NS  2.9     5.0     12      10      4       2
+hb_pair NX   OA  2.9     5.0     12      10      4       2
+hb_pair NX   OS  2.9     5.0     12      10      4       2
+hb_pair NX   OX  2.9     5.0     12      10      4       2
+hb_pair NX   SA  2.9     1.0     12      10      4       2
+hb_pair NX   SX  2.9     1.0     12      10      4       2
+    
+hb_pair SX   NA  2.9     1.0     12      10      4       2
+hb_pair SX   NS  2.9     1.0     12      10      4       2
+hb_pair SX   OA  2.9     1.0     12      10      4       2
+hb_pair SX   OS  2.9     1.0     12      10      4       2
+hb_pair SX   OX  2.9     1.0     12      10      4       2
+hb_pair SX   SA  2.9     1.0     12      10      4       2
+hb_pair SX   SX  2.9     1.0     12      10      4       2

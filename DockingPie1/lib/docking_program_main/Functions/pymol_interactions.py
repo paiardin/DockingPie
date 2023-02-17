@@ -673,11 +673,11 @@ class PyMOLInteractions:
         cmd.zoom("grid_center")
 
 
-    def show_crisscross(self, key):
+    def show_crisscross(self, main, key):
 
-        center = [float(self.main_window.grid_center[key][0]),
-                  float(self.main_window.grid_center[key][1]),
-                  float(self.main_window.grid_center[key][2])
+        center = [float(main.grid_center[key][0]),
+                  float(main.grid_center[key][1]),
+                  float(main.grid_center[key][2])
                   ]
 
         cmd.delete("grid_center")
@@ -711,15 +711,35 @@ class PyMOLInteractions:
         cmd.set_view(view)
 
 
-    def show_box_func(self, object):
+    def show_box_func(self,
+                      main, widget,
+                      x, y, z,
+                      x_vis, y_vis, z_vis,
+                      spacing):
 
+        # Calculate the center given the PyMOL object
         stored.xyz = []
-        cmd.iterate_state(1, self.sel,"stored.xyz.append([x,y,z])")
-        self.xx = statistics.mean(map(lambda a: a[0], stored.xyz))
-        self.yy = statistics.mean(map(lambda a: a[1], stored.xyz))
-        self.zz = statistics.mean(map(lambda a: a[2], stored.xyz))
+        cmd.iterate_state(1, widget.currentText(),"stored.xyz.append([x,y,z])")
+        xx = statistics.mean(map(lambda a: a[0], stored.xyz))
+        yy = statistics.mean(map(lambda a: a[1], stored.xyz))
+        zz = statistics.mean(map(lambda a: a[2], stored.xyz))
 
-        return(self.xx, self.yy, self.zz)
+        # self.calculate_center(object = self.sel)
+
+        self.tmp_coord_list = [round(xx,2), round(yy,2), round(zz,2), round(x_vis.value()), round(y_vis.value()), round(z_vis.value()), round(spacing.value())]
+
+        # Update the Grid center dict
+        main.grid_center[widget.currentText()] = self.tmp_coord_list
+
+        x.setValue(self.tmp_coord_list[0])
+        y.setValue(self.tmp_coord_list[1])
+        z.setValue(self.tmp_coord_list[2])
+        spacing.setValue(self.tmp_coord_list[3])
+        x_vis.setValue(self.tmp_coord_list[4])
+        y_vis.setValue(self.tmp_coord_list[5])
+        z_vis.setValue(self.tmp_coord_list[6])
+
+        self.show_crisscross(main, widget.currentText())
 
 
     def load_element_in_pymol(self, file_to_load, pymol_object_name):

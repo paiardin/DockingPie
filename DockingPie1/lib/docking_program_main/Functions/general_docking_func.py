@@ -5,6 +5,7 @@
 
 import os
 import subprocess
+import re
 
 # PyMOL.
 import pymol
@@ -26,6 +27,104 @@ except:
 
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
 from lib.docking_program_main.docking_program_gui.new_windows import NewWindow
+from lib.docking_program_main.Functions.handle_widgets import HandleWidgets
+
+def check_pymol_object_chemical_type(obj):
+    pass
+
+
+def get_current_sele(tab, main, widget,
+                     x_scroll,
+                     y_scroll,
+                     z_scroll,
+                     x_scroll_vis,
+                     y_scroll_vis,
+                     z_scroll_vis,
+                     spacing_scroll_vis):
+
+    # Get the current object
+    sel = widget.currentText()
+
+    empty = HandleWidgets.combobox_check_if_empty(self = main,
+    widgets_list = [widget])
+
+    if empty:
+        pass
+    else:
+        try:
+            tab.show_box_func(main, widget,
+                             x_scroll,
+                             y_scroll,
+                             z_scroll,
+                             x_scroll_vis,
+                             y_scroll_vis,
+                             z_scroll_vis,
+                             spacing_scroll_vis)
+        except:
+            pass
+
+
+def update_widget_with_pymol_object(main,
+                                    widget,
+                                    clear_widget = True,
+                                    polymer = True,
+                                    small_molecule = True,
+                                    update_name_if_states = True,
+                                    selections = False):
+
+    # List all objects and selection in PyMOL
+    if selections:
+        selections_list = [str(obj) for obj in cmd.get_names("objects") + cmd.get_names("selections")]
+    else:
+        selections_list = [str(obj) for obj in cmd.get_names("objects")]
+
+    # Check for importable objects
+    if selections_list == []:
+        QtWidgets.QMessageBox.warning(main, "PyMOL is empty", str("There isn't any object to import"))
+        widget.clear()
+    # If importable objects are present, update the ComboBox
+    else:
+        if clear_widget:
+            widget.clear()
+
+        if selections:
+            if clear_widget:
+                widget.clear()
+            for i in selections_list:
+                type = cmd.get_type(i)
+                if type == str("object:molecule") or type == "selection":
+                    widget.addItem(i)
+
+        else:
+            polymer_list = []
+            small_molecule_list = []
+            for i in selections_list:
+                type = cmd.get_type(i)
+                if polymer:
+                    if type == str("object:molecule") and not re.search("Run_", i) and cmd.count_atoms(i) > 200:
+                        widget.addItem(i)
+                        polymer_list.append(i)
+
+                if small_molecule:
+                    if type == str("object:molecule") and not re.search("Run_", i) and cmd.count_atoms(i) < 200:
+                        if cmd.count_states(i) > 1:
+                            if update_name_if_states:
+                                new_name = i + "-(" + str(cmd.count_states(i)) + ")"
+                                widget.addItem(new_name)
+                            else:
+                                widget.addItem(i)
+                        else:
+                            widget.addItem(i)
+
+                        small_molecule_list.append(i)
+
+            if polymer and not polymer_list:
+                QtWidgets.QMessageBox.warning(main, "PyMOL is empty", str("There isn't any Receptor to import"))
+                widget.clear()
+
+            if small_molecule and not small_molecule_list:
+                QtWidgets.QMessageBox.warning(main, "PyMOL is empty", str("There isn't any Ligand to import"))
+                widget.clear()
 
 
 class ObjectParser():

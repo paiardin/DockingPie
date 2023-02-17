@@ -50,7 +50,7 @@ from lib.docking_program_main.docking_program_gui.new_windows import NewWindow, 
 from lib.docking_program_main.docking_program_gui.dialogs import *
 from lib.docking_program_main.docking_program_gui.widgets_utilities import *
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
-from lib.docking_program_main.Functions.general_docking_func import Generate_Object, Calculate_RMSD
+from lib.docking_program_main.Functions.general_docking_func import Generate_Object, Calculate_RMSD, update_widget_with_pymol_object, get_current_sele
 from lib.docking_program_main.Functions.general_functions import OpenFromFile, Check_current_tab, Save_to_Csv, SelectAll, check_configuration
 from lib.docking_program_main.Functions.installer import Installation, External_tools_installation_thread, External_tools_download_thread, External_components_dialog
 from lib.docking_program_main.Functions.dockings_thread import _dialog_mixin, Dockings_dialog, Dockings_thread
@@ -101,9 +101,13 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.receptor_cb = QtWidgets.QComboBox()
         self.rec_update = QtWidgets.QPushButton("Update from PyMOL")
         self.rec_ao = QtWidgets.QPushButton("Advanced Options")
+        self.rec_clear = QtWidgets.QPushButton("Clear")
+        self.rec_clear.clicked.connect(self.clear_rec_widg)
+        self.rec_update.clicked.connect(self.rec_update_func)
         self.receptor_group_box.layout().addWidget(self.receptor_cb, 0, 0, 1, 2)
         self.receptor_group_box.layout().addWidget(self.rec_update, 1, 0)
-        self.receptor_group_box.layout().addWidget(self.rec_ao, 1, 1)
+        self.receptor_group_box.layout().addWidget(self.rec_clear, 1, 1)
+        self.receptor_group_box.layout().addWidget(self.rec_ao, 2, 0, 1, 2)
 
          # Ligands QGroupBox
         self.ligand_group_box = QtWidgets.QGroupBox("Ligand(s)")
@@ -113,9 +117,13 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.ligand_cb = QtWidgets.QListWidget()
         self.lig_update = QtWidgets.QPushButton("Update from PyMOL")
         self.lig_ao = QtWidgets.QPushButton("Advanced Options")
+        self.lig_clear = QtWidgets.QPushButton("Clear")
+        self.lig_clear.clicked.connect(self.clear_lig_widg)
+        self.lig_update.clicked.connect(self.lig_update_func)
         self.ligand_group_box.layout().addWidget(self.ligand_cb, 0, 0, 1, 2)
         self.ligand_group_box.layout().addWidget(self.lig_update, 1, 0)
-        self.ligand_group_box.layout().addWidget(self.lig_ao, 1, 1)
+        self.ligand_group_box.layout().addWidget(self.lig_clear, 1, 1)
+        self.ligand_group_box.layout().addWidget(self.lig_ao, 2, 0, 1, 2)
 
          # Grid QGroupBox
         self.grid_group_box = QtWidgets.QGroupBox("Grid Settings")
@@ -128,7 +136,12 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.x_pos, self.x_scroll, self.y_pos, self.y_scroll, self.z_pos, self.z_scroll = grid_position(self.scroll_changed)
 
         self.update_grid = QtWidgets.QPushButton("Get coords from PyMOL object")
+        self.grid_selections = QtWidgets.QComboBox()
+        self.update_grid.clicked.connect(self.get_pymol_obj_for_grid)
         self.grid_layout.addWidget(self.update_grid, 3, 0)
+        self.grid_layout.addWidget(self.grid_selections, 3, 1)
+        self.grid_selections.currentTextChanged.connect(self.get_current_sele)
+        self.grid_selections.view().pressed.connect(self.get_current_sele)
 
         # Grid Position widgets
         self.grid_layout.addWidget(self.x_pos, 1, 1)
@@ -177,6 +190,37 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.layout_data_analysis_tab.addWidget(self.run_consensus_docking_button, 4, 0)
         self.layout_data_analysis_tab.addWidget(self.show_results_summary, 4, 1)
 
+    def get_current_sele(self):
+
+        get_current_sele(self, self.docking_programs, self.grid_selections,
+                         self.x_scroll,
+                         self.y_scroll,
+                         self.z_scroll,
+                         self.x_scroll_vis,
+                         self.y_scroll_vis,
+                         self.z_scroll_vis,
+                         self.spacing_scroll_vis
+                         )
+
+    def clear_rec_widg(self):
+
+        self.receptor_cb.clear()
+
+    def clear_lig_widg(self):
+
+        self.ligand_cb.clear()
+
+    def get_pymol_obj_for_grid(self):
+
+        update_widget_with_pymol_object(self.docking_programs, self.grid_selections, selections = True)
+
+    def rec_update_func(self):
+
+        update_widget_with_pymol_object(self.docking_programs, self.receptor_cb, small_molecule = False)
+
+    def lig_update_func(self):
+
+        update_widget_with_pymol_object(self.docking_programs, self.ligand_cb, polymer = False)
 
 
     def scroll_changed(self):
@@ -1186,6 +1230,18 @@ class GridTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
             self.set_as_reference_btn.setEnabled(False)
 
 
+    def get_current_sele(self):
+
+        get_current_sele(self, self.docking_programs_child_tabs.docking_programs, self.imported_sele,
+                         self.x_scroll,
+                         self.y_scroll,
+                         self.z_scroll,
+                         self.x_scroll_vis,
+                         self.y_scroll_vis,
+                         self.z_scroll_vis,
+                         self.spacing_scroll_vis
+                         )
+
     def set_as_reference_func(self):
 
         Check_current_tab.check_docking_program_current_tab(self)
@@ -1366,76 +1422,29 @@ class GridTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
     def import_objs_sele_func(self):
 
-        # Create a list of all the importable Objects and selections from PyMOL
-        self.selections = [str(obj) for obj in cmd.get_names("objects") + cmd.get_names("selections")]
+        update_widget_with_pymol_object(self.docking_programs_child_tabs, self.imported_sele, selections = True)
 
-        # Check for importable objects
-        if self.selections == []:
-            QtWidgets.QMessageBox.warning(self.docking_programs_child_tabs, "PyMOL is empty", str("There isn't any object to import"))
-
-        # If importable objects are present, update the ComboBox
-        else:
-            self.imported_sele.clear()
-            for i in self.selections:
-                type = cmd.get_type(i)
-                if type == str("object:molecule"):
-                    if re.search("Run_", i):
-                        pass
-                    else:
-                        self.imported_sele.addItem(i)
-                elif type == str("selection"):
-                    self.imported_sele.addItem(i)
-                else:
-                    pass
-
-
-    def get_current_sele(self):
-
-        # Get the current object
-        self.sel = self.imported_sele.currentText()
-
-        HandleWidgets.combobox_check_if_empty(self = self,
-        widgets_list = [self.imported_sele])
-
-        if self.is_empty:
-            pass
-        else:
-            #self.show_box_func()
-            try:
-                self.show_box_func()
-            except:
-                pass
-
-
-    def show_box_func(self):
-
-        # TODO -- IN PYMOL INTERACTIONS!!!
-
-        # Calculate the center given the PyMOL object
-        stored.xyz = []
-        cmd.iterate_state(1, self.imported_sele.currentText(),"stored.xyz.append([x,y,z])")
-        xx = statistics.mean(map(lambda a: a[0], stored.xyz))
-        yy = statistics.mean(map(lambda a: a[1], stored.xyz))
-        zz = statistics.mean(map(lambda a: a[2], stored.xyz))
-
-        # self.calculate_center(object = self.sel)
-
-        self.tmp_coord_list = [round(xx,2), round(yy,2), round(zz,2), round(self.x_scroll_vis.value()), round(self.y_scroll_vis.value()), round(self.z_scroll_vis.value()), round(self.spacing_scroll_vis.value())]
-
-        # Update the Grid center dict
-        self.docking_programs_child_tabs.docking_programs.grid_center[self.imported_sele.currentText()] = self.tmp_coord_list
-
-        self.x_scroll.setValue(self.tmp_coord_list[0])
-        self.y_scroll.setValue(self.tmp_coord_list[1])
-        self.z_scroll.setValue(self.tmp_coord_list[2])
-        self.spacing_scroll_vis.setValue(self.tmp_coord_list[3])
-        self.x_scroll_vis.setValue(self.tmp_coord_list[4])
-        self.y_scroll_vis.setValue(self.tmp_coord_list[5])
-        self.z_scroll_vis.setValue(self.tmp_coord_list[6])
-
-        # Show grid_center, box and wirebox
-        self.show_crisscross(self.imported_sele.currentText())
-
+        # # Create a list of all the importable Objects and selections from PyMOL
+        # self.selections = [str(obj) for obj in cmd.get_names("objects") + cmd.get_names("selections")]
+        #
+        # # Check for importable objects
+        # if self.selections == []:
+        #     QtWidgets.QMessageBox.warning(self.docking_programs_child_tabs, "PyMOL is empty", str("There isn't any object to import"))
+        #
+        # # If importable objects are present, update the ComboBox
+        # else:
+        #     self.imported_sele.clear()
+        #     for i in self.selections:
+        #         type = cmd.get_type(i)
+        #         if type == str("object:molecule"):
+        #             if re.search("Run_", i):
+        #                 pass
+        #             else:
+        #                 self.imported_sele.addItem(i)
+        #         elif type == str("selection"):
+        #             self.imported_sele.addItem(i)
+        #         else:
+        #             pass
 
 
 class GridTab_RxDock(QtWidgets.QWidget, PyMOLInteractions):

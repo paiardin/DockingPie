@@ -1,0 +1,33 @@
+#
+# $Header: /mnt/raid/services/cvs/DejaVu2/source.list,v 1.1.1.1 2014/06/19 19:41:03 sanner Exp $
+#
+# $Id
+#
+
+SOURCE =./Viewer.py ./ViewerGUI.py ./Camera.py ./Light.py ./Clip.py \
+	./Materials.py ./ColorChooser.py ./ColorWheel.py \
+	./PropertyEditor.py ./extendedSlider.py  \
+	./colorTool.py ./EventHandler.py ./Texture.py ./spline.py \
+	./povray3.py ./bitPatterns.py
+
+GEOMS =  ./Geom.py ./Transformable.py ./Displayable.py ./IndexedPolygons.py \
+	 ./IndexedPolylines.py ./Polylines.py ./Spheres.py ./Cylinders.py \
+	 ./Labels.py ./quad_strip.py ./triangle_strip.py ./Arcs3D.py \
+	 ./Points.py ./Box.py ./GleObjects.py
+
+MISC = 	 ./datamodel.py ./Slider.py ./viewerFns.py ./viewerConst.py \
+	 ./jitter.py ./Trackball.py
+              
+#  Measure.py follow.py 
+
+ALL = $(SOURCE) $(GEOMS) $(MISC)
+
+                  
+                 
+                       
+        
+              
+            
+
+
+

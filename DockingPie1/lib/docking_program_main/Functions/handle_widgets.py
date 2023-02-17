@@ -141,6 +141,8 @@ class HandleWidgets:
             if not list:
                 self.is_empty = True
 
+        return self.is_empty
+
 
     def add_to_other_tab(self, input_widget, output_widget):
 
