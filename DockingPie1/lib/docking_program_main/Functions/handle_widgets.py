@@ -106,8 +106,8 @@ class HandleWidgets:
                 self.show_crisscross_changed(1, 1, 1)
                 self.calculate_box_changed(coord_dict[0], coord_dict[1], coord_dict[2], coord_dict[6], int(float(coord_dict[3])), int(float(coord_dict[4])), int(float(coord_dict[5])))
 
-            else:
-                PyMOL_Zoom_Orient_Show_Hide(self, item, show_only = False)
+            # else:
+            #     PyMOL_Zoom_Orient_Show_Hide(self, item, show_only = False)
 
 
     def combobox_check_existing_item(self, widget, item_name):

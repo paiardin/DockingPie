@@ -46,12 +46,12 @@ class Vina_docking():
     """
 
 
-    def __init__(self, tab, ligand, receptor, cavity = None):
+    def __init__(self, tab, main, ligand, receptor, cavity = None):
 
-        self.tab = tab.tab
-        self.thread = tab
+        self.tab = tab
+        self.main = main
 
-        self.path_to_vina = self.tab.docking_programs_child_tabs.docking_programs.path_to_vina
+        self.path_to_vina = self.main.path_to_vina
 
         ### CHECK VINA VERSION ###
         check_vina = check_output([self.path_to_vina, "--version"])
@@ -73,13 +73,13 @@ class Vina_docking():
         if cavity is not None:
 
             name_cav = cavity
-            self.cavity_to_dock = self.tab.docking_programs_child_tabs.docking_programs.ready_grid_centers[name_cav]
+            self.cavity_to_dock = main.ready_grid_centers[name_cav]
             self.cavity_name = name_cav
 
         else:
 
             name_cav = self.tab.loaded_cavities.currentText()
-            self.cavity_to_dock = self.tab.docking_programs_child_tabs.docking_programs.ready_grid_centers[name_cav]
+            self.cavity_to_dock = main.ready_grid_centers[name_cav]
             self.cavity_name = name_cav
 
         # Initialize Flexible Docking
@@ -90,7 +90,7 @@ class Vina_docking():
             self.check_valid_flex_input()
 
         # Initialize names and paths
-        self.results_file_name = str("Run_" + str(self.tab.docking_programs_child_tabs.docking_programs.vina_runs) + "_Vina")
+        self.results_file_name = str("Run_" + str(self.main.vina_runs) + "_Vina")
         self.results_file_name_ext = str(self.results_file_name + ".pdbqt")
 
         # if float(self.vina_version[:3]) > 1.1:
@@ -99,7 +99,7 @@ class Vina_docking():
         self.log_file_name = str(self.results_file_name + "_log.txt")
 
         # Change directory --> Vina tmp dir
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.vina_tmp_dir)
+        os.chdir(self.main.vina_tmp_dir)
 
         self.show_resume_window()
 
@@ -144,7 +144,7 @@ class Vina_docking():
         if self.use_flex_protocol:
 
             # Generate pdbqt file with flexible side chains
-            self.prepare_flex_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_flexreceptor4.py")
+            self.prepare_flex_receptor_path = os.path.join(self.main.config_path, "prepare_flexreceptor4.py")
             self.preapre_flex_receptors_settings = ["python",
             self.prepare_flex_receptor_path,
             "-r", str(self.receptor_to_dock + ".pdbqt"),
@@ -163,18 +163,18 @@ class Vina_docking():
             # Extend options for docking
             self.run_docking_vina_settings.extend(["--flex", flexible_receptor_name])
 
-        self.tab.docking_programs_child_tabs.docking_programs.vina_runs += 1
+        self.main.vina_runs += 1
 
 
     def check_if_docking_completed(self):
 
-        file_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.vina_tmp_dir, self.results_file_name_ext)
+        file_path = os.path.join(self.main.vina_tmp_dir, self.results_file_name_ext)
 
         if Path(file_path).is_file():
 
             if os.path.getsize(file_path):
                 self.docking_completed = True
-                self.tab.docking_programs_child_tabs.docking_programs.vina_runs += 1
+                self.main.vina_runs += 1
 
             else:
                 self.docking_completed = False
@@ -182,17 +182,17 @@ class Vina_docking():
                 if len(self.tab.ligands_to_dock) > 1 or len(self.tab.receptors_to_dock) > 1:
 
                     os.remove(file_path)
-                    self.tab.docking_programs_child_tabs.docking_programs.vina_runs += 1
+                    self.main.vina_runs += 1
 
                 else:
                     os.remove(file_path)
-                    self.tab.docking_programs_child_tabs.docking_programs.vina_runs += 1
+                    self.main.vina_runs += 1
                     QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
 
         else:
             self.docking_completed = False
             QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
-            self.tab.docking_programs_child_tabs.docking_programs.vina_runs += 1
+            self.main.vina_runs += 1
 
 
 class Vina_Parse_Results:

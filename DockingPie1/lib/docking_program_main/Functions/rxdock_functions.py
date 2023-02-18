@@ -77,33 +77,41 @@ class RxDock_Cavity():
     """
 
 
-    def __init__(self, tab):
+    def __init__(self, tab, main,
+                 reference_receptor,
+                 reference_ligand,
+                 two_spheres_method,
+                 reference_ligand_method,
+                 radius_spinbox = 10.00,
+                 small_sphere_value = 1.50,
+                 large_sphere_value = 4.00):
 
         self.tab = tab
+        self.main = main
 
         # Initialize Parameters
-        self.reference_receptor = self.tab.ready_receptors_list.currentText()
-        self.reference_ligand = self.tab.ready_ligands_list.currentText()
+        self.reference_receptor = reference_receptor
+        self.reference_ligand = reference_ligand
 
         # Initialize Docking protocols to use
-        self.two_spheres_method = self.tab.two_spheres_method
-        self.reference_ligand_method = self.tab.reference_ligand
+        self.two_spheres_method = two_spheres_method
+        self.reference_ligand_method = reference_ligand_method
 
         # Get Parameters
         if self.two_spheres_method:
-            self.radius_value = str(self.tab.radius_spinbox.value())
-            self.small_sphere_value = str(self.tab.small_sphere_spinbox.value())
-            self.large_sphere_value = str(self.tab.large_sphere_spinbox.value())
+            self.radius_value = str(radius_spinbox)
+            self.small_sphere_value = str(small_sphere_value)
+            self.large_sphere_value = str(large_sphere_value)
 
         self.simple_docking = False
         self.pharma_restrains = False
         self.tethered_docking = False
 
         # Initialize names and paths
-        self.initial_prm_file_path = self.tab.docking_programs_child_tabs.docking_programs.path_to_cavity
+        self.initial_prm_file_path = self.main.path_to_cavity
 
         # Change directory --> RxDock tmp dir
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
+        os.chdir(self.main.rxdock_tmp_dir)
 
         p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
                                         function=self.generate_cavity,
@@ -121,10 +129,12 @@ class RxDock_Cavity():
         # Create the PrmFile
         self.prm_file = PrmFile(self,
         prm_file_name = "prm_file",
-        counter = len(self.tab.docking_programs_child_tabs.docking_programs.generated_cavity))
+        counter = len(self.main.generated_cavity))
 
+        f = open("prova_rxdock.txt", "w")
         # Run RxDock "rbcavity" func
-        subprocess.run(["rbcavity", "-W", "-d", "-r", str(self.prm_file.prm_file_name)], check = True, capture_output = True)
+        subprocess.run(["rbcavity", "-W", "-d", "-r", str(self.prm_file.prm_file_name)], stdout = f)
+        f.close()
 
 
 
@@ -137,9 +147,20 @@ class RxDock_docking():
     """
 
 
-    def __init__(self, tab, ligand, receptor):
+    def __init__(self, tab, main, ligand,
+                 receptor,
+                 pharma_restrains,
+                 tethered_docking,
+                 poses_box,
+                 cavity_to_dock,
+                 cavity_name,
+                 use_water,
+                 protein_segments_to_exclude = [],
+                 pharma_list = [],
+                 cavity = None):
 
-        self.tab = tab.tab
+        self.tab = tab
+        self.main = main
         self.thread = tab
 
         self.docking_completed = False
@@ -149,16 +170,17 @@ class RxDock_docking():
         self.two_spheres_method = False
         self.reference_ligand_method = False
         self.use_water = False
-        self.pharma_restrains = self.tab.pharma_restrains
-        self.tethered_docking = self.tab.tethered_docking
+
+        self.pharma_restrains = pharma_restrains
+        self.tethered_docking = tethered_docking
 
         self.set_docking_protocol()
 
         # Initialize Standard Docking parameters
         self.receptor_to_dock = receptor
-        self.poses = str(self.tab.poses_box.value())
-        self.cavity_to_dock = self.tab.loaded_cavities.currentText()
-        self.cavity_name = self.tab.loaded_cavities.currentText()
+        self.poses = poses_box
+        self.cavity_to_dock = cavity_to_dock
+        self.cavity_name = cavity_name
         self.ligand_to_dock = ligand
 
         # If Tethered Docking is performed the ligand for docking is modified, thus it is called as "name_of_the_ligand_tethered"
@@ -167,23 +189,25 @@ class RxDock_docking():
 
         # If pharma_restrains protocol is used, create the needed file
         if self.pharma_restrains:
+            self.pharma_list = pharma_list
             self.create_pharma_restrains_file()
 
-        if not self.tab.protein_segments_to_exclude:
+        self.protein_segments_to_exclude = protein_segments_to_exclude
+        if not self.protein_segments_to_exclude:
             self.exclude_segments = False
         else:
             self.exclude_segments = True
             self.create_protein_segments_string()
 
-        if self.tab.receptor_water_checkbtn.isChecked():
+        if use_water:
             self.use_water = True
             self.create_structural_water_file()
 
         # Initialize names and paths
-        r_name = str("Run_" + str(self.tab.docking_programs_child_tabs.docking_programs.rxdock_runs) + "_RxDock")
+        r_name = str("Run_" + str(self.main.rxdock_runs) + "_RxDock")
         self.results_file_name = r_name
 
-        self.log_file_name = None
+        self.log_file_name = str(self.results_file_name + "_log.txt")
 
         states = cmd.count_states(self.ligand_to_dock)
         self.list_of_ligands_to_dock = []
@@ -197,7 +221,7 @@ class RxDock_docking():
         else:
             self.results_file_name_ext = str(self.results_file_name + ".sd")
 
-        self.initial_prm_file_path = self.tab.docking_programs_child_tabs.docking_programs.path_to_cavity
+        self.initial_prm_file_path = self.main.path_to_cavity
 
         # Initialize additional parameters
         self.trans_mode = self.tab.trans_mode_combo.currentText()
@@ -205,36 +229,36 @@ class RxDock_docking():
         self.die_mode = self.tab.die_mode_combo.currentText()
 
         # Change directory --> RxDock tmp dir
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
+        os.chdir(self.main.rxdock_tmp_dir)
 
         self.show_resume_window()
 
 
     def check_if_docking_completed(self):
 
-        self.file_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir, self.results_file_name_ext)
+        self.file_path = os.path.join(self.main.rxdock_tmp_dir, self.results_file_name_ext)
 
         if Path(self.file_path).is_file():
 
             if os.path.getsize(self.file_path):
                 self.docking_completed = True
-                self.tab.docking_programs_child_tabs.docking_programs.rxdock_runs += 1
+                self.main.rxdock_runs += 1
 
             else:
                 self.docking_completed = False
                 QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
                 os.remove(self.file_path)
-                self.tab.docking_programs_child_tabs.docking_programs.rxdock_runs += 1
+                self.main.rxdock_runs += 1
 
         else:
             self.docking_completed = False
             QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
-            self.tab.docking_programs_child_tabs.docking_programs.rxdock_runs += 1
+            self.main.rxdock_runs += 1
 
 
     def split_input_ligand_file(self):
 
-        rxdock_tmp_dir_path = self.tab.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir
+        rxdock_tmp_dir_path = self.main.rxdock_tmp_dir
 
         for idx, state in enumerate(range(cmd.count_states(self.ligand_to_dock))):
 
@@ -320,14 +344,14 @@ class RxDock_docking():
         tmp_list = []
 
         # Get pharmacophoric restrains info
-        for i in range(self.tab.pharma_list.count()):
-            item_to_write = str((self.tab.pharma_list.item(i)).text() + "\n")
+        for i in range(self.pharma_list.count()):
+            item_to_write = str((self.pharma_list.item(i)).text() + "\n")
             tmp_list.append(item_to_write)
 
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
+        os.chdir(self.main.rxdock_tmp_dir)
 
         # Path to pharma file, it is created a new one each time, thus the name is always the same
-        pharma_file_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir, "pharma.const")
+        pharma_file_path = os.path.join(self.main.rxdock_tmp_dir, "pharma.const")
 
         # If the pharma file already exists, remove it.
         try:
@@ -362,7 +386,7 @@ class RxDock_docking():
         self.prm_file = PrmFile(self,
         prm_file_name = as_file_name)
 
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir)
+        os.chdir(self.main.rxdock_tmp_dir)
 
         if self.list_of_ligands_to_dock:
 
@@ -430,7 +454,7 @@ class RxDock_docking():
 
                 if sys.platform == "darwin":
 
-                    path_to_sdsorter = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.path_to_sdsorter)
+                    path_to_sdsorter = os.path.join(self.main.path_to_sdsorter)
                     subprocess.run([path_to_sdsorter, "-sort", "'>  <SCORE>'", "results_tmp_name.sd", str(self.results_file_name + ".sd")])
 
                 else:
@@ -442,7 +466,7 @@ class RxDock_docking():
                     f.close()
 
         #self.docking_completed = True
-        self.tab.docking_programs_child_tabs.docking_programs.rxdock_runs += 1
+        self.main.rxdock_runs += 1
 
 
 

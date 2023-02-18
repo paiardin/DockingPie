@@ -1,0 +1,181 @@
+***********************************************
+The RxDock molecular docking program is licensed under GNU LGPL version 3.
+RxDock is maintained by Vedran Miletić, Patrik Nikolić, and Luka Vretenar.
+Visit https://www.rxdock.org/ for more information.
+Executable:	rbdock/0.1.0
+Library:	librxdock.so/0.1.0
+RBT_ROOT:	/home/ale/miniconda3/envs/pymol37/share/rxdock-2013.1.1_148c5bd1-1
+RBT_HOME:	/home/ale
+Current dir:	/home/ale/miniconda3/envs/pymol37/lib/python3.7/site-packages/pmg_tk/startup/DockingPie1/lib/docking_program_main/tmp/RxDock_tmp
+Date:		Sat Feb 18 19:22:17 2023
+***********************************************
+
+Command line args:
+ -i 01_obj01_RxDock.sdf
+ -r prm_file0
+ -p dock.prm
+ -o results_tmp_name
+ -n 1
+Reading polar hydrogens only from ligand SD file
+
+DOCKING PROTOCOL:
+/home/ale/miniconda3/envs/pymol37/share/rxdock-2013.1.1_148c5bd1-1/data/scripts/dock.prm
+Free docking (indexed VDW)
+
+RECEPTOR:
+prm_file0
+gart_DUD
+
+DOCKING SITE
+Total volume 302.125 A^3
+Cavity #1	Size=2417 points; Vol=302.125 A^3; Min=(184.5,167.5,10); Max=(196,178.5,21); Center=(191.371,172.106,15.7089); Extent=(11.5,11,11)
+
+RbtMOL2FileSource: INFO Attempting to identify element by 1st 2 chars of FFType string: Mg
+RbtMOL2FileSource: INFO Atomic number = 12
+RbtMOL2FileSource: INFO Attempting to identify element by 1st 2 chars of FFType string: Mg
+RbtMOL2FileSource: INFO Atomic number = 12
+RbtMOL2FileSource: INFO Attempting to identify element by 1st 2 chars of FFType string: O
+RbtMOL2FileSource: INFO Atomic number = 8
+RbtMOL2FileSource: INFO Attempting to identify element by 1st 2 chars of FFType string: O
+RbtMOL2FileSource: INFO Atomic number = 8
+RbtMOL2FileSource: INFO Attempting to identify element by 1st 2 chars of FFType string: O
+RbtMOL2FileSource: INFO Atomic number = 8
+RbtMOL2FileSource: INFO Attempting to identify element by 1st 2 chars of FFType string: Mg
+RbtMOL2FileSource: INFO Atomic number = 12
+RbtMOL2FileSource: WARNING Undefined Tripos type for A:MG_1389:MG
+RbtMOL2FileSource: WARNING Undefined Tripos type for A:MG_1390:MG
+RbtMOL2FileSource: WARNING Undefined Tripos type for A:SO_41391:O3
+RbtMOL2FileSource: WARNING Undefined Tripos type for A:SO_41392:O3
+RbtMOL2FileSource: WARNING Undefined Tripos type for A:SO_41393:O3
+RbtMOL2FileSource: WARNING Undefined Tripos type for A:MG_1394:MG
+
+No solvent
+
+------------- Terminate filter 0------------
+
+if (SCORE.NRUNS - 0 ) > 0 then
+	0.0 
+else
+	-1.0 
+end
+
+
+**************************************************
+RECORD #1
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N12 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C15 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N18 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C21 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C22 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C23 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N25 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C26 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N27 makes a bond with an unknown bond order
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+O8 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+O10 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N12 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+O14 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C15 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N18 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C21 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C22 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C23 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+N24 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N25 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C26 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N27 makes too many bonds
+NAME:   obj01
+RNG seed:                     std::random_device
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N12 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C15 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N18 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C21 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C22 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C23 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N25 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+C26 makes a bond with an unknown bond order
+RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 312
+N27 makes a bond with an unknown bond order
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+O8 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+O10 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N12 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+O14 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C15 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N18 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C21 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C22 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C23 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 441
+N24 makes too few bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N25 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+C26 makes too many bonds
+**WARNING** RBT_MODEL_ERROR at ../src/lib/RbtMdlFileSource.cxx, line 452
+N27 makes too many bonds
+Numer of docking runs done:   1 (0 errors)
+Ligand docking duration:      0.698 second(s)
+
+Average duration per ligand:  0.698 second(s)
+Approximately 0 record(s) remaining, will finish Sat Feb 18 19:22:17 2023
+
+**************************************************
+Total number of ligands: 1, all ligands docked without errors
+Docking duration for 1 ligand(s): 0.698 second(s)
+
+END OF RUN
+
+Please cite the following article: Morley, S David and Afshar, Mohammad.
+Validation of an empirical RNA-ligand scoring function for fast flexible docking
+using RiboDock®. Journal of computer-aided molecular design 18(3), 189--208
+(2004).
+Please cite the following article: Ruiz-Carmona, Sergio and Alvarez-Garcia,
+Daniel and Foloppe, Nicolas and Garmendia-Doval, A Beatriz and Juhos,
+Szilveszter and Schmidtke, Peter and Barril, Xavier and Hubbard, Roderick E and
+Morley, S David. rDock: a fast, versatile and open source program for docking
+ligands to proteins and nucleic acids. PLoS computational biology 10(4),
+e1003571 (2014).
+Please cite the following techreport: Melissa E. O'Neill. PCG: A Family of
+Simple Fast Space-Efficient Statistically Good Algorithms for Random Number
+Generation. https://www.cs.hmc.edu/tr/hmc-cs-2014-0905.pdf (2014).
+
+Thank you for using RxDock 0.1.0.

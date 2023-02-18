@@ -128,14 +128,11 @@ class Dockings_dialog(_dialog_mixin, QtWidgets.QDialog):
         ####
         self.initUI()
 
-        ####
-        # Initializes the download thread.
-        ####
         self.docking_thread = Dockings_thread(self)
 
         self.docking_thread.update_progressbar.connect(self.on_update_progressbar)
         self.docking_thread.update_single_docking_progressbar.connect(self.on_update_single_docking_progressbar)
-        self.docking_thread.set_params(self.tab,
+        self.docking_thread.set_params(self.tab, self.tab.docking_programs_child_tabs.docking_programs,
         number_of_dockings_to_do = number_of_dockings_to_do,
         ligands_to_dock = ligands_to_dock,
         receptors_to_dock = receptors_to_dock,
@@ -569,9 +566,10 @@ class Dockings_thread(QtCore.QThread):
     update_data_analysis_tab = QtCore.pyqtSignal(str, dict, object, object)
 
 
-    def set_params(self, tab, number_of_dockings_to_do, ligands_to_dock, receptors_to_dock, dockings_to_do = []):
+    def set_params(self, tab, main, number_of_dockings_to_do, ligands_to_dock, receptors_to_dock, dockings_to_do = []):
 
         self.tab = tab
+        self.main = main
 
         self.number_of_dockings_to_do = number_of_dockings_to_do
 
@@ -656,7 +654,7 @@ class Dockings_thread(QtCore.QThread):
 
         Check_current_tab.check_docking_program_current_tab(self.tab)
 
-        docking_programs = self.tab.docking_programs_child_tabs.docking_programs
+        docking_programs = self.main
 
         self.tab.docking_completed = False
 
@@ -665,16 +663,18 @@ class Dockings_thread(QtCore.QThread):
 
             if cavity is not None:
 
-                self.tab.last_docking = Vina_docking(self,
+                self.tab.last_docking = Vina_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
-                cavity = cavity)
+                cavity = cavity,
+                main = self.main)
 
             else:
 
-                self.tab.last_docking = Vina_docking(self,
+                self.tab.last_docking = Vina_docking(self.tab,
                 ligand = ligand,
-                receptor = receptor)
+                receptor = receptor,
+                main = self.main)
 
             ferr = open('stdout.txt','w+')
             # Run Docking Process in a different environment, to facilitate the interruption of the protocol
@@ -730,7 +730,7 @@ class Dockings_thread(QtCore.QThread):
                 os.remove('stdout.txt')
             else:
                 os.rename('stdout.txt', self.tab.last_docking.log_file_name)
-            # os.remove('stdout.txt')
+
 
             if self.tab.last_docking.interrupt == False:
 
@@ -762,19 +762,42 @@ class Dockings_thread(QtCore.QThread):
 
             if cavity is not None:
 
-                self.tab.last_docking = RxDock_docking(self,
+                self.tab.last_docking = RxDock_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
-                cavity = cavity)
+                cavity = cavity,
+                pharma_restrains = self.tab.pharma_restrains,
+                tethered_docking = self.tab.tethered_docking,
+                poses_box = str(self.tab.poses_box.value()),
+                cavity_to_dock = self.tab.loaded_cavities.currentText(),
+                cavity_name = self.tab.loaded_cavities.currentText(),
+                protein_segments_to_exclude = self.tab.protein_segments_to_exclude,
+                use_water = self.tab.receptor_water_checkbtn.isChecked(),
+                main = self.main)
 
             else:
 
-                self.tab.last_docking = RxDock_docking(self,
+                self.tab.last_docking = RxDock_docking(self.tab,
                 ligand = ligand,
-                receptor = receptor)
+                receptor = receptor,
+                pharma_restrains = self.tab.pharma_restrains,
+                tethered_docking = self.tab.tethered_docking,
+                poses_box = str(self.tab.poses_box.value()),
+                cavity_to_dock = self.tab.loaded_cavities.currentText(),
+                cavity_name = self.tab.loaded_cavities.currentText(),
+                protein_segments_to_exclude = self.tab.protein_segments_to_exclude,
+                use_water = self.tab.receptor_water_checkbtn.isChecked(),
+                main = self.main)
 
             # Run Docking Process in a different environment, to facilitate the interruption of the protocol
-            self.docking_subprocess = subprocess.Popen(self.tab.last_docking.run_docking_rxdock_settings, preexec_fn=os.setsid)
+            ferr = open('stdout.txt','w+')
+            self.docking_subprocess = subprocess.Popen(self.tab.last_docking.run_docking_rxdock_settings, preexec_fn=os.setsid, stdout = ferr)
+            ferr.close()
+
+            if os.path.isfile(self.tab.last_docking.log_file_name):
+                os.remove('stdout.txt')
+            else:
+                os.rename('stdout.txt', self.tab.last_docking.log_file_name)
 
             # 'Cancel' button to interrupt the process, is enabled after a bit, to wait for effective begin of the process
             self.tab.docking_dialog.cancel_button.setEnabled(True)
@@ -834,15 +857,17 @@ class Dockings_thread(QtCore.QThread):
 
             if cavity is not None:
 
-                self.tab.last_docking = Smina_docking(self,
+                self.tab.last_docking = Smina_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
-                cavity = cavity)
+                cavity = cavity,
+                main = self.main)
 
             else:
-                self.tab.last_docking = Smina_docking(self,
+                self.tab.last_docking = Smina_docking(self.tab,
                 ligand = ligand,
-                receptor = receptor)
+                receptor = receptor,
+                main = self.main)
 
             ferr = open('stdout.txt','w')
 
@@ -913,15 +938,17 @@ class Dockings_thread(QtCore.QThread):
 
             if cavity is not None:
 
-                self.tab.last_docking = ADFR_docking(self,
+                self.tab.last_docking = ADFR_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
-                cavity = cavity)
+                cavity = cavity,
+                main = self.main)
 
             else:
-                self.tab.last_docking = ADFR_docking(self,
+                self.tab.last_docking = ADFR_docking(self.tab,
                 ligand = ligand,
-                receptor = receptor)
+                receptor = receptor,
+                main = self.main)
 
             self.update_progress_text.emit("Generating Grid Map. Docking " + str(int(num)) + " of " + str(self.number_of_dockings_to_do))
 

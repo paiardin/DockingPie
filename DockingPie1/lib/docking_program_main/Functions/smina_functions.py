@@ -43,10 +43,10 @@ class Smina_docking():
     """
 
 
-    def __init__(self, tab, ligand, receptor, cavity = None):
+    def __init__(self, tab, main, ligand, receptor, cavity = None):
 
-        self.tab = tab.tab
-        self.thread = tab
+        self.tab = tab
+        self.main = main
 
         self.docking_completed = False
         self.interrupt = False
@@ -100,7 +100,7 @@ class Smina_docking():
 
 
         if self.grid:
-            self.cavity_to_dock = self.tab.docking_programs_child_tabs.docking_programs.ready_grid_centers[name_cav]
+            self.cavity_to_dock = self.main.ready_grid_centers[name_cav]
             self.reference_cavity = False
 
         else:
@@ -109,12 +109,12 @@ class Smina_docking():
             self.reference_cavity = True
 
         # Initialize names and paths
-        self.results_file_name = str("Run_" + str(self.tab.docking_programs_child_tabs.docking_programs.smina_runs) + "_Smina")
+        self.results_file_name = str("Run_" + str(self.main.smina_runs) + "_Smina")
         self.results_file_name_ext = str(self.results_file_name + ".pdb")
         self.log_file_name = str(self.results_file_name + "_log.txt")
 
         # Change directory --> RxDock tmp dir
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
+        os.chdir(self.main.smina_tmp_dir)
 
         self.show_resume_window()
 
@@ -139,13 +139,13 @@ class Smina_docking():
 
                 ### To run the Smina Docking Process ###
 
-        path_to_smina = self.tab.docking_programs_child_tabs.docking_programs.path_to_smina
+        path_to_smina = self.main.path_to_smina
 
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.smina_tmp_dir)
+        os.chdir(self.main.smina_tmp_dir)
 
         self.run_docking_smina_settings = [path_to_smina,
         "-r", str(self.receptor_to_dock + ".pdbqt"),
-        "-l", str(self.ligand_to_dock  + ".sdf"),
+        "-l", str(self.ligand_to_dock  + ".pdbqt"),
         "-o", self.results_file_name_ext,
         "--exhaustiveness", str(self.exhaustiveness),
         "--num_modes", str(self.poses),
@@ -180,7 +180,7 @@ class Smina_docking():
 
         if self.use_flex_protocol:
             # Generate pdbqt file with flexible side chains
-            self.prepare_flex_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_flexreceptor4.py")
+            self.prepare_flex_receptor_path = os.path.join(self.main.config_path, "prepare_flexreceptor4.py")
             self.preapre_flex_receptors_settings = ["python",
             self.prepare_flex_receptor_path,
             "-r", str(self.receptor_to_dock + ".pdbqt"),
@@ -199,29 +199,29 @@ class Smina_docking():
             # Extend options for docking
             self.run_docking_smina_settings.extend(["--flex", flexible_receptor_name])
 
+        self.main.smina_runs += 1
 
-        self.tab.docking_programs_child_tabs.docking_programs.smina_runs += 1
 
     def check_if_docking_completed(self):
 
-        file_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.smina_tmp_dir, self.results_file_name_ext)
+        file_path = os.path.join(self.main.smina_tmp_dir, self.results_file_name_ext)
 
         if Path(file_path).is_file():
 
             if os.path.getsize(file_path):
                 self.docking_completed = True
-                self.tab.docking_programs_child_tabs.docking_programs.smina_runs += 1
+                self.main.smina_runs += 1
 
             else:
                 self.docking_completed = False
                 QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
                 os.remove(file_path)
-                self.tab.docking_programs_child_tabs.docking_programs.smina_runs += 1
+                self.main.smina_runs += 1
 
         else:
             self.docking_completed = False
             QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
-            self.tab.docking_programs_child_tabs.docking_programs.smina_runs += 1
+            self.main.smina_runs += 1
 
 
 class Smina_parse_results:

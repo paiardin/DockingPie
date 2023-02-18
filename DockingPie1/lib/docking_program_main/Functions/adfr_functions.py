@@ -43,9 +43,10 @@ class ADFR_docking():
     """
 
 
-    def __init__(self, tab, ligand, receptor, cavity = None):
+    def __init__(self, tab, main, ligand, receptor, cavity = None):
 
-        self.tab = tab.tab
+        self.tab = tab
+        self.main = main
         self.thread = tab
 
         self.docking_completed = False
@@ -92,7 +93,7 @@ class ADFR_docking():
 
 
         if self.grid:
-            self.cavity_to_dock = self.tab.docking_programs_child_tabs.docking_programs.ready_grid_centers[name_cav]
+            self.cavity_to_dock = self.main.ready_grid_centers[name_cav]
             self.reference_cavity = False
 
         else:
@@ -101,12 +102,12 @@ class ADFR_docking():
             self.reference_cavity = True
 
         # Initialize names and paths
-        self.results_file_name = str("Run_" + str(self.tab.docking_programs_child_tabs.docking_programs.adfr_runs) + "_ADFR")
+        self.results_file_name = str("Run_" + str(self.main.adfr_runs) + "_ADFR")
         self.results_file_name_ext = str(self.results_file_name + ".pdbqt")
         self.log_file_name = str(self.results_file_name + "_log.txt")
 
         # Change directory --> RxDock tmp dir
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
+        os.chdir(self.main.adfr_tmp_dir)
 
         self.show_resume_window()
 
@@ -137,9 +138,9 @@ class ADFR_docking():
             path_to_agfr = "agfr"
 
         else:
-            path_to_agfr = self.tab.docking_programs_child_tabs.docking_programs.path_to_agfr
+            path_to_agfr = self.main.path_to_agfr
 
-        os.chdir(self.tab.docking_programs_child_tabs.docking_programs.adfr_tmp_dir)
+        os.chdir(self.main.adfr_tmp_dir)
 
         self.generate_grid_adfr_settings = [path_to_agfr,
         "-r",
@@ -226,7 +227,7 @@ class ADFR_docking():
             path_to_ADFR = "adfr"
 
         else:
-            path_to_ADFR = self.tab.docking_programs_child_tabs.docking_programs.path_to_ADFR
+            path_to_ADFR = self.main.path_to_ADFR
 
         self.run_docking_adfr_settings = [path_to_ADFR,
         "-t", str(self.results_file_name + "_grid.trg"),
@@ -236,7 +237,7 @@ class ADFR_docking():
         "-s", self.ga_threshold,
         "-o", str(self.results_file_name + "_")]
 
-        self.tab.docking_programs_child_tabs.docking_programs.adfr_runs += 1
+        self.main.adfr_runs += 1
 
 
     #     if sys.platform == "linux":
@@ -292,7 +293,7 @@ class ADFR_docking():
 
     def check_if_docking_completed(self):
 
-        self.file_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.adfr_tmp_dir, self.results_file_name_ext)
+        self.file_path = os.path.join(self.main.adfr_tmp_dir, self.results_file_name_ext)
 
         self.change_results_name()
 
@@ -300,18 +301,18 @@ class ADFR_docking():
 
             if os.path.getsize(self.file_path):
                 self.docking_completed = True
-                self.tab.docking_programs_child_tabs.docking_programs.adfr_runs += 1
+                self.main.adfr_runs += 1
 
             else:
                 self.docking_completed = False
                 QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
                 os.remove(self.file_path)
-                self.tab.docking_programs_child_tabs.docking_programs.adfr_runs += 1
+                self.main.adfr_runs += 1
 
         else:
             self.docking_completed = False
             QtWidgets.QMessageBox.warning(self.tab, "", str("Something went wrong during Docking. \nPlease check LOG files."))
-            self.tab.docking_programs_child_tabs.docking_programs.adfr_runs += 1
+            self.main.adfr_runs += 1
 
 
 
