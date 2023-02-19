@@ -46,7 +46,19 @@ class Vina_docking():
     """
 
 
-    def __init__(self, tab, main, ligand, receptor, cavity = None):
+    def __init__(self,
+                 tab, main,
+                 ligand,
+                 receptor,
+                 ligands_to_dock,
+                 receptors_to_dock,
+                 flex_residues = "",
+                 use_flex_vina = False,
+                 exhaustiveness = 8,
+                 energy = 3,
+                 scoring_function = "Standard",
+                 poses = 1,
+                 cavity = None):
 
         self.tab = tab
         self.main = main
@@ -63,30 +75,22 @@ class Vina_docking():
 
         # Initialize Standard Docking parameters
         self.receptor_to_dock = receptor
-        self.poses = str(self.tab.poses_box.value())
+        self.poses = poses
         self.ligand_to_dock = ligand
 
-        self.exhaustiveness = self.tab.exhaustiveness_box.value()
-        self.energy = self.tab.energy_box.value()
-        self.scoring_function = self.tab.scoring_box.currentText()
+        self.exhaustiveness = exhaustiveness
+        self.energy = energy
+        self.scoring_function = scoring_function
 
-        if cavity is not None:
-
-            name_cav = cavity
-            self.cavity_to_dock = main.ready_grid_centers[name_cav]
-            self.cavity_name = name_cav
-
-        else:
-
-            name_cav = self.tab.loaded_cavities.currentText()
-            self.cavity_to_dock = main.ready_grid_centers[name_cav]
-            self.cavity_name = name_cav
+        name_cav = cavity
+        self.cavity_to_dock = main.ready_grid_centers[name_cav]
+        self.cavity_name = name_cav
 
         # Initialize Flexible Docking
-        if self.tab.use_flex_vina_cb.isChecked():
+        if use_flex_vina:
             self.use_flex_protocol = True
 
-            self.flex_residues = self.tab.flex_arg_edit.text()
+            self.flex_residues = flex_residues
             self.check_valid_flex_input()
 
         # Initialize names and paths
@@ -98,6 +102,8 @@ class Vina_docking():
         # else:
         self.log_file_name = str(self.results_file_name + "_log.txt")
 
+        self.ligands_to_dock = ligands_to_dock
+        self.receptors_to_dock = receptors_to_dock
         # Change directory --> Vina tmp dir
         os.chdir(self.main.vina_tmp_dir)
 
@@ -179,7 +185,7 @@ class Vina_docking():
             else:
                 self.docking_completed = False
 
-                if len(self.tab.ligands_to_dock) > 1 or len(self.tab.receptors_to_dock) > 1:
+                if len(self.ligands_to_dock) > 1 or len(self.receptors_to_dock) > 1:
 
                     os.remove(file_path)
                     self.main.vina_runs += 1
@@ -203,10 +209,11 @@ class Vina_Parse_Results:
     """
 
 
-    def __init__(self, tab, results_file_name, results_dict, poses, results_data = [[]]):
+    def __init__(self, tab, main, results_file_name, results_dict, poses, results_data = [[]]):
 
 
-        self.tab = tab.tab
+        self.tab = tab
+        self.main = main
         self.last_docking = self.tab.last_docking
 
         self.results_file_name = results_file_name

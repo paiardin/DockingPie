@@ -43,7 +43,16 @@ class ADFR_docking():
     """
 
 
-    def __init__(self, tab, main, ligand, receptor, cavity = None):
+    def __init__(self, tab, main,
+                 ligand,
+                 receptor,
+                 ga_evol,
+                 ga_threshold,
+                 max_gen,
+                 buffer,
+                 use_flex = False,
+                 flex_residues = "",
+                 cavity = None):
 
         self.tab = tab
         self.main = main
@@ -57,43 +66,24 @@ class ADFR_docking():
         self.receptor_to_dock = receptor
         self.ligand_to_dock = ligand
 
-        self.ga_evol = str(self.tab.ga_evol.value())
-        self.ga_threshold = str(self.tab.ga_threshold.value())
+        self.ga_evol = ga_evol
+        self.ga_threshold = ga_threshold
         #self.max_ga_eval = str(self.tab.max_ga_eval.value())
-        self.max_gen = str(self.tab.max_gen.value())
-        self.buffer = str(self.tab.buffer_box.value())
+        self.max_gen = max_gen
+        self.buffer = buffer
 
-        if self.tab.use_flex_vina_cb.isChecked():
+        if use_flex:
             self.use_flex_protocol = True
 
-            self.flex_residues = self.tab.flex_arg_edit.text()
+            self.flex_residues = flex_residues
             self.check_valid_flex_input()
 
-        if cavity is not None:
+        self.grid = re.search("Grid Center_", cavity)
+        self.cavity_name = cavity
 
-            # If cavity is specified in input -- Custom protocol
-
-            name_cav = cavity
-
-            # Check if Reference ligand or grid parameters
-
-            self.grid = re.search("Grid Center_", name_cav)
-            self.cavity_name = name_cav
-
-        else:
-
-            # If cavity is not specified in input -- AllvsAll protocol
-
-            name_cav = self.tab.loaded_cavities.currentText()
-
-            # Check if Reference ligand or grid parameters
-
-            self.grid = re.search("Grid Center_", name_cav)
-            self.cavity_name = name_cav
-
-
+        # Check if Reference ligand or grid parameters
         if self.grid:
-            self.cavity_to_dock = self.main.ready_grid_centers[name_cav]
+            self.cavity_to_dock = self.main.ready_grid_centers[cavity]
             self.reference_cavity = False
 
         else:
@@ -323,9 +313,10 @@ class ADFR_parse_results:
     A class to parse the ADFR results file
     """
 
-    def __init__(self, tab, ligand, results_file_name, results_dict, results_data = [[]]):
+    def __init__(self, tab, main, ligand, results_file_name, results_dict, results_data = [[]]):
 
-        self.tab = tab.tab
+        self.tab = tab
+        self.main = main
         self.last_docking = self.tab.last_docking
 
         self.results_file_name = results_file_name

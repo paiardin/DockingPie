@@ -667,14 +667,31 @@ class Dockings_thread(QtCore.QThread):
                 ligand = ligand,
                 receptor = receptor,
                 cavity = cavity,
-                main = self.main)
+                main = self.main,
+                ligands_to_dock = self.ligands_to_dock,
+                receptors_to_dock = self.receptors_to_dock,
+                use_flex_vina = self.tab.use_flex_vina_cb.isChecked(),
+                flex_residues = self.tab.flex_arg_edit.text(),
+                poses = str(self.tab.poses_box.value()),
+                exhaustiveness = self.tab.exhaustiveness_box.value(),
+                energy = self.tab.energy_box.value(),
+                scoring_function = self.tab.scoring_box.currentText())
 
             else:
 
                 self.tab.last_docking = Vina_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
-                main = self.main)
+                cavity = self.tab.loaded_cavities.currentText(),
+                main = self.main,
+                ligands_to_dock = self.ligands_to_dock,
+                receptors_to_dock = self.receptors_to_dock,
+                use_flex_vina = self.tab.use_flex_vina_cb.isChecked(),
+                flex_residues = self.tab.flex_arg_edit.text(),
+                poses = str(self.tab.poses_box.value()),
+                exhaustiveness = self.tab.exhaustiveness_box.value(),
+                energy = self.tab.energy_box.value(),
+                scoring_function = self.tab.scoring_box.currentText())
 
             ferr = open('stdout.txt','w+')
             # Run Docking Process in a different environment, to facilitate the interruption of the protocol
@@ -743,7 +760,9 @@ class Dockings_thread(QtCore.QThread):
 
                 if self.tab.docking_completed:
 
-                    self.tab.results_file = Vina_Parse_Results(self, results_file_name = self.tab.last_docking.results_file_name,
+                    self.tab.results_file = Vina_Parse_Results(self.tab,
+                    main = self.main,
+                    results_file_name = self.tab.last_docking.results_file_name,
                     results_dict = docking_programs.results_dict,
                     poses = self.tab.last_docking.poses)
 
@@ -861,12 +880,29 @@ class Dockings_thread(QtCore.QThread):
                 ligand = ligand,
                 receptor = receptor,
                 cavity = cavity,
+                poses = str(self.tab.poses_box.value()),
+                use_flex_smina = self.tab.use_flex_vina_cb.isChecked(),
+                flex_residues = self.tab.flex_arg_edit.text(),
+                exhaustiveness = self.tab.exhaustiveness_box.value(),
+                buffer = self.tab.buffer_box.value(),
+                energy = self.tab.energy_box.value(),
+                rmsd = self.tab.rmsd_box.value(),
+                scoring = self.tab.scoring_box.currentText(),
                 main = self.main)
 
             else:
                 self.tab.last_docking = Smina_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
+                cavity = self.tab.loaded_cavities.currentText(),
+                poses = str(self.tab.poses_box.value()),
+                use_flex_smina = self.tab.use_flex_vina_cb.isChecked(),
+                flex_residues = self.tab.flex_arg_edit.text(),
+                exhaustiveness = self.tab.exhaustiveness_box.value(),
+                buffer = self.tab.buffer_box.value(),
+                energy = self.tab.energy_box.value(),
+                rmsd = self.tab.rmsd_box.value(),
+                scoring = self.tab.scoring_box.currentText(),
                 main = self.main)
 
             ferr = open('stdout.txt','w')
@@ -921,7 +957,9 @@ class Dockings_thread(QtCore.QThread):
 
                 if self.tab.docking_completed:
 
-                    self.tab.results_file = Smina_parse_results(self, results_file_name = self.tab.last_docking.results_file_name,
+                    self.tab.results_file = Smina_parse_results(self.tab,
+                    main = self.main,
+                    results_file_name = self.tab.last_docking.results_file_name,
                     results_dict = docking_programs.results_dict,
                     poses = self.tab.last_docking.poses,
                     ligand = ligand)
@@ -930,7 +968,6 @@ class Dockings_thread(QtCore.QThread):
                 self.tab.last_docking,
                 "Smina",
                 ["NAME", "POSE", "Affinity (kcal/mol)"])
-
 
         if self.tab.is_adfr_tab:
 
@@ -942,12 +979,25 @@ class Dockings_thread(QtCore.QThread):
                 ligand = ligand,
                 receptor = receptor,
                 cavity = cavity,
+                ga_evol = str(self.tab.ga_evol.value()),
+                ga_threshold = str(self.tab.ga_threshold.value()),
+                max_gen = str(self.tab.max_gen.value()),
+                buffer = str(self.tab.buffer_box.value()),
+                use_flex = self.tab.use_flex_vina_cb.isChecked(),
+                flex_residues = self.tab.flex_arg_edit.text(),
                 main = self.main)
 
             else:
                 self.tab.last_docking = ADFR_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
+                cavity = self.tab.loaded_cavities.currentText(),
+                ga_evol = str(self.tab.ga_evol.value()),
+                ga_threshold = str(self.tab.ga_threshold.value()),
+                max_gen = str(self.tab.max_gen.value()),
+                buffer = str(self.tab.buffer_box.value()),
+                use_flex = self.tab.use_flex_vina_cb.isChecked(),
+                flex_residues = self.tab.flex_arg_edit.text(),
                 main = self.main)
 
             self.update_progress_text.emit("Generating Grid Map. Docking " + str(int(num)) + " of " + str(self.number_of_dockings_to_do))
@@ -1041,7 +1091,9 @@ class Dockings_thread(QtCore.QThread):
 
                 if self.tab.docking_completed:
 
-                    self.tab.results_file = ADFR_parse_results(self, results_file_name = self.tab.last_docking.results_file_name,
+                    self.tab.results_file = ADFR_parse_results(self.tab,
+                    main = self.main,
+                    results_file_name = self.tab.last_docking.results_file_name,
                     results_dict = docking_programs.results_dict,
                     ligand = ligand)
 

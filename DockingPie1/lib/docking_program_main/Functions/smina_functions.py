@@ -43,7 +43,20 @@ class Smina_docking():
     """
 
 
-    def __init__(self, tab, main, ligand, receptor, cavity = None):
+    def __init__(self, tab, main,
+                 ligand,
+                 receptor,
+                 exhaustiveness,
+                 buffer,
+                 energy,
+                 rmsd,
+                 scoring,
+                 use_flex_smina = False,
+                 flex_residues = "",
+                 poses = 1,
+                 cavity = None):
+
+        print(use_flex_smina)
 
         self.tab = tab
         self.main = main
@@ -55,56 +68,37 @@ class Smina_docking():
 
         # Initialize Standard Docking parameters
         self.receptor_to_dock = receptor
-        self.poses = str(self.tab.poses_box.value())
+        self.poses = poses
         self.ligand_to_dock = ligand
 
-        self.exhaustiveness = self.tab.exhaustiveness_box.value()
-        self.buffer = self.tab.buffer_box.value()
-        self.energy = self.tab.energy_box.value()
-        self.rmsd_filter = self.tab.rmsd_box.value()
-        self.scoring_function = self.tab.scoring_box.currentText()
+        self.exhaustiveness = exhaustiveness
+        self.buffer = buffer
+        self.energy = energy
+        self.rmsd_filter = rmsd
+        self.scoring_function = scoring
 
-        if self.tab.use_flex_vina_cb.isChecked():
+        if use_flex_smina:
             self.use_flex_protocol = True
 
             self.flex_residues = ""
 
-            flex_residues = self.tab.flex_arg_edit.text()
+            flex_residues = flex_residues
             for res in flex_residues.split(","):
                 residue = res.replace(" ", "")
                 self.flex_residues += str(self.receptor_to_dock + ":" + residue + ",")
 
             self.check_valid_flex_input()
 
-        if cavity is not None:
+        self.grid = re.search("Grid Center_", cavity)
+        self.cavity_name = cavity
 
-            # If cavity is specified in input -- Custom protocol
-
-            name_cav = cavity
-
-            # Check if Reference ligand or grid parameters
-
-            self.grid = re.search("Grid Center_", name_cav)
-            self.cavity_name = name_cav
-
-        else:
-
-            # If cavity is not specified in input -- AllvsAll protocol
-
-            name_cav = self.tab.loaded_cavities.currentText()
-
-            # Check if Reference ligand or grid parameters
-
-            self.grid = re.search("Grid Center_", name_cav)
-            self.cavity_name = name_cav
-
-
+        # Check if Reference ligand or grid parameters
         if self.grid:
-            self.cavity_to_dock = self.main.ready_grid_centers[name_cav]
+            self.cavity_to_dock = self.main.ready_grid_centers[cavity]
             self.reference_cavity = False
 
         else:
-            self.cavity_to_dock = name_cav
+            self.cavity_to_dock = cavity
             cmd.save(str(self.cavity_to_dock + ".pdb"), self.cavity_to_dock, state = -1, format = 'pdb')
             self.reference_cavity = True
 
@@ -121,13 +115,13 @@ class Smina_docking():
     def check_valid_flex_input(self):
         pass
 
-    def create_protein_segments_string(self):
-
-        self.protein_segments_to_exclude_string = ""
-
-        for items in self.tab.protein_segments_to_exclude:
-            item_to_write = str(items.split("_")[1])
-            self.protein_segments_to_exclude_string += item_to_write
+    # def create_protein_segments_string(self):
+    #
+    #     self.protein_segments_to_exclude_string = ""
+    #
+    #     for items in self.tab.protein_segments_to_exclude:
+    #         item_to_write = str(items.split("_")[1])
+    #         self.protein_segments_to_exclude_string += item_to_write
 
 
     def show_resume_window(self):
@@ -232,9 +226,10 @@ class Smina_parse_results:
     """
 
 
-    def __init__(self, tab, results_file_name, results_dict, poses, ligand, results_data = [[]]):
+    def __init__(self, tab, main, results_file_name, results_dict, poses, ligand, results_data = [[]]):
 
-        self.tab = tab.tab
+        self.tab = tab
+        self.main = main
         self.last_docking = self.tab.last_docking
 
         self.results_file_name = results_file_name

@@ -1,0 +1,158 @@
+#################################################################
+# If you used ADFR in your work, please cite:                   #
+#                                                               #
+# P.A. Ravindranath S. Forli, D.S. Goodsell, A.J. Olson and     #
+# M.F. Sanner                                                   #
+#                                                               #
+# AutoDockFR: Advances in Protein-Ligand Docking with           #
+# Explicitly Specified Binding Site Flexibility                 #
+# PLoS Comput Biol 11(12): e1004586                             #
+#                                                               #
+# DOI:10.1371/journal.pcbi.1004586                              #
+#                                                               #
+# Please see http://adfr.scripps.edu for more information.      #
+#################################################################
+
+Docking on janis a Linux-5.19.0-32-generic-x86_64-with-debian-bookworm-sid computer
+Date Sun Feb 19 11:52:35 2023
+reading ligand /home/ale/miniconda3/envs/pymol37/lib/python3.7/site-packages/pmg_tk/startup/DockingPie1/lib/docking_program_main/tmp/ADFR_tmp/01_obj01_ADFR.pdbqt
+Detected 8 cores, using 8 cores
+Unpacking maps /home/ale/miniconda3/envs/pymol37/lib/python3.7/site-packages/pmg_tk/startup/DockingPie1/lib/docking_program_main/tmp/ADFR_tmp/Run_1_ADFR_grid.trg
+Performing search (20 GA evolutions with 2500000 maxEvals each) ...
+Termination status
+    0/  20  0.0% runs failed
+   20/  20 100.0% runs exhausted their evaluations
+    0/  20  0.0% runs stopped converged 1 or 2 clusters
+    0/  20  0.0% runs stopped after no improvement in clusters
+    0/  20  0.0% runs stopped because GA ran out of choices
+    0/  20  0.0% runs stopped because GA population converged
+
+Refining results ...
+mode |  affinity  | clust. | ref. | clust. | rmsd | energy | best |
+     | (kcal/mol) | rmsd   | rmsd |  size  | stdv |  stdv  | run  |
+-----+------------+--------+------+--------+------+--------+------+
+   1         -4.7     0.0    -1.0       3     0.8     0.3    019
+   2         -4.5     2.8    -1.0       2     0.7     0.0    001
+   3         -4.4     2.5    -1.0       1      NA      NA    006
+   4         -4.4     7.1    -1.0       2     0.7     0.0    011
+   5         -4.2     4.9    -1.0       1      NA      NA    007
+   6         -4.1     2.8    -1.0       1      NA      NA    015
+   7         -3.6     2.9    -1.0       1      NA      NA    008
+   8         -3.5     4.0    -1.0       1      NA      NA    004
+   9         -3.5     4.9    -1.0       1      NA      NA    005
+  10         -3.4     6.7    -1.0       1      NA      NA    002
+  11         -3.1     5.8    -1.0       1      NA      NA    010
+  12         -3.1     6.5    -1.0       1      NA      NA    018
+  13         -2.9     4.6    -1.0       1      NA      NA    016
+  14         -2.6     5.3    -1.0       1      NA      NA    013
+  15         -2.6     2.9    -1.0       1      NA      NA    003
+  16         -2.4     5.8    -1.0       1      NA      NA    017
+
+
+Clustering information
+
+Clustering cutoff:  2.00
+
+cluster 1
+  runs 19 9 12
+  energies -4.67 -3.96 -3.44
+  rmsdbest 0.00 1.70 1.56
+  seeds 18 8 11
+
+cluster 2
+  runs 1 14
+  energies -4.46 -2.58
+  rmsdbest 0.00 1.43
+  seeds 296344 13
+
+cluster 3
+  runs 6
+  energies -4.40
+  rmsdbest 0.00
+  seeds 519441
+
+cluster 4
+  runs 11 20
+  energies -4.37 -4.14
+  rmsdbest 0.00 1.33
+  seeds 10 19
+
+cluster 5
+  runs 7
+  energies -4.22
+  rmsdbest 0.00
+  seeds 816054
+
+cluster 6
+  runs 15
+  energies -4.12
+  rmsdbest 0.00
+  seeds 14
+
+cluster 7
+  runs 8
+  energies -3.61
+  rmsdbest 0.00
+  seeds 214868
+
+cluster 8
+  runs 4
+  energies -3.53
+  rmsdbest 0.00
+  seeds 913743
+
+cluster 9
+  runs 5
+  energies -3.46
+  rmsdbest 0.00
+  seeds 193393
+
+cluster 10
+  runs 2
+  energies -3.43
+  rmsdbest 0.00
+  seeds 297855
+
+cluster 11
+  runs 10
+  energies -3.13
+  rmsdbest 0.00
+  seeds 9
+
+cluster 12
+  runs 18
+  energies -3.11
+  rmsdbest 0.00
+  seeds 17
+
+cluster 13
+  runs 16
+  energies -2.88
+  rmsdbest 0.00
+  seeds 15
+
+cluster 14
+  runs 13
+  energies -2.63
+  rmsdbest 0.00
+  seeds 12
+
+cluster 15
+  runs 3
+  energies -2.56
+  rmsdbest 0.00
+  seeds 126747
+
+cluster 16
+  runs 17
+  energies -2.45
+  rmsdbest 0.00
+  seeds 16
+Writing poses to Run_1_ADFR__out.pdbqt
+
+Docking performed in 15.12 seconds, i.e. 0 hours 00 minutes 15.117436 seconds 
+
+*************** first GA command ***************************
+"/home/ale/miniconda3/envs/pymol37/lib/python3.7/site-packages/pmg_tk/startup/DockingPie1/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/bin/pythonsh" "/home/ale/miniconda3/envs/pymol37/lib/python3.7/site-packages/pmg_tk/startup/DockingPie1/lib/docking_program_main/config/external_tools_linux/ADFRsuite_x86_64Linux_1.0/CCSBpckgs/ADFR/bin/runOneGA.py" -F "/tmp/tmp5u_MfE/Run_1_ADFR_grid" -M rigidReceptor -R "/tmp/tmp5u_MfE/Run_1_ADFR_grid/01_1ol5_ADFR.pdbqt" -T "/tmp/tmp5u_MfE/Run_1_ADFR_grid/translationPoints.npy" "-l" "01_obj01_ADFR.pdbqt" "-g" "5" "-s" "5" -S 296344 -j 1 -o "Run_1_ADFR_/NoName0001.dlg"
+
+packaging docking results in to Run_1_ADFR_.droin  0.04 (s.)

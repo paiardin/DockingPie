@@ -1,3 +1,0 @@
-Ligand: 01_obj01_RxDock
-Receptor: 01_1ol5_RxDock
-Cavity: prm_file0_cav1
