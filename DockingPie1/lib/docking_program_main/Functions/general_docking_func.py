@@ -370,23 +370,26 @@ class Calculate_RMSD:
 class Generate_Object:
 
 
-    def __init__(self, tab,
-    dict,
+    def __init__(self, tab, main,
     prepared_objects_list,
     format,
     tmp_path,
     docking_program_name,
+    dict = {},
+    object_names = [],
     generate_pdbqt = False,
     pdbqt_dict = {},
     is_receptor = False,
+    from_gui = True
     ):
 
         # To check if the object has been generated
         self.generated_object = False
 
+        self.main = main
         self.tab = tab
 
-        # To distinguish between Docking Programs
+        # To distinguish between Docking Programs.
         self.dict = dict
         self.prepared_objects_list = prepared_objects_list
 
@@ -404,29 +407,36 @@ class Generate_Object:
 
         # Path to the temp directory of the specific docking program
         self.tmp_path = tmp_path
+        os.chdir(self.tmp_path)
 
         # Dictionary of the pdbqt options
         self.pdbqt_dict = pdbqt_dict
 
-        self.generate_receptor()
+        self.generate_receptor(object_names, from_gui)
 
 
-    def generate_receptor(self):
+    def generate_receptor(self, object_names, from_gui):
 
         self.generated_receptor = False
 
         # For each object that is loaded in DockingPie
-        for self.strc in self.dict:
+        if from_gui:
 
-            # If the object is checked
-            obj = self.dict[self.strc]["frame"].strc_checkbox
-            if obj.isChecked():
+            for self.strc in self.dict:
 
-                # Count the number of states
-                states = cmd.count_states(obj.text().split()[0])
+                    # If the object is checked
+                    obj = self.dict[self.strc]["frame"].strc_checkbox
+                    if obj.isChecked():
 
-                # TODO DEAL WITH MULTIPLE STATES
+                        # Count the number of states
+                        states = cmd.count_states(obj.text().split()[0])
 
+                        # TODO DEAL WITH MULTIPLE STATES
+
+                        self.generate_checked_object()
+
+        else:
+            for self.strc in object_names:
                 self.generate_checked_object()
 
 
@@ -447,8 +457,8 @@ class Generate_Object:
         ## For those programs that need the generation of the pdbqt file (Vina, Autodock etc ...)
         if self.generate_pdbqt:
 
-            self.prepare_receptor_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_receptor4.py")
-            self.prepare_ligand_path = os.path.join(self.tab.docking_programs_child_tabs.docking_programs.config_path, "prepare_ligand4.py")
+            self.prepare_receptor_path = os.path.join(self.main.config_path, "prepare_receptor4.py")
+            self.prepare_ligand_path = os.path.join(self.main.config_path, "prepare_ligand4.py")
 
             if self.is_receptor:
 

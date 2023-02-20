@@ -2,7 +2,7 @@ set verbose to  True
 set repairs to  hydrogens
 read  obj01.pdb
 setting up LPO with mode= automatic
-and outputfilename=  01_obj01_ADFR.pdbqt
+and outputfilename=  01_obj01_Vina.pdbqt
 and check_for_fragments= False
 and bonds_to_inactivate= 
 returning  0

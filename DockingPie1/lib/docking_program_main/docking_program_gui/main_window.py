@@ -717,6 +717,9 @@ class Docking_Programs(QtWidgets.QWidget):
         # Dict to keep track of the results - Work in Progress
         self.results_dict = {}
 
+        # Dict to keep track of consensus jobs
+        self.consensus_job_dict = {}
+
         # Create the Docking Programs' Tab Widget and set the Layout
         self.docking_prog_tabs_widg = QtWidgets.QWidget()
         self.docking_programs_tabs = QtWidgets.QTabWidget()

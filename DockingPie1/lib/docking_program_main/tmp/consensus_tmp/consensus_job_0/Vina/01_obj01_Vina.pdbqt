@@ -3,8 +3,8 @@ REMARK  status: ('A' for Active; 'I' for Inactive)
 REMARK    1  A    between atoms: PA_1  and  O5'_4 
 REMARK    2  A    between atoms: PA_1  and  O3A_23 
 REMARK    3  A    between atoms: PB_2  and  O3A_23 
-REMARK    4  A    between atoms: C5'_3  and  O5'_4 
-REMARK    5  A    between atoms: C5'_3  and  C4'_5 
+REMARK    4  A    between atoms: C5'_3  and  C4'_5 
+REMARK    5  A    between atoms: C5'_3  and  O5'_4 
 REMARK    6  A    between atoms: C3'_7  and  O3'_8 
 REMARK    7  A    between atoms: C2'_10  and  O2'_11 
 REMARK    8  A    between atoms: C1'_13  and  N9_34 

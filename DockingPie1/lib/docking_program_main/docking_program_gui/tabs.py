@@ -132,8 +132,8 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.grid_layout.setAlignment(QtCore.Qt.AlignCenter)
         self.grid_group_box.setLayout(self.grid_layout)
 
-        self.spacing, self.spacing_scroll_vis, self.x, self.x_scroll_vis, self.y, self.y_scroll_vis, self.z, self.z_scroll_vis = grid_dimensions(self.scroll_changed)
-        self.x_pos, self.x_scroll, self.y_pos, self.y_scroll, self.z_pos, self.z_scroll = grid_position(self.scroll_changed)
+        self.spacing_label, self.spacing_widg, self.x_dim_label, self.x_dim_widg, self.y_dim_label, self.y_dim_widg, self.z_dim_label, self.z_dim_widg = grid_dimensions(self.scroll_changed)
+        self.x_label, self.x_widg, self.y_label, self.y_widg, self.z_label, self.z_widg = grid_position(self.scroll_changed)
 
         self.update_grid = QtWidgets.QPushButton("Get coords from PyMOL object")
         self.grid_selections = QtWidgets.QComboBox()
@@ -144,27 +144,27 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.grid_selections.view().pressed.connect(self.get_current_sele)
 
         # Grid Position widgets
-        self.grid_layout.addWidget(self.x_pos, 1, 1)
-        self.grid_layout.addWidget(self.x_scroll, 1, 2)
+        self.grid_layout.addWidget(self.x_label, 1, 1)
+        self.grid_layout.addWidget(self.x_widg, 1, 2)
 
-        self.grid_layout.addWidget(self.y_pos, 1, 3)
-        self.grid_layout.addWidget(self.y_scroll, 1, 4)
+        self.grid_layout.addWidget(self.y_label, 1, 3)
+        self.grid_layout.addWidget(self.y_widg, 1, 4)
 
-        self.grid_layout.addWidget(self.z_pos, 1, 5)
-        self.grid_layout.addWidget(self.z_scroll, 1, 6)
+        self.grid_layout.addWidget(self.z_label, 1, 5)
+        self.grid_layout.addWidget(self.z_widg, 1, 6)
 
         # Grid Dimension widgets
-        self.grid_layout.addWidget(self.spacing, 0, 0)
-        self.grid_layout.addWidget(self.spacing_scroll_vis, 0, 1)
+        self.grid_layout.addWidget(self.spacing_label, 0, 0)
+        self.grid_layout.addWidget(self.spacing_widg, 0, 1)
 
-        self.grid_layout.addWidget(self.x, 0, 2)
-        self.grid_layout.addWidget(self.x_scroll_vis, 0, 3)
+        self.grid_layout.addWidget(self.x_dim_label, 0, 2)
+        self.grid_layout.addWidget(self.x_dim_widg, 0, 3)
 
-        self.grid_layout.addWidget(self.y, 0, 4)
-        self.grid_layout.addWidget(self.y_scroll_vis, 0, 5)
+        self.grid_layout.addWidget(self.y_dim_label, 0, 4)
+        self.grid_layout.addWidget(self.y_dim_widg, 0, 5)
 
-        self.grid_layout.addWidget(self.z, 0, 6)
-        self.grid_layout.addWidget(self.z_scroll_vis, 0, 7)
+        self.grid_layout.addWidget(self.z_dim_label, 0, 6)
+        self.grid_layout.addWidget(self.z_dim_widg, 0, 7)
 
         ####
 
@@ -189,17 +189,148 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.show_results_summary = QtWidgets.QPushButton("Show Results Summary")
         self.layout_data_analysis_tab.addWidget(self.run_consensus_docking_button, 4, 0)
         self.layout_data_analysis_tab.addWidget(self.show_results_summary, 4, 1)
+        self.run_consensus_docking_button.clicked.connect(self.run_consensus_job)
+
+
+    def run_consensus_job(self):
+
+        ### Get general parameters
+        self.get_general_parameters()
+
+
+    def get_general_parameters(self):
+
+        self.receptor = [self.receptor_cb.currentText()] ## do as also the receptor is a list, so if in the future we would like to add the possibility to run with multiple receptors it is easier
+        self.ligands = [i.text() for i in self.ligand_cb.selectedItems()]
+
+        self.selected_docking_programs = [i.text() for i in self.docking_program_check_list if i.isChecked()]
+
+        ### Make consensus_job_<index> directory
+        self.cs_job_index = len(self.docking_programs.consensus_job_dict)
+        cs_job_dir_name = "consensus_job_" + str(self.cs_job_index)
+        self.consensus_job_dir = os.path.join(self.docking_programs.consensus_tmp_dir, cs_job_dir_name)
+        if os.path.isdir(self.consensus_job_dir):
+            shutil.rmtree(self.consensus_job_dir)
+        os.mkdir(self.consensus_job_dir)
+
+        ### Update consensus_job_dict
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)] = {}
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["directory"] = self.consensus_job_dir
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["docking_programs"] = self.selected_docking_programs
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"] = {}
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"] = {}
+
+        for rec in self.receptor:
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec] = []
+        for lig in self.ligands:
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig] = []
+
+        ### Run consensus
+        for dp in self.selected_docking_programs:
+            self.run_single_consensus(dp)
+
+    def run_single_consensus(self, dp):
+
+        #### TO DO - IN CONSENUS_PROTOCOL.PY
+        self.vina_consensus_job_dir = os.path.join(self.consensus_job_dir, "Vina")
+        if os.path.isdir(self.vina_consensus_job_dir):
+            shutil.rmtree(self.vina_consensus_job_dir)
+        os.mkdir(self.vina_consensus_job_dir)
+
+        for rec in self.receptor:
+            if dp == "Vina":
+                print(self.docking_programs.consensus_job_dict)
+                self.prepared_receptors = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec]
+
+                # Keep track of the imported receptors that have multiple states, just to give a warning to the user
+                states = cmd.count_states(rec)
+                if states > 1:
+                    warning = "Multiple states have been detected in PyMOL for the selected receptor. Only the current state is going to be taken into consideration"
+
+                tmp_path_name = os.path.join(self.vina_consensus_job_dir, str(rec + ".pdb"))
+
+                # This save-delete-load is done to avoid errors while parsing  the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
+                cmd.save(tmp_path_name, rec, format = 'pdb')
+                cmd.delete(rec)
+                cmd.load(tmp_path_name, rec)
+
+                # Extract some information from the input
+                self.object = ObjectParser(file_name = rec,
+                file_path = tmp_path_name,
+                is_receptor = True)
+
+                ###
+                self.pdbqt_options_dict = {}
+                self.pdbqt_options_dict["add_h"] = True
+                self.pdbqt_options_dict["bonds"] = False
+                self.pdbqt_options_dict["add_gast"] = False
+                self.pdbqt_options_dict["remove_nonstd"] = False
+                self.pdbqt_options_dict["remove_water"] = True
+                self.pdbqt_options_dict["remove_lone_pairs"] = False
+                self.pdbqt_options_dict["remove_non_polar_H"] = False
+                self.pdbqt_options_dict["remove_non_protein"] = False
+
+                self.generated_receptor = Generate_Object(self, main = self.docking_programs,
+                prepared_objects_list = self.prepared_receptors,
+                tmp_path = self.vina_consensus_job_dir,
+                format = "pdb",
+                docking_program_name = "Vina",
+                generate_pdbqt = True,
+                object_names = [rec],
+                pdbqt_dict = self.pdbqt_options_dict,
+                is_receptor = True,
+                from_gui = False)
+
+                # Update dict
+                self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
+
+        for lig in self.ligands:
+            if dp == "Vina":
+                self.prepared_ligands = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig]
+
+                # Keep track of the imported receptors that have multiple states, just to give a warning to the user
+                states = cmd.count_states(lig)
+                if states > 1:
+                    warning = "Multiple states have been detected in PyMOL for the selected receptor. Only the current state is going to be taken into consideration"
+
+                tmp_path_name = os.path.join(self.vina_consensus_job_dir, str(lig + ".pdb"))
+
+                # This save-delete-load is done to avoid errors while parsing  the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
+                cmd.save(tmp_path_name, lig, format = 'pdb')
+                cmd.delete(lig)
+                cmd.load(tmp_path_name, lig)
+
+                self.pdbqt_options_dict_lig = {}
+                self.pdbqt_options_dict_lig["add_h"] = True
+                self.pdbqt_options_dict_lig["none_torsions"] = False
+                self.pdbqt_options_dict_lig["all_torsions"] = False
+                self.pdbqt_options_dict_lig["all_but_ga"] = True
+
+                self.generated_receptor = Generate_Object(self, main = self.docking_programs,
+                prepared_objects_list = self.prepared_ligands,
+                tmp_path = self.vina_consensus_job_dir,
+                format = "pdb",
+                docking_program_name = "Vina",
+                generate_pdbqt = True,
+                object_names = [lig],
+                pdbqt_dict = self.pdbqt_options_dict_lig,
+                is_receptor = False,
+                from_gui = False)
+
+                # Update dict
+                self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_receptor.new_strc_name)
+
 
     def get_current_sele(self):
 
         get_current_sele(self, self.docking_programs, self.grid_selections,
-                         self.x_scroll,
-                         self.y_scroll,
-                         self.z_scroll,
-                         self.x_scroll_vis,
-                         self.y_scroll_vis,
-                         self.z_scroll_vis,
-                         self.spacing_scroll_vis
+                         self.x_widg,
+                         self.y_widg,
+                         self.z_widg,
+                         self.spacing_widg,
+                         self.x_dim_widg,
+                         self.y_dim_widg,
+                         self.z_dim_widg
                          )
 
     def clear_rec_widg(self):
@@ -226,30 +357,30 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
     def scroll_changed(self):
 
         # Docking Box is updated dinamically
-        x = self.x_scroll.value()
-        y = self.y_scroll.value()
-        z = self.z_scroll.value()
-        spacing = self.spacing_scroll_vis.value()
-        x_vis = self.x_scroll_vis.value()
-        y_vis = self.y_scroll_vis.value()
-        z_vis = self.z_scroll_vis.value()
+        x = self.x_widg.value()
+        y = self.y_widg.value()
+        z = self.z_widg.value()
+        spacing = self.spacing_widg.value()
+        x_vis = self.x_dim_widg.value()
+        y_vis = self.y_dim_widg.value()
+        z_vis = self.z_dim_widg.value()
 
         spinbox = self.sender()
 
-        if spinbox is self.x_scroll:
-            x = self.x_scroll.value()
-        elif spinbox is self.y_scroll:
-            y = self.y_scroll.value()
-        elif spinbox is self.z_scroll:
-            z = self.z_scroll.value()
-        elif spinbox is self.spacing_scroll_vis:
-            spacing = self.spacing_scroll_vis.value()
-        elif spinbox is self.x_scroll_vis:
-            x_vis = self.x_scroll_vis.value()
-        elif spinbox is self.y_scroll_vis:
-            y_vis = self.y_scroll_vis.value()
-        elif spinbox is self.z_scroll_vis:
-            z_vis = self.z_scroll_vis.value()
+        if spinbox is self.x_widg:
+            x = self.x_widg.value()
+        elif spinbox is self.y_widg:
+            y = self.y_widg.value()
+        elif spinbox is self.z_widg:
+            z = self.z_widg.value()
+        elif spinbox is self.spacing_widg:
+            spacing = self.spacing_widg.value()
+        elif spinbox is self.x_dim_widg:
+            x_vis = self.x_dim_widg.value()
+        elif spinbox is self.y_dim_widg:
+            y_vis = self.y_dim_widg.value()
+        elif spinbox is self.z_dim_widg:
+            z_vis = self.z_dim_widg.value()
 
         # Show the center and the box each time the values are updated
         self.show_crisscross_changed(x, y, z)
@@ -2068,8 +2199,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
             Check_current_tab.check_docking_program_current_tab(self)
 
             if self.is_vina_tab:
-
-                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_receptors_dict,
+                self.generated_receptor = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.vina_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_receptors_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.vina_tmp_dir,
                 format = "pdb",
@@ -2082,7 +2213,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
                 cmd.group("Vina", members=self.generated_receptor.new_strc_name, action='auto', quiet=1)
 
             if self.is_rxdock_tab:
-                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_dict,
+                self.generated_receptor = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_receptors_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir,
                 format = "mol2",
@@ -2094,7 +2226,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
                 cmd.group("RxDock", members=self.generated_receptor.new_strc_name, action='auto', quiet=1)
 
             if self.is_smina_tab:
-                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_receptors_dict,
+                self.generated_receptor = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.smina_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_receptors_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.smina_tmp_dir,
                 format = "pdb",
@@ -2107,7 +2240,8 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
                 cmd.group("Smina", members=self.generated_receptor.new_strc_name, action='auto', quiet=1)
 
             if self.is_adfr_tab:
-                self.generated_receptor = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_receptors_dict,
+                self.generated_receptor = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.adfr_receptors_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_receptors_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir,
                 format = "pdb",
@@ -2531,7 +2665,8 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
             Check_current_tab.check_docking_program_current_tab(self)
 
             if self.is_vina_tab:
-                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.vina_ligands_dict,
+                self.generated_ligand = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.vina_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.vina_ligands_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.vina_tmp_dir,
                 format = "sdf",
@@ -2544,7 +2679,8 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
                 cmd.group("Vina", members=self.generated_ligand.new_strc_name, action='auto', quiet=1)
 
             if self.is_rxdock_tab:
-                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_dict,
+                self.generated_ligand = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.rxdock_ligands_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir,
                 format = "sdf",
@@ -2556,7 +2692,8 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
                 cmd.group("RxDock", members=self.generated_ligand.new_strc_name, action='auto', quiet=1)
 
             if self.is_smina_tab:
-                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.smina_ligands_dict,
+                self.generated_ligand = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.smina_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.smina_ligands_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.smina_tmp_dir,
                 format = "sdf",
@@ -2569,7 +2706,8 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
                 cmd.group("Smina", members=self.generated_ligand.new_strc_name, action='auto', quiet=1)
 
             if self.is_adfr_tab:
-                self.generated_ligand = Generate_Object(self, dict = self.docking_programs_child_tabs.docking_programs.adfr_ligands_dict,
+                self.generated_ligand = Generate_Object(self, main = self.docking_programs_child_tabs.docking_programs,
+                dict = self.docking_programs_child_tabs.docking_programs.adfr_ligands_dict,
                 prepared_objects_list = self.docking_programs_child_tabs.docking_programs.adfr_ligands_prepared,
                 tmp_path = self.docking_programs_child_tabs.docking_programs.adfr_tmp_dir,
                 format = "sdf",

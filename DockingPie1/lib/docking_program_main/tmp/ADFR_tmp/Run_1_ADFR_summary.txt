@@ -1,3 +1,0 @@
-Ligand: 01_obj01_ADFR
-Receptor: 01_1ol5_ADFR
-Cavity: Grid Center_1
