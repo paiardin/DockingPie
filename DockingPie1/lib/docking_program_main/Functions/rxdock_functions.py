@@ -131,7 +131,7 @@ class RxDock_Cavity():
         prm_file_name = "prm_file",
         counter = len(self.main.generated_cavity))
 
-        f = open("prova_rxdock.txt", "w")
+        f = open(self.prm_file.prm_file_name + "_LOG.txt", "w")
         # Run RxDock "rbcavity" func
         subprocess.run(["rbcavity", "-W", "-d", "-r", str(self.prm_file.prm_file_name)], stdout = f)
         f.close()

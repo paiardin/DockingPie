@@ -127,6 +127,105 @@ def update_widget_with_pymol_object(main,
                 widget.clear()
 
 
+class PDBQT_OptionsWindows():
+
+    def __init__(self, tab, main, obj_type, options_dict):
+
+        self.tab = tab
+        self.main = main
+
+
+        self.pdbqt_options_window = NewWindow(parent = self.main,
+        title = "PDBQT options window", upper_frame_title = "Select Options",
+        submit_command = self.apply_pdbqt_options_ligand, submit_button_text= "Set",
+        with_scroll = True)
+
+        if obj_type == "ligand":
+
+            self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+
+            self.active_torsions_group = QtWidgets.QGroupBox("Active Torsions")
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.active_torsions_group)
+            self.active_torsions_group_layout = QtWidgets.QVBoxLayout()
+            self.active_torsions_group.setLayout(self.active_torsions_group_layout)
+
+            self.none_torsions = QtWidgets.QRadioButton("None")
+            self.all_torsions = QtWidgets.QRadioButton("All")
+            self.all_but_ga = QtWidgets.QRadioButton("All But Guanidinium and Amide")
+
+            self.active_torsions_group_layout.addWidget(self.none_torsions)
+            self.active_torsions_group_layout.addWidget(self.all_torsions)
+            self.active_torsions_group_layout.addWidget(self.all_but_ga)
+
+            self.add_h.setChecked(self.options_dict["add_h"])
+            self.none_torsions.setChecked(self.options_dict["none_torsions"])
+            self.all_torsions.setChecked(self.options_dict["all_torsions"])
+            self.all_but_ga.setChecked(self.options_dict["all_but_ga"])
+
+            self.pdbqt_options_window.show()
+
+        if obj_type == "receptor":
+
+            self.pdbqt_options_window = NewWindow(parent = self.main,
+            title = "PDBQT options window", upper_frame_title = "Select Options",
+            submit_command = self.apply_pdbqt_options_receptor, submit_button_text= "Set",
+            with_scroll = True)
+
+            self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+            self.bonds = QtWidgets.QCheckBox("Repair Bonds")
+            self.add_gast = QtWidgets.QCheckBox("Add Gasteiger Charges")
+            self.remove_nonstd = QtWidgets.QCheckBox("Remove ALL non-standard residues")
+            self.remove_water = QtWidgets.QCheckBox("Remove Water")
+            self.remove_lone_pairs = QtWidgets.QCheckBox("Remove Lone Pairs")
+            self.remove_non_polar_H = QtWidgets.QCheckBox("Remove Non-Polar Hydrogens")
+            self.remove_non_protein = QtWidgets.QCheckBox("Remove All Non-Protein chains")
+
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.bonds)
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.add_gast)
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_nonstd)
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_water)
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_lone_pairs)
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_polar_H)
+            self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_protein)
+
+            self.add_h.setChecked(self.options_dict["add_h"])
+            self.bonds.setChecked(self.options_dict["bonds"])
+            self.bonds.setChecked(self.options_dict["add_gast"])
+            self.remove_nonstd.setChecked(self.options_dict["remove_nonstd"])
+            self.remove_water.setChecked(self.options_dict["remove_water"])
+            self.remove_lone_pairs.setChecked(self.options_dict["remove_lone_pairs"])
+            self.remove_non_polar_H.setChecked(self.options_dict["remove_non_polar_H"])
+            self.remove_non_polar_H.setChecked(self.options_dict["remove_non_polar_H"])
+            self.remove_non_protein.setChecked(self.options_dict["remove_non_protein"])
+
+            self.pdbqt_options_window.show()
+
+    def apply_pdbqt_options_ligand(self):
+
+        self.options_dict["add_h"] = self.add_h.isChecked()
+        self.options_dict["none_torsions"] = self.none_torsions.isChecked()
+        self.options_dict["all_torsions"] = self.all_torsions.isChecked()
+        self.options_dict["all_torsions"] = self.all_but_ga.isChecked()
+
+        self.pdbqt_options_window.close()
+
+    def apply_pdbqt_options_receptor(self):
+
+        self.options_dict["add_h"] = self.add_h.isChecked()
+        self.options_dict["bonds"] = self.bonds.isChecked()
+        self.options_dict["remove_nonstd"] = self.remove_nonstd.isChecked()
+        self.options_dict["remove_water"] = self.remove_water.isChecked()
+        self.options_dict["remove_lone_pairs"] = self.remove_lone_pairs.isChecked()
+        self.options_dict["remove_non_polar_H"] = self.remove_non_polar_H.isChecked()
+        self.options_dict["remove_non_protein"] = self.remove_non_protein.isChecked()
+
+        self.pdbqt_options_window.close()
+
+
+
+
 class ObjectParser():
 
 

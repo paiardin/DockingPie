@@ -50,7 +50,7 @@ from lib.docking_program_main.docking_program_gui.new_windows import NewWindow, 
 from lib.docking_program_main.docking_program_gui.dialogs import *
 from lib.docking_program_main.docking_program_gui.widgets_utilities import *
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
-from lib.docking_program_main.Functions.general_docking_func import Generate_Object, Calculate_RMSD, update_widget_with_pymol_object, get_current_sele
+from lib.docking_program_main.Functions.general_docking_func import Generate_Object, Calculate_RMSD, update_widget_with_pymol_object, get_current_sele, PDBQT_OptionsWindows
 from lib.docking_program_main.Functions.general_functions import OpenFromFile, Check_current_tab, Save_to_Csv, SelectAll, check_configuration
 from lib.docking_program_main.Functions.installer import Installation, External_tools_installation_thread, External_tools_download_thread, External_components_dialog
 from lib.docking_program_main.Functions.dockings_thread import _dialog_mixin, Dockings_dialog, Dockings_thread
@@ -225,100 +225,131 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         for lig in self.ligands:
             self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig] = []
 
+        ### Prepare specifics for each docking program
+        self.dp_specifics_dict = {}
+        for dp in self.selected_docking_programs:
+            self.dp_specifics_dict[dp] = {}
+            self.dp_specifics_dict[dp]["directory"] = os.path.join(self.consensus_job_dir, dp)
+            if dp == "Vina" or dp == "Smina" or dp == "ADFR":
+                self.dp_specifics_dict[dp]["format_ligand"] = "pdb"
+                self.dp_specifics_dict[dp]["format_receptor"] = "pdb"
+                self.dp_specifics_dict[dp]["generate_pdbqt"] = True
+            if dp == "RxDock":
+                self.dp_specifics_dict[dp]["format_ligand"] = "sdf"
+                self.dp_specifics_dict[dp]["format_receptor"] = "mol2"
+                self.dp_specifics_dict[dp]["generate_pdbqt"] = False
+
+            if os.path.isdir(os.path.join(self.consensus_job_dir, dp)):
+                shutil.rmtree(os.path.join(self.consensus_job_dir, dp))
+            os.mkdir(os.path.join(self.consensus_job_dir, dp))
+
         ### Run consensus
         for dp in self.selected_docking_programs:
             self.run_single_consensus(dp)
 
-    def run_single_consensus(self, dp):
 
+    def run_single_consensus(self, dp):
         #### TO DO - IN CONSENUS_PROTOCOL.PY
-        self.vina_consensus_job_dir = os.path.join(self.consensus_job_dir, "Vina")
-        if os.path.isdir(self.vina_consensus_job_dir):
-            shutil.rmtree(self.vina_consensus_job_dir)
-        os.mkdir(self.vina_consensus_job_dir)
 
         for rec in self.receptor:
-            if dp == "Vina":
-                print(self.docking_programs.consensus_job_dict)
-                self.prepared_receptors = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec]
 
-                # Keep track of the imported receptors that have multiple states, just to give a warning to the user
-                states = cmd.count_states(rec)
-                if states > 1:
-                    warning = "Multiple states have been detected in PyMOL for the selected receptor. Only the current state is going to be taken into consideration"
-
-                tmp_path_name = os.path.join(self.vina_consensus_job_dir, str(rec + ".pdb"))
-
-                # This save-delete-load is done to avoid errors while parsing  the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
-                cmd.save(tmp_path_name, rec, format = 'pdb')
-                cmd.delete(rec)
-                cmd.load(tmp_path_name, rec)
-
-                # Extract some information from the input
-                self.object = ObjectParser(file_name = rec,
-                file_path = tmp_path_name,
-                is_receptor = True)
-
-                ###
-                self.pdbqt_options_dict = {}
-                self.pdbqt_options_dict["add_h"] = True
-                self.pdbqt_options_dict["bonds"] = False
-                self.pdbqt_options_dict["add_gast"] = False
-                self.pdbqt_options_dict["remove_nonstd"] = False
-                self.pdbqt_options_dict["remove_water"] = True
-                self.pdbqt_options_dict["remove_lone_pairs"] = False
-                self.pdbqt_options_dict["remove_non_polar_H"] = False
-                self.pdbqt_options_dict["remove_non_protein"] = False
-
-                self.generated_receptor = Generate_Object(self, main = self.docking_programs,
-                prepared_objects_list = self.prepared_receptors,
-                tmp_path = self.vina_consensus_job_dir,
-                format = "pdb",
-                docking_program_name = "Vina",
-                generate_pdbqt = True,
-                object_names = [rec],
-                pdbqt_dict = self.pdbqt_options_dict,
-                is_receptor = True,
-                from_gui = False)
-
-                # Update dict
-                self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
+            self.prepare_receptors(rec = rec,
+                                   docking_program = dp,
+                                   directory = self.dp_specifics_dict[dp]["directory"],
+                                   format = self.dp_specifics_dict[dp]["format_receptor"],
+                                   generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
 
         for lig in self.ligands:
-            if dp == "Vina":
-                self.prepared_ligands = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig]
 
-                # Keep track of the imported receptors that have multiple states, just to give a warning to the user
-                states = cmd.count_states(lig)
-                if states > 1:
-                    warning = "Multiple states have been detected in PyMOL for the selected receptor. Only the current state is going to be taken into consideration"
+            self.prepare_ligands(lig = lig,
+                                 docking_program = dp,
+                                 directory = self.dp_specifics_dict[dp]["directory"],
+                                 format = self.dp_specifics_dict[dp]["format_ligand"],
+                                 generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
 
-                tmp_path_name = os.path.join(self.vina_consensus_job_dir, str(lig + ".pdb"))
 
-                # This save-delete-load is done to avoid errors while parsing  the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
-                cmd.save(tmp_path_name, lig, format = 'pdb')
-                cmd.delete(lig)
-                cmd.load(tmp_path_name, lig)
+    def prepare_ligands(self, lig, docking_program, directory, format, generate_pdbqt):
 
-                self.pdbqt_options_dict_lig = {}
-                self.pdbqt_options_dict_lig["add_h"] = True
-                self.pdbqt_options_dict_lig["none_torsions"] = False
-                self.pdbqt_options_dict_lig["all_torsions"] = False
-                self.pdbqt_options_dict_lig["all_but_ga"] = True
+        self.prepared_ligands = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig]
 
-                self.generated_receptor = Generate_Object(self, main = self.docking_programs,
-                prepared_objects_list = self.prepared_ligands,
-                tmp_path = self.vina_consensus_job_dir,
-                format = "pdb",
-                docking_program_name = "Vina",
-                generate_pdbqt = True,
-                object_names = [lig],
-                pdbqt_dict = self.pdbqt_options_dict_lig,
-                is_receptor = False,
-                from_gui = False)
+        # Keep track of the imported receptors that have multiple states, just to give a warning to the user
+        states = cmd.count_states(lig)
+        if states > 1:
+            warning = "Multiple states have been detected in PyMOL for the selected receptor. Only the current state is going to be taken into consideration"
 
-                # Update dict
-                self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_receptor.new_strc_name)
+        tmp_path_name = os.path.join(directory, str(lig + ".pdb"))
+
+        # This save-delete-load is done to avoid errors while parsing  the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
+        cmd.save(tmp_path_name, lig, format = 'pdb')
+        cmd.delete(lig)
+        cmd.load(tmp_path_name, lig)
+
+        self.pdbqt_options_dict_lig = {}
+        self.pdbqt_options_dict_lig["add_h"] = True
+        self.pdbqt_options_dict_lig["none_torsions"] = False
+        self.pdbqt_options_dict_lig["all_torsions"] = False
+        self.pdbqt_options_dict_lig["all_but_ga"] = True
+
+        self.generated_receptor = Generate_Object(self, main = self.docking_programs,
+        prepared_objects_list = self.prepared_ligands,
+        tmp_path = directory,
+        format = format,
+        docking_program_name = docking_program,
+        generate_pdbqt = generate_pdbqt,
+        object_names = [lig],
+        pdbqt_dict = self.pdbqt_options_dict_lig,
+        is_receptor = False,
+        from_gui = False)
+
+        # Update dict
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_receptor.new_strc_name)
+
+
+    def prepare_receptors(self, rec, docking_program, directory, format, generate_pdbqt):
+
+        self.prepared_receptors = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec]
+
+        # Keep track of the imported receptors that have multiple states, just to give a warning to the user
+        states = cmd.count_states(rec)
+        if states > 1:
+            warning = "Multiple states have been detected in PyMOL for the selected receptor. Only the current state is going to be taken into consideration"
+
+        tmp_path_name = os.path.join(directory, str(rec + ".pdb"))
+
+        # This save-delete-load is done to avoid errors while parsing  the files. In this way, despite the type of file that was previously loaded in PyMOL, now it is loaded as a PDB file.
+        cmd.save(tmp_path_name, rec, format = 'pdb')
+        cmd.delete(rec)
+        cmd.load(tmp_path_name, rec)
+
+        # Extract some information from the input
+        self.object = ObjectParser(file_name = rec,
+        file_path = tmp_path_name,
+        is_receptor = True)
+
+        ###
+        self.pdbqt_options_dict = {}
+        self.pdbqt_options_dict["add_h"] = True
+        self.pdbqt_options_dict["bonds"] = False
+        self.pdbqt_options_dict["add_gast"] = False
+        self.pdbqt_options_dict["remove_nonstd"] = False
+        self.pdbqt_options_dict["remove_water"] = True
+        self.pdbqt_options_dict["remove_lone_pairs"] = False
+        self.pdbqt_options_dict["remove_non_polar_H"] = False
+        self.pdbqt_options_dict["remove_non_protein"] = False
+
+        self.generated_receptor = Generate_Object(self, main = self.docking_programs,
+        prepared_objects_list = self.prepared_receptors,
+        tmp_path = directory,
+        format = format,
+        docking_program_name = docking_program,
+        generate_pdbqt = generate_pdbqt,
+        object_names = [rec],
+        pdbqt_dict = self.pdbqt_options_dict,
+        is_receptor = True,
+        from_gui = False)
+
+        # Update dict
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
 
 
     def get_current_sele(self):
@@ -2141,40 +2172,43 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
     def show_pdbqt_options_window(self):
 
-        self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
-        title = "PDBQT options window", upper_frame_title = "Select Options",
-        submit_command = self.apply_pdbqt_options, submit_button_text= "Set",
-        with_scroll = True)
+        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
+                             obj_type = "receptor", options_dict = self.pdbqt_options_dict)
 
-        self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
-        self.bonds = QtWidgets.QCheckBox("Repair Bonds")
-        self.add_gast = QtWidgets.QCheckBox("Add Gasteiger Charges")
-        self.remove_nonstd = QtWidgets.QCheckBox("Remove ALL non-standard residues")
-        self.remove_water = QtWidgets.QCheckBox("Remove Water")
-        self.remove_lone_pairs = QtWidgets.QCheckBox("Remove Lone Pairs")
-        self.remove_non_polar_H = QtWidgets.QCheckBox("Remove Non-Polar Hydrogens")
-        self.remove_non_protein = QtWidgets.QCheckBox("Remove All Non-Protein chains")
-
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.bonds)
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.add_gast)
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_nonstd)
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_water)
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_lone_pairs)
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_polar_H)
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_protein)
-
-        self.add_h.setChecked(self.pdbqt_options_dict["add_h"])
-        self.bonds.setChecked(self.pdbqt_options_dict["bonds"])
-        self.bonds.setChecked(self.pdbqt_options_dict["add_gast"])
-        self.remove_nonstd.setChecked(self.pdbqt_options_dict["remove_nonstd"])
-        self.remove_water.setChecked(self.pdbqt_options_dict["remove_water"])
-        self.remove_lone_pairs.setChecked(self.pdbqt_options_dict["remove_lone_pairs"])
-        self.remove_non_polar_H.setChecked(self.pdbqt_options_dict["remove_non_polar_H"])
-        self.remove_non_polar_H.setChecked(self.pdbqt_options_dict["remove_non_polar_H"])
-        self.remove_non_protein.setChecked(self.pdbqt_options_dict["remove_non_protein"])
-
-        self.pdbqt_options_window.show()
+        # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
+        # title = "PDBQT options window", upper_frame_title = "Select Options",
+        # submit_command = self.apply_pdbqt_options, submit_button_text= "Set",
+        # with_scroll = True)
+        #
+        # self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+        # self.bonds = QtWidgets.QCheckBox("Repair Bonds")
+        # self.add_gast = QtWidgets.QCheckBox("Add Gasteiger Charges")
+        # self.remove_nonstd = QtWidgets.QCheckBox("Remove ALL non-standard residues")
+        # self.remove_water = QtWidgets.QCheckBox("Remove Water")
+        # self.remove_lone_pairs = QtWidgets.QCheckBox("Remove Lone Pairs")
+        # self.remove_non_polar_H = QtWidgets.QCheckBox("Remove Non-Polar Hydrogens")
+        # self.remove_non_protein = QtWidgets.QCheckBox("Remove All Non-Protein chains")
+        #
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.bonds)
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.add_gast)
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_nonstd)
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_water)
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_lone_pairs)
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_polar_H)
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.remove_non_protein)
+        #
+        # self.add_h.setChecked(self.pdbqt_options_dict["add_h"])
+        # self.bonds.setChecked(self.pdbqt_options_dict["bonds"])
+        # self.bonds.setChecked(self.pdbqt_options_dict["add_gast"])
+        # self.remove_nonstd.setChecked(self.pdbqt_options_dict["remove_nonstd"])
+        # self.remove_water.setChecked(self.pdbqt_options_dict["remove_water"])
+        # self.remove_lone_pairs.setChecked(self.pdbqt_options_dict["remove_lone_pairs"])
+        # self.remove_non_polar_H.setChecked(self.pdbqt_options_dict["remove_non_polar_H"])
+        # self.remove_non_polar_H.setChecked(self.pdbqt_options_dict["remove_non_polar_H"])
+        # self.remove_non_protein.setChecked(self.pdbqt_options_dict["remove_non_protein"])
+        #
+        # self.pdbqt_options_window.show()
 
 
     def apply_pdbqt_options(self):
@@ -2478,34 +2512,39 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
     def show_pdbqt_options_window(self):
 
-        self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
-        title = "PDBQT options window", upper_frame_title = "Select Options",
-        submit_command = self.apply_pdbqt_options, submit_button_text= "Set",
-        with_scroll = True)
+        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
+                             obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
 
-        self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+        self.pdbqt_options_dict_lig = pdbqt_options_window.options_dict
 
-        self.active_torsions_group = QtWidgets.QGroupBox("Active Torsions")
-        self.pdbqt_options_window.middle_layout_type.addWidget(self.active_torsions_group)
-        self.active_torsions_group_layout = QtWidgets.QVBoxLayout()
-        self.active_torsions_group.setLayout(self.active_torsions_group_layout)
-
-        self.none_torsions = QtWidgets.QRadioButton("None")
-        self.all_torsions = QtWidgets.QRadioButton("All")
-        self.all_but_ga = QtWidgets.QRadioButton("All But Guanidinium and Amide")
-
-        self.active_torsions_group_layout.addWidget(self.none_torsions)
-        self.active_torsions_group_layout.addWidget(self.all_torsions)
-        self.active_torsions_group_layout.addWidget(self.all_but_ga)
-
-        self.add_h.setChecked(self.pdbqt_options_dict_lig["add_h"])
-        self.none_torsions.setChecked(self.pdbqt_options_dict_lig["none_torsions"])
-        self.all_torsions.setChecked(self.pdbqt_options_dict_lig["all_torsions"])
-        self.all_but_ga.setChecked(self.pdbqt_options_dict_lig["all_but_ga"])
-
-        self.pdbqt_options_window.show()
-
+        # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
+        # title = "PDBQT options window", upper_frame_title = "Select Options",
+        # submit_command = self.apply_pdbqt_options, submit_button_text= "Set",
+        # with_scroll = True)
+        #
+        # self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
+        #
+        # self.active_torsions_group = QtWidgets.QGroupBox("Active Torsions")
+        # self.pdbqt_options_window.middle_layout_type.addWidget(self.active_torsions_group)
+        # self.active_torsions_group_layout = QtWidgets.QVBoxLayout()
+        # self.active_torsions_group.setLayout(self.active_torsions_group_layout)
+        #
+        # self.none_torsions = QtWidgets.QRadioButton("None")
+        # self.all_torsions = QtWidgets.QRadioButton("All")
+        # self.all_but_ga = QtWidgets.QRadioButton("All But Guanidinium and Amide")
+        #
+        # self.active_torsions_group_layout.addWidget(self.none_torsions)
+        # self.active_torsions_group_layout.addWidget(self.all_torsions)
+        # self.active_torsions_group_layout.addWidget(self.all_but_ga)
+        #
+        # self.add_h.setChecked(self.pdbqt_options_dict_lig["add_h"])
+        # self.none_torsions.setChecked(self.pdbqt_options_dict_lig["none_torsions"])
+        # self.all_torsions.setChecked(self.pdbqt_options_dict_lig["all_torsions"])
+        # self.all_but_ga.setChecked(self.pdbqt_options_dict_lig["all_but_ga"])
+        #
+        # self.pdbqt_options_window.show()
+        #
 
     def apply_pdbqt_options(self):
 
