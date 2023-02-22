@@ -104,10 +104,27 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.rec_clear = QtWidgets.QPushButton("Clear")
         self.rec_clear.clicked.connect(self.clear_rec_widg)
         self.rec_update.clicked.connect(self.rec_update_func)
+        self.rec_ao.clicked.connect(self.show_advanced_options_rec)
         self.receptor_group_box.layout().addWidget(self.receptor_cb, 0, 0, 1, 2)
         self.receptor_group_box.layout().addWidget(self.rec_update, 1, 0)
         self.receptor_group_box.layout().addWidget(self.rec_clear, 1, 1)
         self.receptor_group_box.layout().addWidget(self.rec_ao, 2, 0, 1, 2)
+
+        self.pdbqt_options_dict = {}
+        self.pdbqt_options_dict["add_h"] = True
+        self.pdbqt_options_dict["bonds"] = False
+        self.pdbqt_options_dict["add_gast"] = False
+        self.pdbqt_options_dict["remove_nonstd"] = False
+        self.pdbqt_options_dict["remove_water"] = True
+        self.pdbqt_options_dict["remove_lone_pairs"] = False
+        self.pdbqt_options_dict["remove_non_polar_H"] = False
+        self.pdbqt_options_dict["remove_non_protein"] = False
+
+        self.pdbqt_options_dict_lig = {}
+        self.pdbqt_options_dict_lig["add_h"] = True
+        self.pdbqt_options_dict_lig["none_torsions"] = False
+        self.pdbqt_options_dict_lig["all_torsions"] = False
+        self.pdbqt_options_dict_lig["all_but_ga"] = True
 
          # Ligands QGroupBox
         self.ligand_group_box = QtWidgets.QGroupBox("Ligand(s)")
@@ -120,6 +137,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.lig_clear = QtWidgets.QPushButton("Clear")
         self.lig_clear.clicked.connect(self.clear_lig_widg)
         self.lig_update.clicked.connect(self.lig_update_func)
+        self.lig_ao.clicked.connect(self.show_advanced_options_lig)
         self.ligand_group_box.layout().addWidget(self.ligand_cb, 0, 0, 1, 2)
         self.ligand_group_box.layout().addWidget(self.lig_update, 1, 0)
         self.ligand_group_box.layout().addWidget(self.lig_clear, 1, 1)
@@ -192,6 +210,45 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.run_consensus_docking_button.clicked.connect(self.run_consensus_job)
 
 
+    def show_advanced_options_rec(self):
+
+        self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs,
+                                                    submit_func = self.apply_pdbqt_options_rec)
+        self.pdbqt_options_window.fill_window(obj_type = "receptor", options_dict = self.pdbqt_options_dict)
+        self.pdbqt_options_window.show_window()
+
+
+    def show_advanced_options_lig(self):
+        self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs,
+                                                    submit_func = self.apply_pdbqt_options_lig)
+        self.pdbqt_options_window.fill_window(obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
+        self.pdbqt_options_window.show_window()
+
+
+    def apply_pdbqt_options_lig(self):
+
+        self.pdbqt_options_dict_lig["add_h"] = self.pdbqt_options_window.add_h.isChecked()
+        self.pdbqt_options_dict_lig["none_torsions"] = self.pdbqt_options_window.none_torsions.isChecked()
+        self.pdbqt_options_dict_lig["all_torsions"] = self.pdbqt_options_window.all_torsions.isChecked()
+        self.pdbqt_options_dict_lig["all_but_ga"] = self.pdbqt_options_window.all_but_ga.isChecked()
+
+        self.pdbqt_options_window.pdbqt_options_window.close()
+
+
+    def apply_pdbqt_options_rec(self):
+
+        self.pdbqt_options_dict["add_h"] = self.pdbqt_options_window.add_h.isChecked()
+        self.pdbqt_options_dict["bonds"] = self.pdbqt_options_window.bonds.isChecked()
+        self.pdbqt_options_dict["add_gast"] = self.pdbqt_options_window.add_gast.isChecked()
+        self.pdbqt_options_dict["remove_nonstd"] = self.pdbqt_options_window.remove_nonstd.isChecked()
+        self.pdbqt_options_dict["remove_water"] = self.pdbqt_options_window.remove_water.isChecked()
+        self.pdbqt_options_dict["remove_lone_pairs"] = self.pdbqt_options_window.remove_lone_pairs.isChecked()
+        self.pdbqt_options_dict["remove_non_polar_H"] = self.pdbqt_options_window.remove_non_polar_H.isChecked()
+        self.pdbqt_options_dict["remove_non_protein"] = self.pdbqt_options_window.remove_non_protein.isChecked()
+
+        self.pdbqt_options_window.pdbqt_options_window.close()
+
+
     def run_consensus_job(self):
 
         ### Get general parameters
@@ -206,7 +263,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.selected_docking_programs = [i.text() for i in self.docking_program_check_list if i.isChecked()]
 
         ### Make consensus_job_<index> directory
-        self.cs_job_index = len(self.docking_programs.consensus_job_dict)
+        self.cs_job_index = len(self.docking_programs.consensus_job_dict)+1
         cs_job_dir_name = "consensus_job_" + str(self.cs_job_index)
         self.consensus_job_dir = os.path.join(self.docking_programs.consensus_tmp_dir, cs_job_dir_name)
         if os.path.isdir(self.consensus_job_dir):
@@ -214,6 +271,23 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         os.mkdir(self.consensus_job_dir)
 
         ### Update consensus_job_dict
+        '''
+        The dictionary is indexed by 'self.cs_job_index'
+        The keys of the dictionary are described as follows:
+        - 'directory': path to the consensus_job directory
+        - 'docking_programs': a list of the docking programs' names that have been selected
+        - 'receptors' and 'ligands': a dictionary indexed by input receptor/ligand that stores a list of prepared receptors/ligands
+
+       {'1': {'directory': '<PATH/TO/TMP>/tmp/consensus_tmp/consensus_job_1',
+              'docking_programs': ['RxDock', 'Vina', 'Smina', 'ADFR'],
+              'receptors': {'1ol5': ['01_1ol5_RxDock', '02_1ol5_Vina', '03_1ol5_Smina', '04_1ol5_ADFR']},
+              'ligands': {}},
+        '2': {'directory': '<PATH/TO/TMP>/tmp/consensus_tmp/consensus_job_2',
+              'docking_programs': ['RxDock', 'Vina', 'Smina', 'ADFR'],
+              'receptors': {'1ol5': ['01_1ol5_RxDock', '02_1ol5_Vina', '03_1ol5_Smina', '04_1ol5_ADFR']},
+              'ligands': {'obj01': ['01_obj01_RxDock', '02_obj01_Vina', '03_obj01_Smina', '04_obj01_ADFR']}}}
+
+        '''
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)] = {}
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["directory"] = self.consensus_job_dir
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["docking_programs"] = self.selected_docking_programs
@@ -267,6 +341,19 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                                  format = self.dp_specifics_dict[dp]["format_ligand"],
                                  generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
 
+        self.get_grid_dimensions()
+
+
+    def get_grid_dimensions(self):
+
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"] = {}
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["x"] = self.x_widg.value()
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["y"] = self.y_widg.value()
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["z"] = self.z_widg.value()
+
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["x_dim"] = self.x_dim_widg.value()
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["y_dim"] = self.y_dim_widg.value()
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["z_dim"] = self.z_dim_widg.value()
 
     def prepare_ligands(self, lig, docking_program, directory, format, generate_pdbqt):
 
@@ -284,11 +371,13 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         cmd.delete(lig)
         cmd.load(tmp_path_name, lig)
 
-        self.pdbqt_options_dict_lig = {}
-        self.pdbqt_options_dict_lig["add_h"] = True
-        self.pdbqt_options_dict_lig["none_torsions"] = False
-        self.pdbqt_options_dict_lig["all_torsions"] = False
-        self.pdbqt_options_dict_lig["all_but_ga"] = True
+        # self.pdbqt_options_dict_lig = {}
+        # self.pdbqt_options_dict_lig["add_h"] = True
+        # self.pdbqt_options_dict_lig["none_torsions"] = False
+        # self.pdbqt_options_dict_lig["all_torsions"] = False
+        # self.pdbqt_options_dict_lig["all_but_ga"] = True
+        if docking_program == "ADFR":
+            self.pdbqt_options_dict_lig["add_h"] = True
 
         self.generated_receptor = Generate_Object(self, main = self.docking_programs,
         prepared_objects_list = self.prepared_ligands,
@@ -327,15 +416,18 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         is_receptor = True)
 
         ###
-        self.pdbqt_options_dict = {}
-        self.pdbqt_options_dict["add_h"] = True
-        self.pdbqt_options_dict["bonds"] = False
-        self.pdbqt_options_dict["add_gast"] = False
-        self.pdbqt_options_dict["remove_nonstd"] = False
-        self.pdbqt_options_dict["remove_water"] = True
-        self.pdbqt_options_dict["remove_lone_pairs"] = False
-        self.pdbqt_options_dict["remove_non_polar_H"] = False
-        self.pdbqt_options_dict["remove_non_protein"] = False
+        # self.pdbqt_options_dict = {}
+        # self.pdbqt_options_dict["add_h"] = True
+        # self.pdbqt_options_dict["bonds"] = False
+        # self.pdbqt_options_dict["add_gast"] = False
+        # self.pdbqt_options_dict["remove_nonstd"] = False
+        # self.pdbqt_options_dict["remove_water"] = True
+        # self.pdbqt_options_dict["remove_lone_pairs"] = False
+        # self.pdbqt_options_dict["remove_non_polar_H"] = False
+        # self.pdbqt_options_dict["remove_non_protein"] = False
+
+        if docking_program == "ADFR":
+            self.pdbqt_options_dict["add_h"] = True
 
         self.generated_receptor = Generate_Object(self, main = self.docking_programs,
         prepared_objects_list = self.prepared_receptors,
@@ -2172,8 +2264,10 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
     def show_pdbqt_options_window(self):
 
-        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
-                             obj_type = "receptor", options_dict = self.pdbqt_options_dict)
+        self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
+                                                    submit_func = self.apply_pdbqt_options)
+        self.pdbqt_options_window.fill_window(obj_type = "receptor", options_dict = self.pdbqt_options_dict)
+        self.pdbqt_options_window.show_window()
 
         # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
         # title = "PDBQT options window", upper_frame_title = "Select Options",
@@ -2213,15 +2307,15 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
     def apply_pdbqt_options(self):
 
-        self.pdbqt_options_dict["add_h"] = self.add_h.isChecked()
-        self.pdbqt_options_dict["bonds"] = self.bonds.isChecked()
-        self.pdbqt_options_dict["remove_nonstd"] = self.remove_nonstd.isChecked()
-        self.pdbqt_options_dict["remove_water"] = self.remove_water.isChecked()
-        self.pdbqt_options_dict["remove_lone_pairs"] = self.remove_lone_pairs.isChecked()
-        self.pdbqt_options_dict["remove_non_polar_H"] = self.remove_non_polar_H.isChecked()
-        self.pdbqt_options_dict["remove_non_protein"] = self.remove_non_protein.isChecked()
+        self.pdbqt_options_dict["add_h"] = self.pdbqt_options_window.add_h.isChecked()
+        self.pdbqt_options_dict["bonds"] = self.pdbqt_options_window.bonds.isChecked()
+        self.pdbqt_options_dict["remove_nonstd"] = self.pdbqt_options_window.remove_nonstd.isChecked()
+        self.pdbqt_options_dict["remove_water"] = self.pdbqt_options_window.remove_water.isChecked()
+        self.pdbqt_options_dict["remove_lone_pairs"] = self.pdbqt_options_window.remove_lone_pairs.isChecked()
+        self.pdbqt_options_dict["remove_non_polar_H"] = self.pdbqt_options_window.remove_non_polar_H.isChecked()
+        self.pdbqt_options_dict["remove_non_protein"] = self.pdbqt_options_window.remove_non_protein.isChecked()
 
-        self.pdbqt_options_window.close()
+        self.pdbqt_options_window.pdbqt_options_window.close()
 
 
     def generate_receptor_func(self):
@@ -2512,10 +2606,11 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
     def show_pdbqt_options_window(self):
 
-        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
-                             obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
+        self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
+                                                    submit_func = self.apply_pdbqt_options)
 
-        self.pdbqt_options_dict_lig = pdbqt_options_window.options_dict
+        self.pdbqt_options_window.fill_window(obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
+        self.pdbqt_options_window.show_window()
 
         # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
         # title = "PDBQT options window", upper_frame_title = "Select Options",
@@ -2548,13 +2643,12 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
     def apply_pdbqt_options(self):
 
-        self.pdbqt_options_dict_lig["add_h"] = self.add_h.isChecked()
-        self.pdbqt_options_dict_lig["none_torsions"] = self.none_torsions.isChecked()
-        self.pdbqt_options_dict_lig["all_torsions"] = self.all_torsions.isChecked()
-        self.pdbqt_options_dict_lig["all_torsions"] = self.all_but_ga.isChecked()
+        self.pdbqt_options_dict_lig["add_h"] = self.pdbqt_options_window.add_h.isChecked()
+        self.pdbqt_options_dict_lig["none_torsions"] = self.pdbqt_options_window.none_torsions.isChecked()
+        self.pdbqt_options_dict_lig["all_torsions"] = self.pdbqt_options_window.all_torsions.isChecked()
+        self.pdbqt_options_dict_lig["all_torsions"] = self.pdbqt_options_window.all_but_ga.isChecked()
 
-        self.pdbqt_options_window.close()
-
+        self.pdbqt_options_window.pdbqt_options_window.close()
 
     def get_list_of_current_cb(self):
 

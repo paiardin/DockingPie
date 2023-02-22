@@ -159,9 +159,13 @@ class Smina_docking():
 
         else:
 
-            x_val = float(self.cavity_to_dock[3])*float(self.cavity_to_dock[6])
-            y_val = float(self.cavity_to_dock[4])*float(self.cavity_to_dock[6])
-            z_val = float(self.cavity_to_dock[5])*float(self.cavity_to_dock[6])
+            x_val = float(self.cavity_to_dock[3])
+            y_val = float(self.cavity_to_dock[4])
+            z_val = float(self.cavity_to_dock[5])
+            spacing = float(self.cavity_to_dock[6])
+# *float(self.cavity_to_dock[6])
+# *float(self.cavity_to_dock[6])
+# *float(self.cavity_to_dock[6])
 
             self.run_docking_smina_settings.extend([
             "--center_x", self.cavity_to_dock[0],

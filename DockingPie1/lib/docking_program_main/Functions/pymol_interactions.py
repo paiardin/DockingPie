@@ -524,7 +524,8 @@ class PyMOLInteractions:
 
         cylinder_size = float(0.2)
 
-        size = [xpts*spacing, ypts*spacing, zpts*spacing]
+        # size = [xpts*spacing, ypts*spacing, zpts*spacing]
+        size = [xpts, ypts, zpts]
         xmax = x + size[0]/2.
         xmin = x - size[0]/2.
         ymax = y + size[1]/2.
@@ -725,7 +726,6 @@ class PyMOLInteractions:
         zz = statistics.mean(map(lambda a: a[2], stored.xyz))
 
         # self.calculate_center(object = self.sel)
-
         self.tmp_coord_list = [round(xx,2), round(yy,2), round(zz,2), round(x_vis.value()), round(y_vis.value()), round(z_vis.value()), round(spacing.value())]
 
         # Update the Grid center dict

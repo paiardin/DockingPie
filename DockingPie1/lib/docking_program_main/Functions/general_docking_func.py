@@ -129,18 +129,25 @@ def update_widget_with_pymol_object(main,
 
 class PDBQT_OptionsWindows():
 
-    def __init__(self, tab, main, obj_type, options_dict):
+    def __init__(self, tab, main, submit_func):
 
         self.tab = tab
         self.main = main
 
+        self.create_window(submit_func)
+
+    def create_window(self, submit_func):
 
         self.pdbqt_options_window = NewWindow(parent = self.main,
         title = "PDBQT options window", upper_frame_title = "Select Options",
-        submit_command = self.apply_pdbqt_options_ligand, submit_button_text= "Set",
+        submit_command = submit_func, submit_button_text= "Set",
         with_scroll = True)
 
+    def fill_window(self, obj_type, options_dict):
+
         if obj_type == "ligand":
+
+            self.options_dict = options_dict
 
             self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
             self.pdbqt_options_window.middle_layout_type.addWidget(self.add_h)
@@ -163,14 +170,9 @@ class PDBQT_OptionsWindows():
             self.all_torsions.setChecked(self.options_dict["all_torsions"])
             self.all_but_ga.setChecked(self.options_dict["all_but_ga"])
 
-            self.pdbqt_options_window.show()
-
         if obj_type == "receptor":
 
-            self.pdbqt_options_window = NewWindow(parent = self.main,
-            title = "PDBQT options window", upper_frame_title = "Select Options",
-            submit_command = self.apply_pdbqt_options_receptor, submit_button_text= "Set",
-            with_scroll = True)
+            self.options_dict = options_dict
 
             self.add_h = QtWidgets.QCheckBox("Add Hydrogens")
             self.bonds = QtWidgets.QCheckBox("Repair Bonds")
@@ -192,7 +194,7 @@ class PDBQT_OptionsWindows():
 
             self.add_h.setChecked(self.options_dict["add_h"])
             self.bonds.setChecked(self.options_dict["bonds"])
-            self.bonds.setChecked(self.options_dict["add_gast"])
+            self.add_gast.setChecked(self.options_dict["add_gast"])
             self.remove_nonstd.setChecked(self.options_dict["remove_nonstd"])
             self.remove_water.setChecked(self.options_dict["remove_water"])
             self.remove_lone_pairs.setChecked(self.options_dict["remove_lone_pairs"])
@@ -200,28 +202,32 @@ class PDBQT_OptionsWindows():
             self.remove_non_polar_H.setChecked(self.options_dict["remove_non_polar_H"])
             self.remove_non_protein.setChecked(self.options_dict["remove_non_protein"])
 
-            self.pdbqt_options_window.show()
+    def show_window(self):
 
-    def apply_pdbqt_options_ligand(self):
 
-        self.options_dict["add_h"] = self.add_h.isChecked()
-        self.options_dict["none_torsions"] = self.none_torsions.isChecked()
-        self.options_dict["all_torsions"] = self.all_torsions.isChecked()
-        self.options_dict["all_torsions"] = self.all_but_ga.isChecked()
 
-        self.pdbqt_options_window.close()
+        self.pdbqt_options_window.show()
 
-    def apply_pdbqt_options_receptor(self):
-
-        self.options_dict["add_h"] = self.add_h.isChecked()
-        self.options_dict["bonds"] = self.bonds.isChecked()
-        self.options_dict["remove_nonstd"] = self.remove_nonstd.isChecked()
-        self.options_dict["remove_water"] = self.remove_water.isChecked()
-        self.options_dict["remove_lone_pairs"] = self.remove_lone_pairs.isChecked()
-        self.options_dict["remove_non_polar_H"] = self.remove_non_polar_H.isChecked()
-        self.options_dict["remove_non_protein"] = self.remove_non_protein.isChecked()
-
-        self.pdbqt_options_window.close()
+    # def apply_pdbqt_options_ligand(self):
+    #
+    #     self.options_dict["add_h"] = self.add_h.isChecked()
+    #     self.options_dict["none_torsions"] = self.none_torsions.isChecked()
+    #     self.options_dict["all_torsions"] = self.all_torsions.isChecked()
+    #     self.options_dict["all_torsions"] = self.all_but_ga.isChecked()
+    #
+    #     self.pdbqt_options_window.close()
+    #
+    # def apply_pdbqt_options_receptor(self):
+    #
+    #     self.options_dict["add_h"] = self.add_h.isChecked()
+    #     self.options_dict["bonds"] = self.bonds.isChecked()
+    #     self.options_dict["remove_nonstd"] = self.remove_nonstd.isChecked()
+    #     self.options_dict["remove_water"] = self.remove_water.isChecked()
+    #     self.options_dict["remove_lone_pairs"] = self.remove_lone_pairs.isChecked()
+    #     self.options_dict["remove_non_polar_H"] = self.remove_non_polar_H.isChecked()
+    #     self.options_dict["remove_non_protein"] = self.remove_non_protein.isChecked()
+    #
+    #     self.pdbqt_options_window.close()
 
 
 

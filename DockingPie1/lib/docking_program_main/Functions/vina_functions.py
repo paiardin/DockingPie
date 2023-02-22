@@ -121,9 +121,13 @@ class Vina_docking():
 
     def run_docking_vina(self):
 
-        x_val = float(self.cavity_to_dock[3])*float(self.cavity_to_dock[6])
-        y_val = float(self.cavity_to_dock[4])*float(self.cavity_to_dock[6])
-        z_val = float(self.cavity_to_dock[5])*float(self.cavity_to_dock[6])
+        x_val = float(self.cavity_to_dock[3])
+        y_val = float(self.cavity_to_dock[4])
+        z_val = float(self.cavity_to_dock[5])
+        spacing = float(self.cavity_to_dock[6])
+# *float(self.cavity_to_dock[6])
+# *float(self.cavity_to_dock[6])
+# *float(self.cavity_to_dock[6])
 
         self.run_docking_vina_settings = [self.path_to_vina,
         "--receptor", str(self.receptor_to_dock + ".pdbqt"),
@@ -134,6 +138,7 @@ class Vina_docking():
         "--size_x", str(x_val),
         "--size_y", str(y_val),
         "--size_z", str(z_val),
+        "--spacing", str(spacing),
         "--out", self.results_file_name_ext,
         "--exhaustiveness", str(self.exhaustiveness),
         "--num_modes", str(self.poses),
