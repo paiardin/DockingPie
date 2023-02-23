@@ -132,6 +132,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.ligand_group_box.setLayout(QtWidgets.QGridLayout())
 
         self.ligand_cb = QtWidgets.QListWidget()
+        self.ligand_cb.setSelectionMode(3)
         self.lig_update = QtWidgets.QPushButton("Update from PyMOL")
         self.lig_ao = QtWidgets.QPushButton("Advanced Options")
         self.lig_clear = QtWidgets.QPushButton("Clear")
@@ -299,19 +300,26 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         for lig in self.ligands:
             self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig] = []
 
-        ### Prepare specifics for each docking program
+        ### Fill a dictionary with specific infos for each docking program
         self.dp_specifics_dict = {}
+        self.dp_specifics_dict[str(self.cs_job_index)] = {}
+
         for dp in self.selected_docking_programs:
-            self.dp_specifics_dict[dp] = {}
-            self.dp_specifics_dict[dp]["directory"] = os.path.join(self.consensus_job_dir, dp)
+            self.dp_specifics_dict[str(self.cs_job_index)][dp] = {}
+            self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"] = os.path.join(self.consensus_job_dir, dp)
+
+            self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_rec"] = []
+            self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_lig"] = []
+
             if dp == "Vina" or dp == "Smina" or dp == "ADFR":
-                self.dp_specifics_dict[dp]["format_ligand"] = "pdb"
-                self.dp_specifics_dict[dp]["format_receptor"] = "pdb"
-                self.dp_specifics_dict[dp]["generate_pdbqt"] = True
+                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"] = "pdb"
+                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"] = "pdb"
+                self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"] = True
+
             if dp == "RxDock":
-                self.dp_specifics_dict[dp]["format_ligand"] = "sdf"
-                self.dp_specifics_dict[dp]["format_receptor"] = "mol2"
-                self.dp_specifics_dict[dp]["generate_pdbqt"] = False
+                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"] = "sdf"
+                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"] = "mol2"
+                self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"] = False
 
             if os.path.isdir(os.path.join(self.consensus_job_dir, dp)):
                 shutil.rmtree(os.path.join(self.consensus_job_dir, dp))
@@ -319,29 +327,123 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
 
         ### Run consensus
         for dp in self.selected_docking_programs:
-            self.run_single_consensus(dp)
+            self.run_consensus(dp)
 
 
-    def run_single_consensus(self, dp):
+    def run_consensus(self, dp):
         #### TO DO - IN CONSENUS_PROTOCOL.PY
 
         for rec in self.receptor:
-
             self.prepare_receptors(rec = rec,
                                    docking_program = dp,
-                                   directory = self.dp_specifics_dict[dp]["directory"],
-                                   format = self.dp_specifics_dict[dp]["format_receptor"],
-                                   generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
+                                   directory = self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
+                                   format = self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"],
+                                   generate_pdbqt = self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
 
         for lig in self.ligands:
 
             self.prepare_ligands(lig = lig,
                                  docking_program = dp,
-                                 directory = self.dp_specifics_dict[dp]["directory"],
-                                 format = self.dp_specifics_dict[dp]["format_ligand"],
-                                 generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
+                                 directory = self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
+                                 format = self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"],
+                                 generate_pdbqt = self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
 
         self.get_grid_dimensions()
+
+        if dp == "RxDock":
+            ready_receptors = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][self.receptor[0]] # Always the first receptor is taken into consideration for grid generation
+            rec_file_name = [rec for rec in ready_receptors if re.search("RxDock", rec)][0]
+            self.make_grid(rec_file_name)
+
+        for rec in self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_rec"]:
+            print(rec)
+            for lig in self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_lig"]:
+                print(lig)
+                self.run_single_docking(dp, rec, lig)
+
+
+    def run_single_docking(self, dp, rec, lig):
+
+        if dp == "Vina":
+            self.vina_docking = Vina_docking(self,
+            ligand = lig,
+            receptor = rec,
+            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["Vina"]["directory"],
+            cavity = "consensus_grid",
+            cavity_list = self.list_grid,
+            main = self.docking_programs,
+            poses = 10,
+            exhaustiveness = 8,
+            energy = 3,
+            automatic = True)
+
+            f = open("stdout.txt", "w")
+            subprocess.run(self.vina_docking.run_docking_vina_settings, stdout = f, stderr = f)
+            f.close()
+
+            if os.path.isfile(self.vina_docking.log_file_name):
+                os.remove('stdout.txt')
+            else:
+                os.rename('stdout.txt', self.vina_docking.log_file_name)
+
+            self.vina_results = Vina_Parse_Results(self,
+            main = self.docking_programs,
+            results_file_name = self.vina_docking.results_file_name,
+            last_docking = self.vina_docking,
+            poses = self.vina_docking.poses)
+
+        if dp == "Smina":
+
+            self.smina_docking = Smina_docking(self,
+            ligand = lig,
+            receptor = rec,
+            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["Smina"]["directory"],
+            cavity = "consensus_grid",
+            cavity_list = self.list_grid,
+            poses = 10,
+            exhaustiveness = 8,
+            buffer = 4,
+            energy = 3,
+            rmsd = 1,
+            main = self.docking_programs)
+
+            f = open("stdout.txt", "w")
+            subprocess.run(self.smina_docking.run_docking_smina_settings, stdout = f, stderr = f)
+            f.close()
+
+            if os.path.isfile(self.smina_docking.log_file_name):
+                os.remove('stdout.txt')
+            else:
+                os.rename('stdout.txt', self.smina_docking.log_file_name)
+
+            self.smina_results = Smina_parse_results(self,
+            main = self.docking_programs,
+            results_file_name = self.smina_docking.results_file_name,
+            poses = self.smina_docking.poses,
+            ligand = lig)
+
+        # if dp == "RxDock":
+
+        # if dp == "ADFR":
+        #
+        # if dp == "RxDock":
+
+    def make_grid(self, rec_file_name):
+
+        # """
+        # Compute grids prior docking
+        # """
+        #
+        cavity = RxDock_Cavity(self,
+                               main = self.docking_programs,
+                               reference_receptor = rec_file_name,
+                               two_spheres_method = True,
+                               reference_ligand_method = False,
+                               tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["RxDock"]["directory"],
+                               x = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["x"],
+                               y = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["y"],
+                               z = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["z"],
+                               progress_bar = False)
 
 
     def get_grid_dimensions(self):
@@ -354,6 +456,13 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["x_dim"] = self.x_dim_widg.value()
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["y_dim"] = self.y_dim_widg.value()
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["z_dim"] = self.z_dim_widg.value()
+
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["spacing"] = self.spacing_widg.value()
+
+        grid_key = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]
+        # Make a list in the form of [x_pos, y_pos, z_pos, x, y, z, spacing]
+        self.list_grid = [str(grid_key["x"]), str(grid_key["y"]), str(grid_key["z"]), str(grid_key["x_dim"]), str(grid_key["y_dim"]), str(grid_key["z_dim"]), str(grid_key["spacing"])]
+
 
     def prepare_ligands(self, lig, docking_program, directory, format, generate_pdbqt):
 
@@ -371,15 +480,10 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         cmd.delete(lig)
         cmd.load(tmp_path_name, lig)
 
-        # self.pdbqt_options_dict_lig = {}
-        # self.pdbqt_options_dict_lig["add_h"] = True
-        # self.pdbqt_options_dict_lig["none_torsions"] = False
-        # self.pdbqt_options_dict_lig["all_torsions"] = False
-        # self.pdbqt_options_dict_lig["all_but_ga"] = True
         if docking_program == "ADFR":
             self.pdbqt_options_dict_lig["add_h"] = True
 
-        self.generated_receptor = Generate_Object(self, main = self.docking_programs,
+        self.generated_ligand = Generate_Object(self, main = self.docking_programs,
         prepared_objects_list = self.prepared_ligands,
         tmp_path = directory,
         format = format,
@@ -390,8 +494,9 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         is_receptor = False,
         from_gui = False)
 
-        # Update dict
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_receptor.new_strc_name)
+        # Update dicts
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_ligand.new_strc_name)
+        self.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_lig"].append(self.generated_ligand.new_strc_name)
 
 
     def prepare_receptors(self, rec, docking_program, directory, format, generate_pdbqt):
@@ -415,17 +520,6 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         file_path = tmp_path_name,
         is_receptor = True)
 
-        ###
-        # self.pdbqt_options_dict = {}
-        # self.pdbqt_options_dict["add_h"] = True
-        # self.pdbqt_options_dict["bonds"] = False
-        # self.pdbqt_options_dict["add_gast"] = False
-        # self.pdbqt_options_dict["remove_nonstd"] = False
-        # self.pdbqt_options_dict["remove_water"] = True
-        # self.pdbqt_options_dict["remove_lone_pairs"] = False
-        # self.pdbqt_options_dict["remove_non_polar_H"] = False
-        # self.pdbqt_options_dict["remove_non_protein"] = False
-
         if docking_program == "ADFR":
             self.pdbqt_options_dict["add_h"] = True
 
@@ -440,9 +534,9 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         is_receptor = True,
         from_gui = False)
 
-        # Update dict
+        # Update dicts
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
-
+        self.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_rec"].append(self.generated_receptor.new_strc_name)
 
     def get_current_sele(self):
 
@@ -2042,8 +2136,11 @@ class GridTab_RxDock(QtWidgets.QWidget, PyMOLInteractions):
                                    reference_ligand_method = self.reference_ligand,
                                    radius_spinbox = self.radius_spinbox.value(),
                                    small_sphere_value = self.small_sphere_spinbox.value(),
-                                   large_sphere_value = self.large_sphere_spinbox.value()
-                                   )
+                                   large_sphere_value = self.large_sphere_spinbox.value(),
+                                   tmp_dir = self.docking_programs_child_tabs.docking_programs.rxdock_tmp_dir,
+                                   x = self.x_scroll.value(),
+                                   y = self.y_scroll.value(),
+                                   z = self.z_scroll.value())
 
             # The cavity generated by RxDock takes the name by the prm_file name + "_cav1" in ".grd" format
             self.file_to_load = str(cavity.prm_file.prm_file_name + "_cav1.grd")

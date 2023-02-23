@@ -50,15 +50,18 @@ class Vina_docking():
                  tab, main,
                  ligand,
                  receptor,
-                 ligands_to_dock,
-                 receptors_to_dock,
+                 tmp_dir,
                  flex_residues = "",
+                 ligands_to_dock = 1,
+                 receptors_to_dock = 1,
                  use_flex_vina = False,
                  exhaustiveness = 8,
                  energy = 3,
                  scoring_function = "Standard",
                  poses = 1,
-                 cavity = None):
+                 cavity = None,
+                 cavity_list = [],
+                 automatic = False):
 
         self.tab = tab
         self.main = main
@@ -82,9 +85,8 @@ class Vina_docking():
         self.energy = energy
         self.scoring_function = scoring_function
 
-        name_cav = cavity
-        self.cavity_to_dock = main.ready_grid_centers[name_cav]
-        self.cavity_name = name_cav
+        self.cavity_to_dock = cavity_list # [x_pos, y_pos, z_pos, x, y, z, spacing] e.g. ['191.48', '171.91', '15.94', '16', '1', '16', '16.0']
+        self.cavity_name = cavity
 
         # Initialize Flexible Docking
         if use_flex_vina:
@@ -105,7 +107,7 @@ class Vina_docking():
         self.ligands_to_dock = ligands_to_dock
         self.receptors_to_dock = receptors_to_dock
         # Change directory --> Vina tmp dir
-        os.chdir(self.main.vina_tmp_dir)
+        os.chdir(tmp_dir)
 
         self.show_resume_window()
 
@@ -214,12 +216,12 @@ class Vina_Parse_Results:
     """
 
 
-    def __init__(self, tab, main, results_file_name, results_dict, poses, results_data = [[]]):
+    def __init__(self, tab, main, last_docking, results_file_name, poses, results_dict = {}, results_data = [[]]):
 
 
         self.tab = tab
         self.main = main
-        self.last_docking = self.tab.last_docking
+        self.last_docking = last_docking
 
         self.results_file_name = results_file_name
 

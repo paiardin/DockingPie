@@ -79,9 +79,14 @@ class RxDock_Cavity():
 
     def __init__(self, tab, main,
                  reference_receptor,
-                 reference_ligand,
                  two_spheres_method,
                  reference_ligand_method,
+                 tmp_dir,
+                 x,
+                 y,
+                 z,
+                 progress_bar = True,
+                 reference_ligand = "",
                  radius_spinbox = 10.00,
                  small_sphere_value = 1.50,
                  large_sphere_value = 4.00):
@@ -110,18 +115,28 @@ class RxDock_Cavity():
         # Initialize names and paths
         self.initial_prm_file_path = self.main.path_to_cavity
 
-        # Change directory --> RxDock tmp dir
-        os.chdir(self.main.rxdock_tmp_dir)
+        # Position
+        self.x = x
+        self.y = y
+        self.z = z
 
-        p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
-                                        function=self.generate_cavity,
-                                        args=(),
-                                        wait_start=0.4, wait_end=0.4,
-                                        lock=True,
-                                        stdout_silence=True,
-                                        title="Running",
-                                        label_text="RxDock is generating the cavity. Please wait")
-        p_dialog.exec_()
+        # Change directory --> RxDock tmp dir
+        os.chdir(tmp_dir)
+
+        if progress_bar:
+
+            p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
+                                            function=self.generate_cavity,
+                                            args=(),
+                                            wait_start=0.4, wait_end=0.4,
+                                            lock=True,
+                                            stdout_silence=True,
+                                            title="Running",
+                                            label_text="RxDock is generating the cavity. Please wait")
+            p_dialog.exec_()
+
+        else:
+            self.generate_cavity()
 
 
     def generate_cavity(self):
@@ -129,7 +144,10 @@ class RxDock_Cavity():
         # Create the PrmFile
         self.prm_file = PrmFile(self,
         prm_file_name = "prm_file",
-        counter = len(self.main.generated_cavity))
+        counter = len(self.main.generated_cavity),
+        x = self.x,
+        y = self.y,
+        z = self.z)
 
         f = open(self.prm_file.prm_file_name + "_LOG.txt", "w")
         # Run RxDock "rbcavity" func
@@ -147,7 +165,7 @@ class RxDock_docking():
     """
 
 
-    def __init__(self, tab, main, ligand,
+    def __init__(self, tab, main,
                  receptor,
                  pharma_restrains,
                  tethered_docking,
@@ -155,6 +173,7 @@ class RxDock_docking():
                  cavity_to_dock,
                  cavity_name,
                  use_water,
+                 ligand,
                  protein_segments_to_exclude = [],
                  pharma_list = [],
                  cavity = None):
@@ -499,6 +518,7 @@ class PrmFile():
 
 
     def __init__(self, docking_process,
+    x, y, z,
     prm_file_name = None,
     counter = 0):
 
@@ -513,10 +533,10 @@ class PrmFile():
         # Set the path to the constraints file
         self.pharma_file_path = self.docking_process
 
-        self.generate_prm_file(prm_file_name)
+        self.generate_prm_file(prm_file_name, x, y, z)
 
 
-    def generate_prm_file(self, prm_file_name):
+    def generate_prm_file(self, prm_file_name, x, y, z):
 
         if self.docking_process.simple_docking:
 
@@ -574,19 +594,11 @@ class PrmFile():
 
             # Get the coordinates of the reference object, thus get the center of the cavity
 
-            # stored.xyz = []
-            # cmd.iterate_state(1, self.docking_process.reference_ligand,"stored.xyz.append([x,y,z])")
-            # xx = statistics.mean(map(lambda a: a[0], stored.xyz))
-            # yy = statistics.mean(map(lambda a: a[1], stored.xyz))
-            # zz = statistics.mean(map(lambda a: a[2], stored.xyz))
-            # x = str(round(xx,2))
-            # y = str(round(yy,2))
-            # z = str(round(zz,2))
-            x = str(self.docking_process.tab.x_scroll.value())
-            y = str(self.docking_process.tab.y_scroll.value())
-            z = str(self.docking_process.tab.z_scroll.value())
+            # x = str(self.docking_process.tab.x_scroll.value())
+            # y = str(self.docking_process.tab.y_scroll.value())
+            # z = str(self.docking_process.tab.z_scroll.value())
 
-            coords = str("(" + x + "," + y + "," + z + ")")
+            coords = str("(" + str(x) + "," + str(y) + "," + str(z) + ")")
 
             # Name of the prm file
             self.prm_file_name = str(prm_file_name + self.counter)

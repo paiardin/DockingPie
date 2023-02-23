@@ -50,13 +50,13 @@ class Smina_docking():
                  buffer,
                  energy,
                  rmsd,
-                 scoring,
+                 tmp_dir,
+                 cavity_list,
+                 scoring = "",
                  use_flex_smina = False,
                  flex_residues = "",
                  poses = 1,
                  cavity = None):
-
-        print(use_flex_smina)
 
         self.tab = tab
         self.main = main
@@ -91,10 +91,11 @@ class Smina_docking():
 
         self.grid = re.search("Grid Center_", cavity)
         self.cavity_name = cavity
+        self.cavity_to_dock = cavity_list # [x_pos, y_pos, z_pos, x, y, z, spacing] e.g. ['191.48', '171.91', '15.94', '16', '1', '16', '16.0']
 
         # Check if Reference ligand or grid parameters
-        if self.grid:
-            self.cavity_to_dock = self.main.ready_grid_centers[cavity]
+        if self.grid or cavity == "consensus_grid":
+            self.cavity_to_dock = cavity_list
             self.reference_cavity = False
 
         else:
@@ -108,7 +109,7 @@ class Smina_docking():
         self.log_file_name = str(self.results_file_name + "_log.txt")
 
         # Change directory --> RxDock tmp dir
-        os.chdir(self.main.smina_tmp_dir)
+        os.chdir(tmp_dir)
 
         self.show_resume_window()
 
@@ -134,8 +135,6 @@ class Smina_docking():
                 ### To run the Smina Docking Process ###
 
         path_to_smina = self.main.path_to_smina
-
-        os.chdir(self.main.smina_tmp_dir)
 
         self.run_docking_smina_settings = [path_to_smina,
         "-r", str(self.receptor_to_dock + ".pdbqt"),
@@ -230,11 +229,10 @@ class Smina_parse_results:
     """
 
 
-    def __init__(self, tab, main, results_file_name, results_dict, poses, ligand, results_data = [[]]):
+    def __init__(self, tab, main, results_file_name, poses, ligand, results_dict = {}, results_data = [[]]):
 
         self.tab = tab
         self.main = main
-        self.last_docking = self.tab.last_docking
 
         self.results_file_name = results_file_name
 
