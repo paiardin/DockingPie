@@ -50,6 +50,8 @@ class ADFR_docking():
                  ga_threshold,
                  max_gen,
                  buffer,
+                 tmp_dir,
+                 cavity_list,
                  use_flex = False,
                  flex_residues = "",
                  cavity = None):
@@ -57,6 +59,8 @@ class ADFR_docking():
         self.tab = tab
         self.main = main
         self.thread = tab
+
+        self.adfr_tmp_dir = tmp_dir
 
         self.docking_completed = False
         self.interrupt = False
@@ -82,22 +86,23 @@ class ADFR_docking():
         self.cavity_name = cavity
 
         # Check if Reference ligand or grid parameters
-        if self.grid:
-            self.cavity_to_dock = self.main.ready_grid_centers[cavity]
+        if self.grid or cavity == "consensus_grid":
+            self.cavity_to_dock = cavity_list
             self.reference_cavity = False
 
         else:
-            self.cavity_to_dock = name_cav
+            self.cavity_to_dock = cavity
             cmd.save(str(self.cavity_to_dock + ".pdb"), self.cavity_to_dock, state = -1, format = 'pdb')
             self.reference_cavity = True
 
         # Initialize names and paths
         self.results_file_name = str("Run_" + str(self.main.adfr_runs) + "_ADFR")
         self.results_file_name_ext = str(self.results_file_name + ".pdbqt")
-        self.log_file_name = str(self.results_file_name + "_log.txt")
+        self.log_file_name = str(self.results_file_name + "_LOG.txt")
+        self.grid_log_file_name = str(self.results_file_name + "_grid_LOG.txt")
 
         # Change directory --> RxDock tmp dir
-        os.chdir(self.main.adfr_tmp_dir)
+        os.chdir(self.adfr_tmp_dir)
 
         self.show_resume_window()
 
@@ -130,7 +135,7 @@ class ADFR_docking():
         else:
             path_to_agfr = self.main.path_to_agfr
 
-        os.chdir(self.main.adfr_tmp_dir)
+        os.chdir(self.adfr_tmp_dir)
 
         self.generate_grid_adfr_settings = [path_to_agfr,
         "-r",
@@ -313,15 +318,12 @@ class ADFR_parse_results:
     A class to parse the ADFR results file
     """
 
-    def __init__(self, tab, main, ligand, results_file_name, results_dict, results_data = [[]]):
+    def __init__(self, tab, main, ligand, results_file_name, results_data = [[]]):
 
         self.tab = tab
         self.main = main
-        self.last_docking = self.tab.last_docking
 
         self.results_file_name = results_file_name
-
-        self.results_dict = results_dict
 
         self.results_data = results_data
 

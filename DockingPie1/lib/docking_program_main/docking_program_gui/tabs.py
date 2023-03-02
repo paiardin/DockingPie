@@ -356,9 +356,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             self.make_grid(rec_file_name)
 
         for rec in self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_rec"]:
-            print(rec)
             for lig in self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_lig"]:
-                print(lig)
                 self.run_single_docking(dp, rec, lig)
 
 
@@ -422,19 +420,104 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             poses = self.smina_docking.poses,
             ligand = lig)
 
-        # if dp == "RxDock":
+        if dp == "RxDock":
 
-        # if dp == "ADFR":
-        #
-        # if dp == "RxDock":
+            self.rxdock_docking = RxDock_docking(self,
+            ligand = lig,
+            receptor = rec,
+            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["RxDock"]["directory"],
+            pharma_restrains = False,
+            tethered_docking = False,
+            poses_box = str(10),
+            trans_mode = "FREE",
+            rot_mode = "FREE",
+            die_mode = "FREE",
+            cavity_to_dock = self.rxdock_grid.prm_file.prm_file_name,
+            cavity_name = self.rxdock_grid.prm_file.prm_file_name,
+            use_water = False,
+            main = self.docking_programs)
+
+            # Run Docking Process in a different environment, to facilitate the interruption of the protocol
+            f = open('stdout.txt','w')
+            print(self.rxdock_docking.run_docking_rxdock_settings)
+            subprocess.run(self.rxdock_docking.run_docking_rxdock_settings, stdout = f, stderr = f)
+            f.close()
+
+            if os.path.isfile(self.rxdock_docking.log_file_name):
+                os.remove('stdout.txt')
+            else:
+                os.rename('stdout.txt', self.rxdock_docking.log_file_name)
+
+            if Path("results_tmp_name.sd").is_file():
+
+                if sys.platform == "darwin":
+
+                    path_to_sdsorter = os.path.join(self.docking_programs.path_to_sdsorter)
+                    subprocess.run([path_to_sdsorter, "-sort", "'>  <SCORE>'", "results_tmp_name.sd", str(self.rxdock_docking.results_file_name + ".sd")])
+
+                else:
+                # subprocess.run(["obabel", "-i", "sd", "results_tmp_name.sd", "-o", "sdf", "-O", "results_tmp_name.sdf"])
+                # subprocess.run(["obabel", "results_tmp_name.sdf", "-O", str(self.results_file_name + ".sdf"), "--sort", "SCORE"])
+
+                    try:
+                        f = open(str(self.rxdock_docking.results_file_name + ".sd"), "w")
+                        subprocess.run(["sdsort", "-n", "-fSCORE", "results_tmp_name.sd"], stdout = f, check = True)
+                        f.close()
+                    except:
+                        f.close()
+                        os.remove(str(self.rxdock_docking.results_file_name + ".sd"))
+                        os.rename("results_tmp_name.sd", str(self.rxdock_docking.results_file_name + ".sd"))
+
+            self.rxdock_results = RxDock_parse_results(self,
+            main = self.docking_programs,
+            results_file_name = self.rxdock_docking.results_file_name,
+            results_dict = self.docking_programs.results_dict,
+            poses = self.rxdock_docking.poses,
+            ligand = lig)
+
+        if dp == "ADFR":
+
+            self.adfr_docking = ADFR_docking(self,
+            ligand = lig,
+            receptor = rec,
+            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"],
+            cavity = "consensus_grid",
+            cavity_list = self.list_grid,
+            ga_evol = str(20),
+            ga_threshold = str(5),
+            max_gen = str(5),
+            buffer = str(4),
+            use_flex = False,
+            main = self.docking_programs)
+
+            f = open('stdout.txt','w')
+            subprocess.run(self.adfr_docking.generate_grid_adfr_settings, stdout = f, stderr = f)
+            f.close()
+
+            f = open('stdout.txt','w')
+            subprocess.run(self.adfr_docking.run_docking_adfr_settings, stdout = f, stderr = f)
+            f.close()
+
+            self.file_path = os.path.join(self.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"], self.adfr_docking.results_file_name_ext)
+
+            for file in os.listdir(self.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"]):
+                temp = re.search("_out", file)
+                temp2 = re.search("_grid.log", file)
+                if temp:
+                    os.rename(file, self.file_path)
+                if temp2:
+                    os.rename(file, str(file.replace("grid.log", "")) + "log.txt")
+
+
+            self.adfr_results = ADFR_parse_results(self,
+            main = self.docking_programs,
+            results_file_name = self.adfr_docking.results_file_name,
+            ligand = lig)
+
 
     def make_grid(self, rec_file_name):
 
-        # """
-        # Compute grids prior docking
-        # """
-        #
-        cavity = RxDock_Cavity(self,
+        self.rxdock_grid = RxDock_Cavity(self,
                                main = self.docking_programs,
                                reference_receptor = rec_file_name,
                                two_spheres_method = True,

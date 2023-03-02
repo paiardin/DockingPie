@@ -790,6 +790,10 @@ class Dockings_thread(QtCore.QThread):
                 ligand = ligand,
                 receptor = receptor,
                 cavity = cavity,
+                tmp_dir = self.main.rxdock_tmp_dir,
+                trans_mode = self.tab.trans_mode_combo.currentText(),
+                rot_mode = self.tab.rot_mode_combo.currentText(),
+                die_mode = self.tab.die_mode_combo.currentText(),
                 pharma_restrains = self.tab.pharma_restrains,
                 tethered_docking = self.tab.tethered_docking,
                 poses_box = str(self.tab.poses_box.value()),
@@ -804,6 +808,10 @@ class Dockings_thread(QtCore.QThread):
                 self.tab.last_docking = RxDock_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
+                tmp_dir = self.main.rxdock_tmp_dir,
+                trans_mode = self.tab.trans_mode_combo.currentText(),
+                rot_mode = self.tab.rot_mode_combo.currentText(),
+                die_mode = self.tab.die_mode_combo.currentText(),
                 pharma_restrains = self.tab.pharma_restrains,
                 tethered_docking = self.tab.tethered_docking,
                 poses_box = str(self.tab.poses_box.value()),
@@ -812,6 +820,8 @@ class Dockings_thread(QtCore.QThread):
                 protein_segments_to_exclude = self.tab.protein_segments_to_exclude,
                 use_water = self.tab.receptor_water_checkbtn.isChecked(),
                 main = self.main)
+
+
 
             # Run Docking Process in a different environment, to facilitate the interruption of the protocol
             ferr = open('stdout.txt','w+')
@@ -866,7 +876,9 @@ class Dockings_thread(QtCore.QThread):
 
                 if self.tab.docking_completed:
 
-                    self.tab.results_file = RxDock_parse_results(self, results_file_name = self.tab.last_docking.results_file_name,
+                    self.tab.results_file = RxDock_parse_results(self.tab,
+                    main = self.main,
+                    results_file_name = self.tab.last_docking.results_file_name,
                     results_dict = docking_programs.results_dict,
                     poses = self.tab.last_docking.poses,
                     ligand = ligand)
@@ -988,6 +1000,8 @@ class Dockings_thread(QtCore.QThread):
                 ligand = ligand,
                 receptor = receptor,
                 cavity = cavity,
+                cavity_list = self.main.ready_grid_centers[cavity],
+                tmp_dir = self.main.adfr_tmp_dir,
                 ga_evol = str(self.tab.ga_evol.value()),
                 ga_threshold = str(self.tab.ga_threshold.value()),
                 max_gen = str(self.tab.max_gen.value()),
@@ -1000,7 +1014,9 @@ class Dockings_thread(QtCore.QThread):
                 self.tab.last_docking = ADFR_docking(self.tab,
                 ligand = ligand,
                 receptor = receptor,
+                tmp_dir = self.main.adfr_tmp_dir,
                 cavity = self.tab.loaded_cavities.currentText(),
+                cavity_list = self.main.ready_grid_centers[self.tab.loaded_cavities.currentText()],
                 ga_evol = str(self.tab.ga_evol.value()),
                 ga_threshold = str(self.tab.ga_threshold.value()),
                 max_gen = str(self.tab.max_gen.value()),
@@ -1103,7 +1119,6 @@ class Dockings_thread(QtCore.QThread):
                     self.tab.results_file = ADFR_parse_results(self.tab,
                     main = self.main,
                     results_file_name = self.tab.last_docking.results_file_name,
-                    results_dict = docking_programs.results_dict,
                     ligand = ligand)
 
                 self.update_results_tab.emit(docking_programs.ADFR.results_tab_ui,

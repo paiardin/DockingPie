@@ -174,6 +174,10 @@ class RxDock_docking():
                  cavity_name,
                  use_water,
                  ligand,
+                 trans_mode,
+                 rot_mode,
+                 die_mode,
+                 tmp_dir,
                  protein_segments_to_exclude = [],
                  pharma_list = [],
                  cavity = None):
@@ -181,6 +185,8 @@ class RxDock_docking():
         self.tab = tab
         self.main = main
         self.thread = tab
+
+        self.rxdock_tmp_dir = tmp_dir
 
         self.docking_completed = False
         self.interrupt = False
@@ -228,27 +234,31 @@ class RxDock_docking():
 
         self.log_file_name = str(self.results_file_name + "_log.txt")
 
-        states = cmd.count_states(self.ligand_to_dock)
         self.list_of_ligands_to_dock = []
+        try:
+            states = cmd.count_states(self.ligand_to_dock)
+            self.list_of_ligands_to_dock = []
 
-        if states > 1:
-            self.split_input_ligand_file()
-            self.results_file_name_ext = []
-            for idx, i in enumerate(range(states)):
-                self.results_file_name_ext.extend([r_name + "_ML" + str(idx+1) + ".sd"])
+            if states > 1:
+                self.split_input_ligand_file()
+                self.results_file_name_ext = []
+                for idx, i in enumerate(range(states)):
+                    self.results_file_name_ext.extend([r_name + "_ML" + str(idx+1) + ".sd"])
 
-        else:
+            else:
+                self.results_file_name_ext = str(self.results_file_name + ".sd")
+        except:
             self.results_file_name_ext = str(self.results_file_name + ".sd")
 
         self.initial_prm_file_path = self.main.path_to_cavity
 
         # Initialize additional parameters
-        self.trans_mode = self.tab.trans_mode_combo.currentText()
-        self.rot_mode = self.tab.rot_mode_combo.currentText()
-        self.die_mode = self.tab.die_mode_combo.currentText()
+        self.trans_mode = trans_mode
+        self.rot_mode = rot_mode
+        self.die_mode = die_mode
 
         # Change directory --> RxDock tmp dir
-        os.chdir(self.main.rxdock_tmp_dir)
+        os.chdir(self.rxdock_tmp_dir)
 
         self.show_resume_window()
 
@@ -367,7 +377,7 @@ class RxDock_docking():
             item_to_write = str((self.pharma_list.item(i)).text() + "\n")
             tmp_list.append(item_to_write)
 
-        os.chdir(self.main.rxdock_tmp_dir)
+        os.chdir(self.rxdock_tmp_dir)
 
         # Path to pharma file, it is created a new one each time, thus the name is always the same
         pharma_file_path = os.path.join(self.main.rxdock_tmp_dir, "pharma.const")
@@ -405,7 +415,7 @@ class RxDock_docking():
         self.prm_file = PrmFile(self,
         prm_file_name = as_file_name)
 
-        os.chdir(self.main.rxdock_tmp_dir)
+        os.chdir(self.rxdock_tmp_dir)
 
         if self.list_of_ligands_to_dock:
 
@@ -518,7 +528,7 @@ class PrmFile():
 
 
     def __init__(self, docking_process,
-    x, y, z,
+    x = "", y = "", z = "",
     prm_file_name = None,
     counter = 0):
 
@@ -670,13 +680,14 @@ class RxDock_parse_results():
     """
 
 
-    def __init__(self, tab,
+    def __init__(self, tab, main,
     results_file_name,
     results_dict,
     poses, ligand,
     results_data = [[]]):
 
-        self.tab = tab.tab
+        self.tab = tab
+        self.main = main
 
         self.results_file_name = results_file_name
 
@@ -695,17 +706,9 @@ class RxDock_parse_results():
         self.list_of_list = []
         self.list_of_all_scores = []
 
-        if self.tab.last_docking.list_of_ligands_to_dock:
-
-            for idx, element in enumerate(self.tab.last_docking.list_of_ligands_to_dock):
-                self.poses_list = []
-                self.input = open(str(self.results_file_name + "_ML" + str(idx+1) + ".sd"))
-                self.parse_file()
-
-        else:
-            self.poses_list = []
-            self.input = open(str(self.results_file_name + ".sd"), "rt")
-            self.parse_file(ligand)
+        self.poses_list = []
+        self.input = open(str(self.results_file_name + ".sd"), "rt")
+        self.parse_file(ligand)
 
         # Input format for the table
         self.results_data = self.list_of_list
