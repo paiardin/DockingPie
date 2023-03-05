@@ -1,0 +1,18 @@
+set verbose to  True
+set repairs to  hydrogens
+do not add charges
+set cleanup to  waters
+read  1ol5.pdb
+Unable to assign HAD type to atom Mg
+Unable to assign valence to atom 1ol5:A: MG1389:MG type = Mg
+Unable to assign HAD type to atom Mg
+Unable to assign valence to atom 1ol5:A: MG1390:MG type = Mg
+Unable to assign HAD type to atom Mg
+Unable to assign valence to atom 1ol5:A: MG1394:MG type = Mg
+WARNING: some atoms in '1ol5' had no charge! Adding gasteiger charges to all...
+Unable to assign MAP type to atom Mg
+Sorry, there are no Gasteiger parameters available for atom 1ol5:A: MG1389:MG
+Unable to assign MAP type to atom Mg
+Sorry, there are no Gasteiger parameters available for atom 1ol5:A: MG1390:MG
+Unable to assign MAP type to atom Mg
+Sorry, there are no Gasteiger parameters available for atom 1ol5:A: MG1394:MG

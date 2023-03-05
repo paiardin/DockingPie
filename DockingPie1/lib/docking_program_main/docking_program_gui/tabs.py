@@ -515,6 +515,8 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             ligand = lig)
 
 
+
+
     def make_grid(self, rec_file_name):
 
         self.rxdock_grid = RxDock_Cavity(self,
@@ -1019,6 +1021,10 @@ class DataAnalysisTab(QtWidgets.QWidget):
 
         # All lists are provided to the ConsensusProtocol, even if empty
         self.consensus_run = ConsensusProtocol(self,
+        rmsd_threshold = self.label_rmsd_box.value(),
+        main = self.docking_programs,
+        consensus_tmp_dir = self.docking_programs.consensus_tmp_dir,
+        score_value = self.box_consensus_type.currentText(),
         smina_poset = self.smina_frame.label_box.currentText(),
         rxdock_poset = self.rxdock_frame.label_box.currentText(),
         vina_poset = self.vina_frame.label_box.currentText(),

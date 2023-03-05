@@ -264,15 +264,19 @@ class ConsensusScoringFunctions():
 class ConsensusMatrixCell(ConsensusScoringFunctions):
 
     def __init__(self,
+    protocol,
     tab,
+    main,
     x_ind,
     y_ind,
     x,
     y,
     compute_rmsd = True
     ):
-
-        self.tab = tab.tab
+        print(self, protocol, tab, main)
+        self.tab = tab
+        self.main = main
+        self.protocol = protocol
 
         self.x_index = x_ind
         self.y_index = y_ind
@@ -289,7 +293,7 @@ class ConsensusMatrixCell(ConsensusScoringFunctions):
         self.x_data = ConsensusData(self, element = self.x_run, rank = self.x_rank)
         self.y_data = ConsensusData(self, element = self.y_run, rank = self.y_rank)
 
-        os.chdir(self.tab.docking_programs.consensus_tmp_dir)
+        os.chdir(self.protocol.consensus_tmp_dir)
 
         self.calculate_rmsd()
 
@@ -317,7 +321,11 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
     def __init__(self,
     tab,
+    main,
+    consensus_tmp_dir,
+    rmsd_threshold,
     rmsd_protocol,
+    score_value,
     smina_poset,
     rxdock_poset,
     vina_poset,
@@ -327,15 +335,15 @@ class ConsensusProtocol(ConsensusMatrixCell):
     vina_runs_list = [],
     adfr_runs_list = []):
 
-
         self.tab = tab
-
+        self.main = main
 
         self.single_program_list = []
         self.complete_list = []
 
-
-        self.rmsd_threshold_value = self.tab.label_rmsd_box.value()
+        self.score_value = score_value
+        self.rmsd_threshold_value = rmsd_threshold
+        self.consensus_tmp_dir = consensus_tmp_dir
 
 
         self.create_input_list_consensus_matrix(smina_runs_list, smina_poset, single_program = True)
@@ -343,15 +351,6 @@ class ConsensusProtocol(ConsensusMatrixCell):
         self.create_input_list_consensus_matrix(vina_runs_list, vina_poset)
         self.create_input_list_consensus_matrix(adfr_runs_list, adfr_poset)
 
-        # self.docking_dialog = Dockings_dialog(self,
-        # number_of_dockings_to_do = number_of_dockings_to_do,
-        # receptors_to_dock = self.receptors_to_dock,
-        # ligands_to_dock = self.ligands_to_dock,
-        # dockings_to_do = self.dockings_to_do)
-        #
-        # self.docking_dialog.setModal(True)
-        # self.docking_dialog.exec_()
-        #
 
         if rmsd_protocol == "clustered":
             p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
@@ -404,7 +403,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
                 else:
                     index = index
                 name = run + "_pose_" + str(index) + ".sdf"
-                consensus_tmp_dir_path = str(os.path.join(self.tab.docking_programs.consensus_tmp_dir, run) + "_pose_" + str(index) + ".sdf")
+                consensus_tmp_dir_path = str(os.path.join(self.consensus_tmp_dir, run) + "_pose_" + str(index) + ".sdf")
                 cmd.save(consensus_tmp_dir_path, run, format = 'sdf', state = index)
                 cmd.load(consensus_tmp_dir_path, name)
                 cmd.group("Consensus", members=name, action='auto', quiet=1)
@@ -441,7 +440,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
             for y_ind, y in enumerate(self.complete_list):
 
-                cell = ConsensusMatrixCell(self, x_ind, y_ind, x, y)
+                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y)
 
                 if cell.rmsd.rmsd_computed == False:
                     rmsd_value = np.NaN
@@ -458,7 +457,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
     def paired_protocol_update_table(self):
 
         # Create Table with the generated matrix
-        self.consensus_matrix_table = TableView(parent=self.tab.docking_programs, data=self.array,
+        self.consensus_matrix_table = TableView(parent=self.main, data=self.array,
                                    row_labels_height=25,
                                    column_labels= self.complete_list,
                                    row_labels = self.complete_list,
@@ -537,9 +536,9 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
             # Get score value
             if update_from_matrix:
-                score_box  = self.box_consensus_type.currentText()
+                score_box  = self.score_value
             else:
-                score_box = self.tab.box_consensus_type.currentText()
+                score_box = self.score_value
 
             score = self.get_consensus_score_type(cell, score_box)
 
@@ -563,7 +562,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
         if list_of_list:
 
-            self.consensus_new_table = TableView(parent=self.tab.docking_programs, data=list_of_list,
+            self.consensus_new_table = TableView(parent=self.main, data=list_of_list,
                                        row_labels=None, row_labels_height=25,
                                        column_labels=["Program 1", "Program 2", "RMSD", "RANKING 1", "RANKING 2", "SCORE 1", "SCORE 2", "CONSENSUS SCORE\n" + self.score_name],
                                        sortable=True)
@@ -675,12 +674,12 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
             for y_ind, y in enumerate(self.complete_list):
 
-                cell = ConsensusMatrixCell(self, x_ind, y_ind, x, y, compute_rmsd = False)
+                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y)
 
                 self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)] = {}
                 self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)]["cell"] = cell
 
-        score_box = self.tab.box_consensus_type.currentText()
+        score_box = self.score_value
 
         list_of_new_entries = []
         self.list_of_list = []
@@ -722,7 +721,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
     def no_rmsd_protocol_update_table(self):
 
-        self.consensus_new_table = TableView(parent=self.tab.docking_programs, data=self.list_of_list,
+        self.consensus_new_table = TableView(parent=self.main, data=self.list_of_list,
                                    row_labels=None, row_labels_height=25,
                                    column_labels=["Program 1", "Program 2", "NAME", "RANKING 1", "RANKING 2", "SCORE 1", "SCORE 2", "CONSENSUS SCORE\n" + self.score_name],
                                    sortable=True)
@@ -760,7 +759,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
             for y_ind, y in enumerate(list_to_be_analized):
 
                 tmp_list = []
-                cell = ConsensusMatrixCell(self, index, y_ind, x, y)
+                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y)
 
                 if float(cell.rmsd_list[0]) < threshold:
                     tmp_list.extend([cluster_dict[threshold], cell.rmsd_list[0], cell.x_data_name, cell.y_data_name, cell.x_rank, cell.y_rank, cell.x_data.POSE_SCORE, cell.y_data.POSE_SCORE])
@@ -770,7 +769,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
             index += 1
 
-        self.consensus_new_table = TableView(parent=self.tab.docking_programs, data=list_of_list,
+        self.consensus_new_table = TableView(parent=self.main, data=list_of_list,
                                    row_labels=None, row_labels_height=25,
                                    column_labels=["Cluster", "RMSD", "Cluster\nReference", "NAME", "RANKING 1", "RANKING 2", "SCORE 1", "SCORE 2"],
                                    sortable=True)
@@ -984,7 +983,7 @@ class ConsensusData():
 
             ### Get Docking Run info ###
 
-            docking_run_results_file = self.protocol.tab.docking_programs.all_runs[element]["docking_run_results_file"]
+            docking_run_results_file = self.protocol.main.all_runs[element]["docking_run_results_file"]
 
                 # all scores
             list_tot_scores = []
