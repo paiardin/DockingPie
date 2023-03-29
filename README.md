@@ -1,10 +1,8 @@
 <p align="center">
 <img src="https://user-images.githubusercontent.com/68196372/228539016-ec73639f-2dae-418d-9b66-07bd9dfb2425.jpeg" height="200">
-
-# A Consensus Docking plugin for PyMOL
 </p>
+<h1 align="center">A Consensus Docking plugin for PyMOL</h1>
 
-<h1 align="center">Material Bread</h1>
 ![immagine](https://user-images.githubusercontent.com/68196372/158363199-aaaabe39-ce47-4a3e-b794-e57e088c2cce.png)
 
 
