@@ -1,10 +1,9 @@
 <p align="center">
-<img src="https://user-images.githubusercontent.com/68196372/228539016-ec73639f-2dae-418d-9b66-07bd9dfb2425.jpeg" height="200">
+<img src="https://user-images.githubusercontent.com/68196372/229778703-bd216486-835c-43eb-a85c-efa0925e75df.svg" height="200">
 </p>
 <h1 align="center">A Consensus Docking plugin for PyMOL</h1>
 
 ![immagine](https://user-images.githubusercontent.com/68196372/158363199-aaaabe39-ce47-4a3e-b794-e57e088c2cce.png)
-
 
 **DockingPie** is a plugin of the popular molecular graphics system PyMOL [1] that offers a versatile and user-friendly graphical user interface for assisting molecular and consensus docking analyses. 
 
