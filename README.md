@@ -1,7 +1,6 @@
 <p align="center">
-<img src="https://user-images.githubusercontent.com/68196372/230106143-1f81d1c2-b359-4e3e-bfe6-72aac638363d.svg" height="200">
+<img src="https://user-images.githubusercontent.com/68196372/230106143-1f81d1c2-b359-4e3e-bfe6-72aac638363d.svg" height="400">
 </p>
-<h1 align="center">A Consensus Docking plugin for PyMOL</h1>
 
 ![immagine](https://user-images.githubusercontent.com/68196372/158363199-aaaabe39-ce47-4a3e-b794-e57e088c2cce.png)
 
