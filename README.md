@@ -29,8 +29,6 @@ If you use DockingPie in your work, please cite:
 
 Serena Rosignoli and Alessandro Paiardini, DockingPie: a consensus docking plugin for PyMOL, Bioinformatics, 2022, btac452, [DOI](https://doi.org/10.1093/bioinformatics/btac452 "Rosignoli et al., Bioinformatics,2022")
 
-<img src="https://user-images.githubusercontent.com/68196372/228542114-1d45f7b0-e5a6-4862-8790-df9118f5b88f.png" height="100">
-
 ## Requirements
 
 **Minimal requirement**: a recent version of PyMOL installed on your computer. 
