@@ -14,7 +14,7 @@ Providing an easy interface to four docking programs, DockingPie is particularly
 
 DockingPie is constantly improving and, as great supporters of open source, we are also aware of the effort required to prevent its fairness. You can contribute to this work by compiling our form linked next:
 
-https://docs.google.com/forms/d/1DCqNCRiWquaJK6etguDcNurmNqbnmaUtZcs1c05FQKM/edit
+https://forms.gle/uh9YcREhGku2V75E6
 
 ## NEWS 
 
