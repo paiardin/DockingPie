@@ -98,6 +98,7 @@ class Vina_docking():
         # Initialize names and paths
         self.results_file_name = str("Run_" + str(self.main.vina_runs) + "_Vina")
         self.results_file_name_ext = str(self.results_file_name + ".pdbqt")
+        self.results_file_name_sdf = str(self.results_file_name + ".sdf")
 
         # if float(self.vina_version[:3]) > 1.1:
         #     self.log_file_name = None
@@ -144,7 +145,8 @@ class Vina_docking():
         "--out", self.results_file_name_ext,
         "--exhaustiveness", str(self.exhaustiveness),
         "--num_modes", str(self.poses),
-        "--energy_range", str(self.energy)]
+        "--energy_range", str(self.energy),
+        "--verbosity", str(2)]
 
         if self.scoring_function == "Vinardo":
             self.run_docking_vina_settings.extend(["--scoring", "vinardo"])
@@ -177,6 +179,8 @@ class Vina_docking():
             self.run_docking_vina_settings.extend(["--flex", flexible_receptor_name])
 
         self.main.vina_runs += 1
+
+        # If the
 
 
     def check_if_docking_completed(self):
@@ -216,12 +220,14 @@ class Vina_Parse_Results:
     """
 
 
-    def __init__(self, tab, main, last_docking, results_file_name, poses, results_dict = {}, results_data = [[]]):
+    def __init__(self, tab, main, ligand, last_docking, results_file_name, poses, results_dict = {}, results_data = [[]]):
 
 
         self.tab = tab
         self.main = main
         self.last_docking = last_docking
+
+        self.ligand_name = ligand
 
         self.results_file_name = results_file_name
 

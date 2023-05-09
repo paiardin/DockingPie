@@ -1,0 +1,69 @@
+===============================================================================
+	ADFRsuite BINARY DISTRIBUTION
+===============================================================================
+
+Thank you for downloading ADFRsuite software.
+
+This distribution contains a collection of pure Python packages 
+(including ADFR, PmvApp, DejaVu2, MolKit2, AppFramework, etc.),
+various platform dependent packages (including ADFRcc, mslib, opengltk, 
+bhtree, gle, UTpackages, etc.), and ADFR, ADFRGUI, AGFR, AUTOSITE and ADCP 
+applications built on top of these software packages.
+
+**************************************************************************
+
+**  INSTALLING from tar ball
+
+**************************************************************************
+
+ 
+
+# run the installation script
+
+./install.sh [-d destinationFolder] [-c [0] [1]  ]
+
+Options:
+-d destinationFolder specifies where to install the ADFR software suite;
+   the folder will be created if needed;
+-c  specifies how to compile the python files. Use 0 for .pyc or 1 for .pyo
+
+Example:
+./install.sh -d ~/ADFRsuite-1.0 -c 0    
+#install ADFRsuite to your home folder. ADFRsuite-1.0 folder will be created.
+
+
+**************************************************************************
+**  CITING THESE TOOLS IN PUBLICATIONS
+**************************************************************************
+
+Whether you downloaded the Academic or the Commercial distribution, we ask
+that you acknowledge using these tools in any publications arising from 
+their use.
+
+**************************************************************************
+** LICENSES
+**************************************************************************
+
+You can refer to the LICENSES.txt file included in the distribution
+
+Unless otherwise stated, packages that do not specify a license are
+released under the LGPL 2 Open Source License.
+
+**************************************************************************
+** DOCUMENTATION
+**************************************************************************
+
+Documentation, tutorials and more information are
+available online:
+
+https://ccsb.scripps.edu/adfr/
+
+**************************************************************************
+** HOW TO CONTACT US:
+**************************************************************************
+
+annao@scripps.edu
+
+
+
+

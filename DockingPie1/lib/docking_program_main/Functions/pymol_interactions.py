@@ -198,15 +198,6 @@ class Import_from_Pymol():
         else:
             # If the user is working from the Receptor tab
             if self.is_receptor:
-
-                # # Check for multiple states
-                # for i in self.list_of_pymol_objects:
-                #     # check for multiple states of the object
-                #     self.check_for_multiple_states(i)
-                #     if self.has_multiple_state:
-                #         cmd.split_states(i)
-                #         cmd.delete(i)
-
                 for i in self.list_of_pymol_objects:
                     # Get PyMOL object type
                     type = cmd.get_type(i)
@@ -219,20 +210,6 @@ class Import_from_Pymol():
 
 
             else:
-                # # Check for multiple states
-                # for i in self.list_of_pymol_objects:
-                #     # check for multiple states of the object
-                #     self.check_for_multiple_states(i)
-                #     if self.has_multiple_state:
-                #         cmd.split_states(i)
-                #         cmd.delete(i)
-
-                self.list_of_pymol_objects = []
-
-                # If multiple states were present and splitted, the names of the objects have changed, hence a new list of PyMOL objects is needed
-                self.list_pymol_objects(self.list_of_pymol_objects)
-
-                # If multiple states were present and splitted, the names of the objects have changed, hence a new list of PyMOL objects is needed
                 for i in self.list_of_pymol_objects:
                     # Get PyMOL object type
                     type = cmd.get_type(i)
@@ -275,15 +252,19 @@ class Import_from_Pymol():
 
         if self.current_tab == "ADFR":
             self.is_adfr_tab = True
+            os.chdir(self.tab.parent().docking_programs.adfr_tmp_dir)
 
         if self.current_tab == "Smina":
             self.is_smina_tab = True
+            os.chdir(self.tab.parent().docking_programs.smina_tmp_dir)
 
         if self.current_tab == "Vina":
             self.is_vina_tab = True
+            os.chdir(self.tab.parent().docking_programs.vina_tmp_dir)
 
         if self.current_tab == "RxDock":
             self.is_rxdock_tab = True
+            os.chdir(self.tab.parent().docking_programs.rxdock_tmp_dir)
 
         self.pymol_rec_multiple_states = []
 
@@ -734,10 +715,10 @@ class PyMOLInteractions:
         x.setValue(self.tmp_coord_list[0])
         y.setValue(self.tmp_coord_list[1])
         z.setValue(self.tmp_coord_list[2])
-        spacing.setValue(self.tmp_coord_list[3])
-        x_vis.setValue(self.tmp_coord_list[4])
-        y_vis.setValue(self.tmp_coord_list[5])
-        z_vis.setValue(self.tmp_coord_list[6])
+        x_vis.setValue(self.tmp_coord_list[3])
+        y_vis.setValue(self.tmp_coord_list[4])
+        z_vis.setValue(self.tmp_coord_list[5])
+        spacing.setValue(self.tmp_coord_list[6])
 
         self.show_crisscross(main, widget.currentText())
 

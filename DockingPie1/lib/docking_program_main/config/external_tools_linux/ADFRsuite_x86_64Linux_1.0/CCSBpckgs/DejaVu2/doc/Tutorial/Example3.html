@@ -1,0 +1,98 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.61C-SGI [en] (X11; U; IRIX64 6.5 IP30) [Netscape]">
+</head>
+<body>
+&nbsp;
+<h3>
+Example Three:&nbsp; a simple surface and its normals</h3>
+This example starts by importing the function which we will use to read
+in a precalculated msms surface from the files 'surface.vertices' and 'surface.triangles':
+(For the code for this example, see <a href="Example3.py">Example3.py</a>)
+<p><tt>>>> from tutorialFunctions import readSurface</tt>
+<p>The function readSurface returns v, a list of vertices and t a list
+of triangles
+<br><tt>>>>&nbsp; v,t = readSurface ('surface')</tt>
+<p>We make a numeric array out of the vertices so we can easily separate
+vertices and normals
+<p><tt>>>> import Numeric</tt>
+<br><tt>>>> vn = Numeric.array(v)</tt>
+<p>We get a viewer:
+<p><tt>>>> from DejaVu import Viewer</tt>
+<br><tt>>>> vi = Viewer()</tt>
+<p>We add the surface to the viewer
+<br><tt>>>> from DejaVu.IndexedPolygons import IndexedPolygons</tt>
+<br><tt>>>> srf = IndexedPolygons('myFirstSurface', vertices = vn[:,:3],
+vnormals=vn[:,3:6], faces = t)</tt>
+<br><tt>>>> vi.AddObject(srf)</tt>
+<br>To see the new object, we have to redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p><img SRC="example3d.jpg" height=439 width=420 align=LEFT>
+<br>The surface composed of triangles should appear in camera 0.&nbsp;&nbsp;
+The buttons at the bottom of the Viewer GUI let you change this display.&nbsp;
+First make "~myFirstSurface" the current object.&nbsp; Then, click on the
+Front button.&nbsp; A drop-down menu appears with 4 radiobuttons: inherit,
+point, line or fill.&nbsp; Try changing the surface to Fill.&nbsp; While
+it is shown in this representation, experiment with the Shading menu.&nbsp;
+The Culling menu allows you to select which side of the surface is hidden
+(culled).&nbsp; Try rotating the object while the front is culled.&nbsp;
+Notice that if Front_and_Back is culled the object disappears!
+<br>To see the effects of selecting "INHERIT" for the Front representation,
+make "root" the current object and change its representation from line
+to fill or to point.
+<br>Notice what the surface looks like if Culling is set to None: If the
+Front and Back representations are both set to Line you see all the triangles
+in both the front and back.&nbsp; If you now change the Back representation
+to Fill, you will see the Front triangles on top of the Back shaded areas.
+Experiment with changing culling.
+<p>To make this example a little more interesting, we will add lines to
+represent the normals to each vertex , spheres to mark the center of each
+face and lines representing the normal to the center of each face:
+<p>To add the normals to each vertex (each point in pts which is a copy
+of vn):
+<br><tt>>>> from DejaVu.Polylines import Polylines</tt>
+<br><tt>>>> pts = vn.__copy__()</tt>
+<br><tt>>>> vn[:,3:6] = vn[:,:3]+vn[:,3:6]</tt>
+<br><tt>>>> pts = Numeric.reshape( vn, (-1,2,3) )</tt>
+<br><tt>>>> p = Polylines('normals', vertices = pts)</tt>
+<br><tt>>>> vi.AddObject(p)</tt>
+<br>To see the new object, we have to redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p><img SRC="example3e.jpg" height=443 width=419>
+<p>To add the face centers (by computing the center of gravity of each
+triangle):
+<br><tt>>>> from DejaVu.Spheres import Spheres</tt>
+<br><tt>>>> pts = Numeric.take(vn[:,:3], t)</tt>
+<br><tt>>>> cg = Numeric.sum(pts, 1)/3.0</tt>
+<br><tt>>>> s = Spheres('faceCenters', centers=cg, radii=0.1 )</tt>
+<br><tt>>>> vi.AddObject(s)</tt>
+<br>To see the new object, we have to redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p><img SRC="example3h.jpg" height=445 width=418>
+<p>To add the normals to the triangles placed on the face centers we just
+computed:
+<br>This is done by calculating the normals to the triangles:
+<br><tt>>>> from OpenGL import GL</tt>
+<br><tt>>>> vc = vn[:,:3].__copy__()</tt>
+<br><tt>>>> nf = GL.glTriangleNormals(vc, t, 'PER_FACE' )</tt>
+<p>Then by drawing lines from the center of the triangles to these points:
+<br><tt>>>> pts = Numeric.concatenate( (cg, cg+nf), 1 )</tt>
+<br><tt>>>> pts&nbsp; = Numeric.reshape(pts, (-1,2,3))</tt>
+<br><tt>>>> pf = Polylines('faceNormals', vertices = pts)</tt>
+<br><tt>>>> vi.AddObject(pf)</tt>
+<br>To see the new object, we have to redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>&nbsp;'normals' and 'faceNormals' have been show in the viewer as a
+collection of lines. 'faceCenters' has been added to the viewer and appears
+as a collection of spheres marking the centers of the triangles making
+up the surface. (NB:You may need to do a "Reset" if you transformed the
+surface in the viewer before these additions.) As discussed above, transformations
+are directed to the current object so that it is possible to transform
+'normals',&nbsp; 'faceNormals', or 'faceCenters' independently of&nbsp;
+'myFirstSurface.'&nbsp; If 'root' is the current object,&nbsp; everything
+in the viewer is transformed together.
+<p><img SRC="snap.jpg" height=445 width=422 align=LEFT>
+</body>
+</html>

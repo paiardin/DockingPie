@@ -327,6 +327,8 @@ class ADFR_parse_results:
 
         self.results_data = results_data
 
+        self.ligand_name = ligand
+
         self.SCORE = float(00.00)
 
         self.docked_ligands_list = []

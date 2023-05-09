@@ -35,6 +35,11 @@ try:
 except:
     pass
 
+try:
+    import networkx as nx
+except:
+    pass
+
 #numpy
 import numpy as np
 
@@ -44,8 +49,13 @@ from lib.docking_program_main.Functions.general_docking_func import Calculate_RM
 from lib.docking_program_main.tables.tables import *
 from lib.docking_program_main.docking_program_gui.new_windows import NewWindow
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
+
 # csv module
 import csv
+
+#pandas
+import pandas as pd
+
 
 
 #
@@ -271,9 +281,10 @@ class ConsensusMatrixCell(ConsensusScoringFunctions):
     y_ind,
     x,
     y,
+    all_runs_dict,
     compute_rmsd = True
     ):
-        print(self, protocol, tab, main)
+
         self.tab = tab
         self.main = main
         self.protocol = protocol
@@ -290,8 +301,8 @@ class ConsensusMatrixCell(ConsensusScoringFunctions):
         self.x_run = self.x_data_name.replace("_pose_" + str(self.x_rank) + ".sdf", "")
         self.y_run = self.y_data_name.replace("_pose_" + str(self.y_rank) + ".sdf", "")
 
-        self.x_data = ConsensusData(self, element = self.x_run, rank = self.x_rank)
-        self.y_data = ConsensusData(self, element = self.y_run, rank = self.y_rank)
+        self.x_data = ConsensusData(self, element = self.x_run, rank = self.x_rank, all_runs_dict = all_runs_dict)
+        self.y_data = ConsensusData(self, element = self.y_run, rank = self.y_rank, all_runs_dict = all_runs_dict)
 
         os.chdir(self.protocol.consensus_tmp_dir)
 
@@ -322,6 +333,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
     def __init__(self,
     tab,
     main,
+    cs_job_index,
     consensus_tmp_dir,
     rmsd_threshold,
     rmsd_protocol,
@@ -330,6 +342,8 @@ class ConsensusProtocol(ConsensusMatrixCell):
     rxdock_poset,
     vina_poset,
     adfr_poset,
+    all_runs_dict,
+    num_of_ligands_analyzed,
     smina_runs_list = [],
     rxdock_runs_list = [],
     vina_runs_list = [],
@@ -341,55 +355,102 @@ class ConsensusProtocol(ConsensusMatrixCell):
         self.single_program_list = []
         self.complete_list = []
 
+        self.cs_job_index = cs_job_index
         self.score_value = score_value
         self.rmsd_threshold_value = rmsd_threshold
         self.consensus_tmp_dir = consensus_tmp_dir
 
+        self.all_runs_dict = all_runs_dict
+
+        self.num_of_ligands_analyzed = num_of_ligands_analyzed
+
+        self.load_in_pymol_dict = {}
 
         self.create_input_list_consensus_matrix(smina_runs_list, smina_poset, single_program = True)
         self.create_input_list_consensus_matrix(rxdock_runs_list, rxdock_poset)
         self.create_input_list_consensus_matrix(vina_runs_list, vina_poset)
         self.create_input_list_consensus_matrix(adfr_runs_list, adfr_poset)
 
-
         if rmsd_protocol == "clustered":
-            p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
-                                            function=self.clustered_rmsd_protocol,
-                                            args=(),
-                                            wait_start=0.4, wait_end=0.4,
-                                            lock=True,
-                                            stdout_silence=False,
-                                            title="Consensus Docking",
-                                            label_text="Analysis of the results. \nPlease wait.")
-            p_dialog.exec_()
+            # p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
+            #                                 function=self.clustered_rmsd_protocol,
+            #                                 args=(),
+            #                                 wait_start=0.4, wait_end=0.4,
+            #                                 lock=True,
+            #                                 stdout_silence=False,
+            #                                 title="Consensus Docking",
+            #                                 label_text="Analysis of the results. \nPlease wait.")
+            # p_dialog.exec_()
 
-            #self.clustered_rmsd_protocol()
+            self.clustered_rmsd_protocol()
+
         elif rmsd_protocol == "paired":
-            p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
-                                            function=self.paired_rmsd_protocol,
-                                            args=(),
-                                            wait_start=0.4, wait_end=0.4,
-                                            lock=True,
-                                            stdout_silence=False,
-                                            title="Consensus Docking",
-                                            label_text="Analysis of the results. \nPlease wait.")
-            p_dialog.exec_()
+            # p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
+            #                                 function=self.paired_rmsd_protocol,
+            #                                 args=(),
+            #                                 wait_start=0.4, wait_end=0.4,
+            #                                 lock=True,
+            #                                 stdout_silence=False,
+            #                                 title="Consensus Docking",
+            #                                 label_text="Analysis of the results. \nPlease wait.")
+            # p_dialog.exec_()
 
-            self.paired_protocol_update_table()
+            self.paired_rmsd_protocol()
+
+            #self.paired_protocol_update_table()
 
 
         elif rmsd_protocol == "normsd":
-            p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
-                                            function=self.no_rmsd_protocol,
-                                            args=(),
-                                            wait_start=0.4, wait_end=0.4,
-                                            lock=True,
-                                            stdout_silence=False,
-                                            title="Consensus Docking",
-                                            label_text="Analysis of the results. \nPlease wait.")
-            p_dialog.exec_()
+            # p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
+            #                                 function=self.no_rmsd_protocol,
+            #                                 args=(),
+            #                                 wait_start=0.4, wait_end=0.4,
+            #                                 lock=True,
+            #                                 stdout_silence=False,
+            #                                 title="Consensus Docking",
+            #                                 label_text="Analysis of the results. \nPlease wait.")
+            # p_dialog.exec_()
 
-            self.no_rmsd_protocol_update_table()
+            self.no_rmsd_protocol()
+
+        elif rmsd_protocol == "normsd_bestpose":
+            # p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
+            #                                 function=self.no_rmsd_best_pose_protocol,
+            #                                 args=(),
+            #                                 wait_start=0.4, wait_end=0.4,
+            #                                 lock=True,
+            #                                 stdout_silence=False,
+            #                                 title="Consensus Docking",
+            #                                 label_text="Analysis of the results. \nPlease wait.")
+            # p_dialog.exec_()
+
+            self.no_rmsd_best_pose_protocol()
+
+        elif rmsd_protocol == "normsd_meanpose":
+            # p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
+            #                                 function=self.no_rmsd_mean_pose_protocol,
+            #                                 args=(),
+            #                                 wait_start=0.4, wait_end=0.4,
+            #                                 lock=True,
+            #                                 stdout_silence=False,
+            #                                 title="Consensus Docking",
+            #                                 label_text="Analysis of the results. \nPlease wait.")
+            # p_dialog.exec_()
+
+            self.no_rmsd_mean_pose_protocol()
+
+        elif rmsd_protocol == "normsd_allpose":
+            # p_dialog = Protocol_exec_dialog(app=self.tab, docking_pie=self.tab,
+            #                                 function=self.no_rmsd_all_pose_protocol,
+            #                                 args=(),
+            #                                 wait_start=0.4, wait_end=0.4,
+            #                                 lock=True,
+            #                                 stdout_silence=False,
+            #                                 title="Consensus Docking",
+            #                                 label_text="Analysis of the results. \nPlease wait.")
+            # p_dialog.exec_()
+
+            self.no_rmsd_all_pose_protocol()
 
 
     def create_input_list_consensus_matrix(self, list, pose_threshold, single_program = False):
@@ -405,8 +466,8 @@ class ConsensusProtocol(ConsensusMatrixCell):
                 name = run + "_pose_" + str(index) + ".sdf"
                 consensus_tmp_dir_path = str(os.path.join(self.consensus_tmp_dir, run) + "_pose_" + str(index) + ".sdf")
                 cmd.save(consensus_tmp_dir_path, run, format = 'sdf', state = index)
-                cmd.load(consensus_tmp_dir_path, name)
-                cmd.group("Consensus", members=name, action='auto', quiet=1)
+                # cmd.load(consensus_tmp_dir_path, name)
+                # cmd.group("Consensus", members=name, action='auto', quiet=1)
 
                 if pose_threshold == "All":
 
@@ -427,31 +488,505 @@ class ConsensusProtocol(ConsensusMatrixCell):
                         index = index + 1
 
 
+    def mean_list(self, x):
+
+        try:
+            mean = sum(x)/len(x)
+        except:
+            mean = np.nan
+        return mean
+
+
+    def no_rmsd_all_pose_protocol(self):
+
+        # Create DataFrame
+        '''
+        If this protocol has been chosen, the number of rows of the dataframe will be equal to the number of poses per ligand analyzed,
+        because only the mean for all poses is considered
+
+        e.g. with 'self.num_of_ligands_analyzed' = 2
+
+              Smina Vina RxDock ADFR
+           0   NaN  NaN    NaN  NaN
+           1   NaN  NaN    NaN  NaN
+        '''
+
+        df = pd.DataFrame(columns=['Smina', 'Vina', 'RxDock', 'ADFR'], index = [i+1 for i in range(100)])
+
+        list_of_ligands_names = []
+
+        for run_pose in self.complete_list:
+
+            rank = run_pose.split("_")[4].replace(".sdf", "")
+            run_name = re.sub(r"_pose_\d+\.sdf", "", run_pose)
+            dp = run_pose.split("_")[2]
+            run_index = run_pose.split("_")[1]
+
+            #if rank == str(1): # IF POSE 1
+            run = run_name
+            print(run_name)
+            print(rank)
+            print(self.all_runs_dict)
+            data = ConsensusData(self, element = run_name, rank = int(rank), all_runs_dict = self.all_runs_dict)
+            if not data.ligand_name in list_of_ligands_names:
+                """
+                list_of_ligands_names = ['03_obj01_Smina', '03_obj02_Smina', '01_obj01_RxDock', '01_obj02_RxDock', '02_obj01_Vina', '02_obj02_Vina', '04_obj01_ADFR', '04_obj02_ADFR']
+                """
+                list_of_ligands_names.append(data.ligand_name.split("_")[1])
+
+            for dp_list in ["RxDock", "ADFR", "Smina", "Vina"]:
+                if dp == dp_list:
+                    data = ConsensusData(self, element = run, rank = int(rank), all_runs_dict = self.all_runs_dict)
+                    column = df[dp]
+
+                    row_index = len(df[dp].dropna().to_list()) + 1
+                    column[row_index] = (data.ligand_name.split("_")[1] + ":" + run_pose, data.POSE_SCORE)
+
+                    if not data.ligand_name.split("_")[1] in self.load_in_pymol_dict:
+                        self.load_in_pymol_dict[data.ligand_name.split("_")[1]] = []
+                        self.load_in_pymol_dict[data.ligand_name.split("_")[1]].append(run_pose)
+                    else:
+                        self.load_in_pymol_dict[data.ligand_name.split("_")[1]].append(run_pose)
+
+        df.to_csv("cons.csv")
+        smina_sorted = sorted(df['Smina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        vina_sorted = sorted(df['Vina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        adfr_sorted = sorted(df['ADFR'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        rxdock_sorted = sorted(df['RxDock'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+
+        all_sorted = []
+        all_sorted.extend([smina_sorted, vina_sorted, adfr_sorted, rxdock_sorted])
+
+        self.dataframe = self.consensus_scoring(self.score_value, all_sorted, list_of_ligands_names)
+
+        self.load_in_pymol("AllPose")
+
+
+    def no_rmsd_mean_pose_protocol(self):
+
+        # Create DataFrame
+        '''
+        If this protocol has been chosen, the number of rows of the dataframe will be equal to the number of ligands analyzed,
+        because only the mean for all poses is considered
+
+        e.g. with 'self.num_of_ligands_analyzed' = 2
+
+              Smina Vina RxDock ADFR
+           0   NaN  NaN    NaN  NaN
+           1   NaN  NaN    NaN  NaN
+        '''
+
+        df = pd.DataFrame(columns=['Smina', 'Vina', 'RxDock', 'ADFR'], index = [i+1 for i in range(self.num_of_ligands_analyzed)])
+
+        # Select 'pose 1' for each Run
+        # pose_1_dict = {}
+        pose_1_list = []
+
+        list_of_ligands_names = []
+
+        # for i in range(self.num_of_ligands_analyzed):
+        #     index = i+1
+        #     pose_1_dict[str(index)] = []
+
+        for run_pose in self.complete_list:
+
+            rank = run_pose.split("_")[4].replace(".sdf", "")
+            run_name = re.sub(r"_pose_\d+\.sdf", "", run_pose)
+            dp = run_pose.split("_")[2]
+            run_index = run_pose.split("_")[1]
+
+            #if rank == str(1): # IF POSE 1
+            run = run_name
+            data = ConsensusData(self, element = run_name, rank = int(rank), all_runs_dict = self.all_runs_dict)
+            if not data.ligand_name in list_of_ligands_names:
+                """
+                list_of_ligands_names = ['03_obj01_Smina', '03_obj02_Smina', '01_obj01_RxDock', '01_obj02_RxDock', '02_obj01_Vina', '02_obj02_Vina', '04_obj01_ADFR', '04_obj02_ADFR']
+                """
+                list_of_ligands_names.append(data.ligand_name.split("_")[1])
+
+
+            for dp_list in ["RxDock", "ADFR", "Smina", "Vina"]:
+                if dp == dp_list:
+                    data = ConsensusData(self, element = run, rank = int(rank), all_runs_dict = self.all_runs_dict)
+                    column = df[dp]
+                    row_index = len(df[dp].dropna().to_list()) + 1
+                    column[row_index] = (data.ligand_name, data.MEAN)
+
+                    if not data.ligand_name.split("_")[1] in self.load_in_pymol_dict:
+                        self.load_in_pymol_dict[data.ligand_name.split("_")[1]] = []
+                        self.load_in_pymol_dict[data.ligand_name.split("_")[1]].append(run_pose)
+                    else:
+                        self.load_in_pymol_dict[data.ligand_name.split("_")[1]].append(run_pose)
+
+        smina_sorted = sorted(df['Smina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        vina_sorted = sorted(df['Vina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        adfr_sorted = sorted(df['ADFR'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        rxdock_sorted = sorted(df['RxDock'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+
+        all_sorted = []
+        all_sorted.extend([smina_sorted, vina_sorted, adfr_sorted, rxdock_sorted])
+
+        self.dataframe = self.consensus_scoring(self.score_value, all_sorted, list_of_ligands_names)
+
+        self.load_in_pymol("MeanPose")
+
+
+    def no_rmsd_best_pose_protocol(self):
+
+        # Create DataFrame
+        '''
+        If this protocol has been chosen, the number of rows of the dataframe will be equal to the number of ligands analyzed,
+        because only the best pose for each is selected
+
+        e.g. with 'self.num_of_ligands_analyzed' = 2
+
+              Smina Vina RxDock ADFR
+           0   NaN  NaN    NaN  NaN
+           1   NaN  NaN    NaN  NaN
+        '''
+
+        df = pd.DataFrame(columns=['Smina', 'Vina', 'RxDock', 'ADFR'], index = [i+1 for i in range(self.num_of_ligands_analyzed)])
+
+        # Select 'pose 1' for each Run
+        pose_1_list = []
+        list_of_ligands_names = []
+
+        for run_pose in self.complete_list:
+
+            rank = run_pose.split("_")[4].replace(".sdf", "")
+            run_name = run_pose.replace("_pose_1.sdf", "")
+            dp = run_pose.split("_")[2]
+            run_index = run_pose.split("_")[1]
+
+            if rank == str(1): # IF POSE 1
+                run = run_name
+                data = ConsensusData(self, element = run, rank = 1, all_runs_dict = self.all_runs_dict)
+                if not data.ligand_name in list_of_ligands_names:
+                    list_of_ligands_names.append(data.ligand_name.split("_")[1])
+
+                for dp_list in ["RxDock", "ADFR", "Smina", "Vina"]:
+                    if dp == dp_list:
+                        data = ConsensusData(self, element = run, rank = 1, all_runs_dict = self.all_runs_dict)
+                        column = df[dp]
+                        row_index = len(df[dp].dropna().to_list()) + 1
+                        column[row_index] = (data.ligand_name, data.POSE_SCORE)
+
+                        if not data.ligand_name.split("_")[1] in self.load_in_pymol_dict:
+                            self.load_in_pymol_dict[data.ligand_name.split("_")[1]] = []
+                            self.load_in_pymol_dict[data.ligand_name.split("_")[1]].append(run_pose)
+                        else:
+                            self.load_in_pymol_dict[data.ligand_name.split("_")[1]].append(run_pose)
+
+        smina_sorted = sorted(df['Smina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        vina_sorted = sorted(df['Vina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        adfr_sorted = sorted(df['ADFR'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        rxdock_sorted = sorted(df['RxDock'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+
+        all_sorted = []
+        all_sorted.extend([smina_sorted, vina_sorted, adfr_sorted, rxdock_sorted])
+
+        self.dataframe = self.consensus_scoring(self.score_value, all_sorted, list_of_ligands_names)
+
+        self.load_in_pymol("BestPose")
+
+
+    def load_in_pymol(self, tag):
+
+        for objss in cmd.get_names():
+            if objss.startswith("Consensus_Job"):
+                cmd.delete(objss)
+            if objss.startswith("cluster_"):
+                cmd.delete(objss)
+
+        for key in self.load_in_pymol_dict:
+            for obj in self.load_in_pymol_dict[key]:
+                if not obj in cmd.get_names():
+                    cmd.load(os.path.join(self.consensus_tmp_dir, obj))
+                    cmd.group("Consensus_Job:{}_{}_{}".format(self.cs_job_index, self.score_value, tag), members=obj.replace(".sdf", ""), action='auto')
+
+
+    def replace_nan_with_tuple(self, val):
+
+        if pd.isna(val):
+            return ("-", np.nan)
+        else:
+            return val
+
+
+    def consensus_scoring(self, score_value, all_sorted, list_of_ligands_names):
+
+        # Create a dictionary in which each ligand is a key and correspond to a list
+        sorted_dict = {}
+        for lig in list_of_ligands_names:
+            ligand = lig
+            sorted_dict[ligand] = []
+
+        if score_value == "RbR":
+
+            for sorted_list in all_sorted:
+                for rank, tup in enumerate(sorted_list):
+                    for key in sorted_dict:
+                        if re.search(key, tup[0]):
+                            try:
+                                sorted_dict[key].append(rank+1)
+                            except:
+                                pass
+
+            print(sorted_dict)
+            print(list(sorted_dict.items()))
+            df = pd.DataFrame(list(sorted_dict.items()), columns=['Ligand', 'Values'])
+            df['Consensus'] = df['Values'].apply(self.mean_list)
+
+
+        elif score_value == "RbN":
+
+            # sorted_dict = {}
+            # for lig in list_of_ligands_names:
+            #     ligand = lig
+            #     sorted_dict[ligand] = []
+
+            for sorted_list in all_sorted:
+                for rank, tup in enumerate(sorted_list):
+                    for key in sorted_dict:
+                        if re.search(key, tup[0]):
+                            try:
+                                sorted_dict[key].append(rank+1)
+                            except:
+                                pass
+
+
+            df = pd.DataFrame(list(sorted_dict.items()), columns=['Ligand', 'Values'])
+            df['Consensus'] = df['Values'].apply(self.mean_list)
+
+
+        elif self.score_value == "RbV":
+
+            threshold = 0.1
+            # sorted_dict = {}
+            #
+            # for lig in list_of_ligands_names:
+            #     ligand = lig
+            #     sorted_dict[ligand] = []
+
+            for sorted_list in all_sorted:
+                index = int(len(sorted_list) * 0.1)
+                new_list = sorted_list[:index+1]
+
+                for rank, tup in enumerate(new_list):
+                    for key in sorted_dict:
+                        if re.search(key, tup[0]):
+                            try:
+                                sorted_dict[key].append(rank+1)
+                            except:
+                                pass
+
+            df = pd.DataFrame(list(sorted_dict.items()), columns=['Ligand', 'Values'])
+            df['Consensus'] = df['Values'].apply(self.mean_list)
+
+        elif self.score_value == "ECR":
+
+            sigma = 2
+
+            # sorted_dict = {}
+            #
+            # for lig in list_of_ligands_names:
+            #     ligand = lig
+            #     sorted_dict[ligand] = []
+
+            for sorted_list in all_sorted:
+                for rank, tup in enumerate(sorted_list):
+                    for key in sorted_dict:
+                        if re.search(key, tup[0]):
+                            try:
+                                sorted_dict[key].append(rank+1)
+                            except:
+                                pass
+
+            df = pd.DataFrame(list(sorted_dict.items()), columns=['Ligand', 'Values'])
+            df['Consensus'] = df['Values'].apply(lambda x: self.compute_ecr(x, sigma))
+
+        elif self.score_value == "LCR":
+
+            p = 2
+
+            # sorted_dict = {}
+            #
+            # for lig in list_of_ligands_names:
+            #     ligand = lig
+            #     sorted_dict[ligand] = []
+
+            for sorted_list in all_sorted:
+                for rank, tup in enumerate(sorted_list):
+                    for key in sorted_dict:
+                        if re.search(key, tup[0]):
+                            try:
+                                sorted_dict[key].append(rank+1)
+                            except:
+                                pass
+
+            df = pd.DataFrame(list(sorted_dict.items()), columns=['Ligand', 'Values'])
+            df['Consensus'] = df['Values'].apply(lambda x: self.compute_lcr(x, p))
+
+
+        elif self.score_value == "AASS":
+
+            # sorted_dict = {}
+            #
+            # for lig in list_of_ligands_names:
+            #     ligand = lig
+            #     sorted_dict[ligand] = []
+
+            for sorted_list in all_sorted:
+
+                sum_values = sum(x[1] for x in sorted_list)
+                normalized_list = [(x[0], x[1]/sum_values) for x in sorted_list]
+
+                for rank, tup in enumerate(normalized_list):
+                    for key in sorted_dict:
+                        if re.search(key, tup[0]):
+                            try:
+                                sorted_dict[key].append(rank+1)
+                            except:
+                                pass
+
+            df = pd.DataFrame(list(sorted_dict.items()), columns=['Ligand', 'Values'])
+            df['Consensus'] = df['Values'].apply(self.mean_list)
+
+        elif self.score_value == "zscore":
+
+            sigma = 2
+
+            # sorted_dict = {}
+            #
+            # for lig in list_of_ligands_names:
+            #     ligand = lig
+            #     sorted_dict[ligand] = []
+
+            for sorted_list in all_sorted:
+
+                mean_value = sum(x[1] for x in sorted_list)/len([x[1] for x in sorted_list])
+                std = np.std(np.array([x[1] for x in sorted_list]))
+                normalized_list = [(x[0], (x[1]-mean_value)/std) for x in sorted_list]
+
+                for rank, tup in enumerate(normalized_list):
+                    for key in sorted_dict:
+                        if re.search(key, tup[0]):
+                            try:
+                                sorted_dict[key].append(rank+1)
+                            except:
+                                pass
+
+            df = pd.DataFrame(list(sorted_dict.items()), columns=['Ligand', 'Values'])
+
+            df['Consensus'] = df['Values'].apply(self.mean_list)
+
+        df['Consensus'].round(3)
+
+        return df
+
+    def compute_ecr(self, x, sigma):
+
+        ecr_score = [(1/sigma)**(-(y/sigma)) for y in x]
+
+        return sum(ecr_score)
+
+
+    def compute_lcr(self, x, p):
+
+        ecr_score = [np.log(y)/np.log(1-p) for y in x]
+
+        return sum(ecr_score)
+
+
     def paired_rmsd_protocol(self):
+
+        df = pd.DataFrame(columns=['Smina', 'Vina', 'RxDock', 'ADFR'], index = [i+1 for i in range(self.num_of_ligands_analyzed)])
+        list_of_ligands_names = []
 
         # Create an empty array
         self.array = np.empty((len(self.complete_list), len(self.complete_list)))
+        self.array.fill(0)
 
         # Create an empty dictionary to store information of each cell
         self.consensus_matrix_dict = {}
 
-        # Generate Matrix
-        for x_ind, x in enumerate(self.complete_list):
+        # # Generate Matrix
+        comb_list = []
+        for idx, pair in enumerate(itertools.combinations(self.complete_list, 2)):
 
-            for y_ind, y in enumerate(self.complete_list):
+            ## Lexicographic order
+            comb_list.append(pair)
 
-                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y)
+            x = pair[0]
+            y = pair[1]
+            x_ind = self.complete_list.index(x)
+            y_ind = self.complete_list.index(y)
 
-                if cell.rmsd.rmsd_computed == False:
-                    rmsd_value = np.NaN
-                else:
-                    rmsd_value=float(cell.rmsd_list[0])
+            cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y, all_runs_dict = self.all_runs_dict)
 
-                self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)] = {}
-                self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)]["cell"] = cell
-                self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)]["rmsd"] = rmsd_value
+            if cell.rmsd.rmsd_computed == False:
+                rmsd_value = np.NaN
+            else:
+                rmsd_value=float(cell.rmsd_list[0])
 
-                self.array[x_ind, y_ind] = rmsd_value
+            self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)] = {}
+            self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)]["cell"] = cell
+            self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)]["rmsd"] = rmsd_value
+
+            self.array[x_ind, y_ind] = rmsd_value
+
+        self.dataframe = self.array
+
+        # Create a graph
+        G = nx.Graph()
+
+        # distances
+        D = self.array
+        T = 1.5 #RMSD threshold
+        labels = {}
+
+        # Iterate over half-matrix
+        for n in range(len(D)):
+            for m in range(len(D)-(n+1)):
+                if float(D[n][n+m+1]) < T:
+                    G.add_edge(n,n+m+1, len=float(D[n][n+m+1]))
+                    labels[ (n,n+m+1) ] = str(D[n][n+m+1])
+
+        for objss in cmd.get_names():
+            if objss.startswith("Consensus_Job"):
+                cmd.delete(objss)
+            if objss.startswith("cluster_"):
+                cmd.delete(objss)
+
+        all_sorted = []
+        list_of_clusters = list(nx.connected_components(G))
+        for idx, i in enumerate(list_of_clusters):
+            for j in i:
+                rank = self.complete_list[j].split("_")[1]
+                pose = self.complete_list[j].split("_")[4].replace(".sdf", "")
+                run = self.complete_list[j].replace("_pose_{}.sdf".format(pose), "")
+                dp = self.complete_list[j].split("_")[2]
+                data = ConsensusData(self, element = run, rank = int(rank), all_runs_dict = self.all_runs_dict)
+
+                if not data.ligand_name in list_of_ligands_names:
+                    list_of_ligands_names.append("cluster " + str(idx))
+
+                column = df[dp]
+                row_index = len(df[dp].dropna().to_list()) + 1
+                column[row_index] = ("cluster " + str(idx) + ":" + run, data.MEAN)
+
+                cmd.load(self.complete_list[j])
+                cmd.group("cluster " + str(idx), members=self.complete_list[j].replace(".sdf", ""), action='auto')
+
+        smina_sorted = sorted(df['Smina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        vina_sorted = sorted(df['Vina'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        adfr_sorted = sorted(df['ADFR'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+        rxdock_sorted = sorted(df['RxDock'].dropna().to_list(), key=lambda x: math.isnan(x[1]) or x[1], reverse = True)
+
+        all_sorted = []
+        all_sorted.extend([smina_sorted, vina_sorted, adfr_sorted, rxdock_sorted])
+
+        self.dataframe = self.consensus_scoring(self.score_value, all_sorted, list_of_ligands_names)
 
 
     def paired_protocol_update_table(self):
@@ -674,7 +1209,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
             for y_ind, y in enumerate(self.complete_list):
 
-                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y)
+                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y, all_runs_dict = self.all_runs_dict)
 
                 self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)] = {}
                 self.consensus_matrix_dict[str(x_ind) + ":" + str(y_ind)]["cell"] = cell
@@ -718,7 +1253,6 @@ class ConsensusProtocol(ConsensusMatrixCell):
 
                     self.list_of_list.append(tmp_list)
 
-
     def no_rmsd_protocol_update_table(self):
 
         self.consensus_new_table = TableView(parent=self.main, data=self.list_of_list,
@@ -759,7 +1293,7 @@ class ConsensusProtocol(ConsensusMatrixCell):
             for y_ind, y in enumerate(list_to_be_analized):
 
                 tmp_list = []
-                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y)
+                cell = ConsensusMatrixCell(self, self.tab, self.main, x_ind, y_ind, x, y, all_runs_dict = self.all_runs_dict)
 
                 if float(cell.rmsd_list[0]) < threshold:
                     tmp_list.extend([cluster_dict[threshold], cell.rmsd_list[0], cell.x_data_name, cell.y_data_name, cell.x_rank, cell.y_rank, cell.x_data.POSE_SCORE, cell.y_data.POSE_SCORE])
@@ -974,25 +1508,27 @@ class RMSD_Object():
 class ConsensusData():
 
     def __init__(self, protocol,
-    element, rank, list = ["dummy"]
+    element, rank, all_runs_dict, list = ["dummy"]
     ):
 
         self.protocol = protocol
 
+        dp = element.split("_")[2]
+
         if len(list) == 1:
 
             ### Get Docking Run info ###
-
-            docking_run_results_file = self.protocol.main.all_runs[element]["docking_run_results_file"]
+            #docking_run_results_file = self.protocol.main.all_runs[element]["docking_run_results_file"]
+            self.docking_run_results_file = all_runs_dict[dp][element]["docking_run_results_file"]
 
                 # all scores
             list_tot_scores = []
-            list_tot_scores.append(docking_run_results_file.TOT_SCORE)
+            list_tot_scores.append(self.docking_run_results_file.TOT_SCORE)
             array = np.array(list_tot_scores).astype(np.float)
             self.DATA = np.array(array)
 
                 # score
-            score = docking_run_results_file.TOT_SCORE[int(rank)-1]
+            score = self.docking_run_results_file.TOT_SCORE[int(rank)-1]
             self.POSE_SCORE = np.float64(score)
 
                 # mean, std, min and max of data
@@ -1002,17 +1538,26 @@ class ConsensusData():
             self.MIN = np.amin(self.DATA)
             self.MAX = np.amax(self.DATA)
 
+            # Normalized
+            self.DATA_norm = (self.DATA-np.min(self.DATA))/(np.max(self.DATA)-np.min(self.DATA))
+
+            # NAME
+            self.results_file_name = self.docking_run_results_file.results_file_name
+            self.ligand_name = self.docking_run_results_file.ligand_name
+
                 # number of poses generated
 
-            self.NUM_POSES = len(docking_run_results_file.results_data)
+            self.NUM_POSES = len(self.docking_run_results_file.results_data)
 
         else:
             list_tot_scores = []
 
             for runs in list:
-                list_tot_scores.extend(self.protocol.tab.docking_programs.all_runs[runs]["docking_run_results_file"].TOT_SCORE)
+                #list_tot_scores.extend(self.protocol.main.all_runs[runs]["docking_run_results_file"].TOT_SCORE)
+                list_tot_scores.extend(all_runs_dict[dp][runs]["docking_run_results_file"].TOT_SCORE)
 
-            self.POSE_SCORE = self.protocol.tab.docking_programs.all_runs[element]["docking_run_results_file"].TOT_SCORE[int(rank)-1]
+            #self.POSE_SCORE = self.protocol.main.all_runs[element]["docking_run_results_file"].TOT_SCORE[int(rank)-1]
+            self.POSE_SCORE = all_runs_dict[dp][element]["docking_run_results_file"].TOT_SCORE[int(rank)-1]
 
             self.DATA = np.array(list_tot_scores)
 

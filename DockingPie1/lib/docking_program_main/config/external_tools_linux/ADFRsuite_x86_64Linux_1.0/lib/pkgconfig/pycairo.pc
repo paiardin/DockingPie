@@ -1,0 +1,8 @@
+prefix=/data/mgltools/MakeInstallers/python2.7
+
+Name: Pycairo
+Description: Python bindings for cairo
+Version: 1.10.0
+Requires: cairo
+Cflags: -I/data/mgltools/MakeInstallers/python2.7/include/pycairo
+Libs:

@@ -13,6 +13,21 @@ from pymol.Qt import QtWidgets, QtCore, QtGui
 import csv
 
 
+def write_log_titles(file, title, big = True):
+
+    '''
+    A function that writes titles inside ###
+    n.b. the input must be an opened file, with the method file = 'open("", "w+")'
+    '''
+
+    file.write('################################################################')
+    file.write('##########  {}  ######################'.format(title))
+
+    if big:
+        file.write('################################################################')
+
+    file.write('                                                                    \n')
+
 def check_configuration(self, docking_programs):
 
     if sys.platform == "linux":

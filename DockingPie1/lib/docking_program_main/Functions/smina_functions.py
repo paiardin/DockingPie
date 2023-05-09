@@ -234,6 +234,8 @@ class Smina_parse_results:
         self.tab = tab
         self.main = main
 
+        self.ligand_name = ligand
+
         self.results_file_name = results_file_name
 
         self.results_dict = results_dict

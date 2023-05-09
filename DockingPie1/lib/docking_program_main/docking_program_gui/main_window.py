@@ -719,6 +719,7 @@ class Docking_Programs(QtWidgets.QWidget):
 
         # Dict to keep track of consensus jobs
         self.consensus_job_dict = {}
+        self.dp_specifics_dict = {}
 
         # Create the Docking Programs' Tab Widget and set the Layout
         self.docking_prog_tabs_widg = QtWidgets.QWidget()

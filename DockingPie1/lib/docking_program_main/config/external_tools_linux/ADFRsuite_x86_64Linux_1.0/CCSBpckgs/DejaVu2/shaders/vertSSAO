@@ -1,0 +1,24 @@
+varying vec2 texCoords;
+varying vec3 vCoords;
+//varying vec4 test;
+varying vec2 vTexCoord;
+varying vec3 normal;
+//varying vec4 pos;
+
+void main (void)
+{
+    gl_FrontColor = gl_Color;//gl_Normal for normal map
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    //gl_TexCoord[0] = gl_MultiTexCoord0;
+    //vTexCoord = (gl_ModelViewProjectionMatrix * gl_Vertex).xy;//(gl_TextureMatrix[0] * gl_Vertex).xy;
+    //vCoords = (gl_ModelViewProjectionMatrix * gl_Vertex).xyz;
+    //vec4 t  =  gl ModelViewMatrix * gl_Vertex;
+    //test = gl_ModelViewProjectionMatrix * gl_Vertex;// gl_Position.w;
+    //test = test / test.w;
+    //test = test / test.w ; 
+    //viweport transformation ?
+    //normal = normalize(gl_NormalMatrix * gl_Normal.xyz);
+    normal = vec3(gl_ModelViewMatrix * vec4(gl_Normal,0.0));
+    //pos = gl_Vertex;
+
+}

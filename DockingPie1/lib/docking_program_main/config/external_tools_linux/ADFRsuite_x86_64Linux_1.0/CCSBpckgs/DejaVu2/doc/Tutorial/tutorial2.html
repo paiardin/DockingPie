@@ -1,0 +1,458 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.61C-SGI [en] (X11; U; IRIX64 6.5 IP30) [Netscape]">
+</head>
+<body bgcolor = "#FFFFFF">
+
+<h1>
+<a NAME="SimpleExample"></a>Tutorial:</h1>
+In the following we will assume that you have are running Python1.5.2b1
+and that your <b>PYTHONPATH</b> is set such that you can import OpenGL
+(which implies Tkinter), the Numeric extension and also the viewer module
+itself. I will also use the word xxx-"object" to refer to an instance of
+the class xxx.
+<br>&nbsp;
+<h3>
+Example 1: Getting started</h3>
+Let's first import the viewer module from the DejaVu application
+<pre>>>> from DejaVu import Viewer</pre>
+All right, so let's instantiate our first viewer:
+<pre>>>> MyViewer = Viewer()</pre>
+This command creates a viewer with a first camera (3D window) that was
+created with double buffering and a z-buffer by default. A viewer can have
+several cameras allowing the user to look at the scene from several view
+points.
+<br>It is a good idea to use a non trivial name for the viewer (not v since
+you are very likely to use v to refer to a list of vertices in which case
+you would loose the handle to your viewer). Of course you can use a simpler
+alias if you do not want to type in the viewer's whole name:
+<pre>>>> v1 = MyViewer</pre>
+After issuing this command you should have the following windows on your
+screen:
+<br>The viewer's GUI, and the first camera called camera 0.
+<br><img SRC="GU.jpg" height=662 width=261 align=LEFT><img SRC="camera0.jpg" height=434 width=414 align=LEFT>
+<br>The GUI presents a row of buttons under <i>Transform </i>which allow
+the user to direct transformations to the current Object, the current Camera,
+the current Clipping plane, the current Light or the current Texture. Normally&nbsp;
+"<i>Object</i>" is selected (I call transformation a rotation, translation
+or scale operation). This means that the callback functions of the camera's
+trackball are bound to the functions transforming the current object's
+position.
+<br>Below this set of&nbsp; buttons we have the object list that currently
+contains only one object called "<b><i>root</i></b>".&nbsp; <b>root</b>&nbsp;
+is highlighted which means it is the current object. This "<b><i>root</i></b>"
+object is protected against deletion and is a place holder for the world
+transformation. All objects added to this viewer will be children of "<b><i>root</i></b>"
+or one of its children and they all will inherit root's transformation
+matrix. 3D transformation inheritance makes all children of the current
+object undergo the same transformations as the current object.&nbsp; This
+can be changed programmatically.(see Reference Manual)
+<p>Now let's display a bunch of lines. To do this we need 3D coordinates:
+<pre>>>> coords = [ [0,0,0], [1,1,0], [0,1,0], [1,0,0] ]</pre>
+an array of indices telling which vertices are to be connected by lines:
+<br>(each entry represents a line between two points whose indices in the
+coords array are given)
+<p><tt>>>> indices = [[0,1], [2,3],[0,2],[2,1],[1,3],[3,0]]</tt>
+<p>Alternatively, the lines could be specified where each list represents
+a line through the points whose indices are given. The value -1 terminates
+the line. The first two entries draw the diagonals and the third the box
+itself:
+<pre>>>> indices = [[0,1, -1, 0,0], [2,3,-1,0,0], [0,2,1,3,0]]</pre>
+and an optional array of materials. Here the tuples represent RGB values:
+<pre>>>> materials = ( (1.,1.,1.,1.), (1.,0.,0.,1.), (0.,1.,0.,1.), (0.,0.,1.,1.) )</pre>
+We create a geometry object of type IndexedPolylines:
+<pre>>>> from DejaVu import IndexedPolylines</pre>
+
+<pre>>>> cross = IndexedPolylines.IndexedPolylines('MyFirstObject')</pre>
+We add the vertices, lines and materials to that object:
+<pre>>>> cross.Set(vertices=coords, faces=indices, materials = materials )</pre>
+and we add the geometry to the viewer:
+<pre>>>> MyViewer.AddObject(cross)</pre>
+to see the new object, we redraw the scene:
+<pre>>>> MyViewer.Redraw()</pre>
+Now the object listbox should have one more line "<b><i>~MyFirstObject</i></b>".
+The ~ is used to visualize the hierarchy. By default, AddObject makes the
+new object the child of root.&nbsp; This can be changed programmatically
+(see Reference Manual). In the camera you should see a square with four
+vertices colored white, red, green and blue. You can use the mouse to transform
+this object:
+<br><a NAME="Mouse Default Bindings"></a>
+<center><table BORDER COLS=2 WIDTH="80%" BGCOLOR="#FFCCCC" NOSAVE >
+<caption>Mouse default bindings</caption>
+
+<tr NOSAVE>
+<td NOSAVE>Middle-button</td>
+
+<td>rotation</td>
+</tr>
+
+<tr>
+<td>Right-button</td>
+
+<td>XY-translation</td>
+</tr>
+
+<tr>
+<td>Shift + Middle-button</td>
+
+<td>scale</td>
+</tr>
+
+<tr>
+<td>Shift + Right-button</td>
+
+<td>Z-translation</td>
+</tr>
+</table></center>
+
+<p>Because of the perspective, the Z-translation looks like a scaling operation,
+but it is not. You can tell the difference by doing a Z-translation away
+from you. You will see the object fade in the fog ...!
+<p>Now try to hit the <b><i>Reset </i></b>button in the GUI. The object
+should return to its initial position. What you do here is to reset the
+current object's transformation matrix.(See Reference Manual for more details.)
+<p>If you hit the <b><i>Normalize </i></b>button, the square will be scaled
+to fill out the camera. What happens here is that the bounding box of the
+scene is computed and then the root object is transformed to fit the bounding
+box into the camera.
+<p>Notice that when you rotate, the square rotates about its lower left
+corner (the white vertex). Try hitting the <b><i>Center </i></b>button
+and do a rotation. The object now rotates about its center. What happens
+here is that the center<b><i> </i></b>of the scene's bounding box is computed
+and this point is set as the current object's rotation center. You can
+<b><i>set
+the rotation center</i></b> of the current object by picking on any vertex
+in the scene while holding down the Shift key.
+<br>&nbsp;
+<center><table BORDER COLS=2 WIDTH="80%" BGCOLOR="#FFCCCC" NOSAVE >
+<tr>
+<td>Shift + Left-button</td>
+
+<td>set rotation center to picked vertex</td>
+</tr>
+</table></center>
+The <b><i>Reset</i></b>, <b><i>Normalize </i></b>and <b><i>Center </i></b>functions
+are also bound by default to the 'r', 'n' and 'c' keyboard keys (also to
+the 'R', 'N' and 'C' keys).
+<p>Up to now the current object was always the "<b><i>root</i></b>". Therefore,
+all transformations were applied to "<b><i>root</i></b>" and the square
+moved because it is a child of root and thus inherits its transformations.
+<p>You can change the current object either by selecting its name in the
+object list or by picking its graphical representation with the mouse in
+the camera. Picking in the camera not on an object makes the root the current
+object. (Also, an object can be made the current object programmatically
+which is described in the Reference Manual.)
+<br>&nbsp;
+<center><table BORDER COLS=2 WIDTH="60%" BGCOLOR="#FFCCCC" NOSAVE >
+<tr>
+<td>Left-button</td>
+
+<td>selection picking</td>
+</tr>
+</table></center>
+Using the left mouse button you can <b>select an object</b> (i.e. make
+it the current object). Try picking on the square. If picking was successful,
+the Object browser in the GUI should now highlight the object "<b><i>~cross</i></b>".
+Any rotation, translation or scale operation will now apply to this object
+and its children but won't affect its siblings.
+<p>The Properties Panel appears below the Reset, Norm. and Center buttons.&nbsp;
+This part of the GUI allows the user to interactively change the properties
+of the current object, camera, any Clipping planes and any of the lights
+present.&nbsp; Selecting Object, Camera, Clip or Light button causes the
+appropriate submenu to be displayed at the bottom of the GUI.
+<p>By default, the Object submenu is displayed. The Object submenu has
+3 checkbuttons: Show Object lets you display or hide the current object,(
+it has no effect if the current object is <b><i>root</i></b>) and the Edit
+Object Material button lets you change the color, value and surface properties
+of the current object.
+<p>Set the current object to "~MyFirstObject" and toggle the Show Object
+checkbutton.&nbsp; The box should appear and disappear in the Camera 0.
+<p>Click on the Edit Object Material checkbutton.&nbsp; Controls are displayed
+which allow you to change the color, value and other properties of the
+materials used to display the current object, "~MyFirstObject."&nbsp;&nbsp;
+(Example Two below shows you more about changing the materials of the current
+object.)
+<br>Click on this button again to close this portion of the GUI.&nbsp;
+(It is not possible to change the properties of the root's materials)
+<p>Next is the Delete Object button.&nbsp; If you press this button, the
+current object will be deleted and removed from the viewer.&nbsp; Try it.&nbsp;
+The box should disappear from Camera 0. To restore it, you must again add
+it to your viewer.
+<p><tt>>>> MyViewer.AddObject(cross)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> MyViewer.Redraw()</tt>
+<p>The LineWidth and PointWidth Sliders allow you to change these properties
+of the current object if it is possible.
+<br>Make "~MyFirstObject" the current object and try dragging the small
+blue triangle above the slider. You should see the line widths change in
+Camera 0.
+<p>The last four buttons allow you to make choices about how the Front
+and Back views of the current object are displayed,&nbsp; what kind of
+shading is used and what kind of culling is done on it.&nbsp; These are
+illustrated with the third example below.
+<p>Up to now we have transformed geometries, but you can also transform
+the camera position or the clipping planes.
+<br>Let's first name a <b>clipping plane</b>:
+<pre>>>> cl = MyViewer.clipP[0]</pre>
+This a handle to the first clipping plane. By default this plane has equation
+x=0. The number of clipping planes available depends on your hardware.
+The OpenGL specifications speak about 6 or more such planes. When a viewer
+gets instantiated, it finds out how many such planes your OpenGL implementation
+provides and creates an array of clipping planes for the viewer (<i>MyViewer.clipP</i>).
+<p>Now we can add this clipping plane to our object, meaning this object
+will be clipped by the plane . (HINT: you may want to increase the size
+of "cross" with Shift-Middle Mouse Button before starting this section)
+<pre>>>> cross.AddClipPlane(cl)</pre>
+To display the plane,&nbsp; select the Clip button in the Properties Panel.&nbsp;
+This will show the Clip Properties submenu.&nbsp; Click on row 1 button
+under the disp. (display)&nbsp; heading.&nbsp; Notice that as you translate
+the square, it gets clipped when it moves into the left half of the camera.&nbsp;
+If you toggle the button in row 1 under the side heading, this will change.&nbsp;
+You can add other clipping planes using this submenu.&nbsp; First, be sure
+that ~MyFirstObject is the current object.&nbsp; Then clipping planes are
+made to slice it by turning on the buttons in the first column.&nbsp; The
+side buttons toggle which part of the clipped object is displayed.
+<p>When you bind clipping planes to an object, you can specify whether
+or not it should clip this object's children using the inh buttons.
+<p>We can now <b>transform the clipping</b> plane either by picking on
+it (left mouse button) or by selection (Transform Clip) in the GUI.
+<br>As you rotate the plane you will see that is is actually a square with
+diagonals. Translations are always done perpendicular to the clipping plane.
+Scale only changes the geometry representing the clipping plane which is
+infinite .&nbsp; Of course, the plane can be made invisible by toggling
+the disp button. The reset button in the GUI will reset the clipping plane's
+transformation if the Clip button under Transform is on.
+<p>Note that when you move the "<b><i>root</i></b>" object or the "<b><i>~MyFirstObject</i></b>"
+object, the clipping plane doesn't move. this is because it doesn't inherit
+transformations. If you want to look at how it clips your geometry from
+somewhere else you'll have to <b>transform the camera's position</b>. You
+can do this either by double clicking (left mouse button) on the camera's
+background or by selecting "Transform Camera" in the GUI.
+<br>&nbsp;
+<br>&nbsp;
+<center><table BORDER COLS=2 WIDTH="60%" BGCOLOR="#FFCCCC" NOSAVE >
+<tr NOSAVE>
+<td>Double Left-button</td>
+
+<td NOSAVE>transform camera</td>
+</tr>
+</table></center>
+&nbsp;Now when you rotate the relative position of the plane, the object
+doesn't change. You look at it from somewhere else.
+<p>Finally, we can <b>add a second camera</b>:
+<pre>>>> c2 = MyViewer.AddCamera()</pre>
+As you move the mouse from one camera to the other, notice that the cameras
+maintain their own transformation mode. The first camera should be in Transform
+Camera mode while the second one appears in the default Transform object
+mode.
+<br>Try some transformations in each window.
+<p>Also notice that camera 0 has a red border, meaning that it is the current
+camera. If you pick (left mouse button) in camera 1, it will become the
+current camera.
+<br>&nbsp;
+<h3>
+Example Two:&nbsp; Changing materials</h3>
+Start this example by making a collection of points, v:
+<br><tt>>>>&nbsp; v = ( (0.,0.,0.),&nbsp; (1.,0.,0.),</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (0.,1.,0.),&nbsp; (1.,1.,0.),</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (0.,2.,0.),&nbsp; (1.,2.,0.),</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (0.,3.,0.),&nbsp; (1.,3.,0.),</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (0.,4.,0.),&nbsp; (1.,4.,0.),</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (0.,5.,0.),&nbsp; (1.,5.,0.),</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (0.,6.,0.),&nbsp; (1.,6.,0.))</tt>
+<br>&nbsp;
+<br>&nbsp;
+<p>and defining some colors:
+<br><tt>>>> RED =&nbsp;&nbsp; (1., 0., 0.)</tt>
+<br><tt>>>> GREEN = (0., 1., 0.)</tt>
+<br><tt>>>> BLUE =&nbsp; (0., 0., 1.)</tt>
+<p>and collections of colors:
+<br><tt>>>> col = ( RED, RED, RED, GREEN, GREEN, GREEN, BLUE, BLUE, BLUE,
+RED, GREEN, BLUE, RED, GREEN )</tt>
+<p><tt>>>> col2 = ( RED, RED, RED, RED, RED, RED, RED, GREEN, GREEN, GREEN,
+GREEN, GREEN, GREEN, GREEN)</tt>
+<p>Define a list to specify the faces of the lines we make later:
+<br><tt>>>> ind = (range(14),)</tt>
+<p>Start up a viewer :
+<p><tt>>>> from DejaVu import Viewer</tt>
+<br><tt>>>> vi = Viewer()</tt>
+<p>and make a line:
+<p><tt>>>> from DejaVu.IndexedPolylines import IndexedPolylines</tt>
+<br><tt>>>> p = IndexedPolylines('testColor', vertices = v, faces = ind,
+materials = col)</tt>
+<p>and add it to the viewer:
+<br><tt>>>> vi.AddObject(p)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>and make another line:
+<br><tt>>>> p2 = IndexedPolylines('testColor2', vertices = v, faces = ind,materials
+= col2)</tt>
+<p>and add it to the viewer:
+<p><tt>>>> vi.AddObject(p2)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>With these two objects in the viewer, try changing the current object
+and transforming it.
+<p>Add another line:
+<br><tt>>>> norm = ((1.0, 0., 0.0 ),) * 14</tt>
+<br><tt>>>> pn = IndexedPolylines('testMaterial', vertices = v, faces =
+ind,</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+materials = col, vnormals = norm)</tt>
+<br><tt>>>> vi.AddObject(pn)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>Add another line:
+<br><tt>>>> pn2col = IndexedPolylines('testMaterial2', vertices = v, faces
+= ind,</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+materials = col2,</tt>
+<br><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+vnormals = norm)</tt>
+<br><tt>>>> vi.AddObject(pn2col)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>Finally, try making some rows of spheres colored differently:
+<br><tt>>>> from DejaVu.Spheres import Spheres</tt>
+<br><tt>>>> s1 = Spheres('test', centers = v, radii = (0.4,), materials
+= col)</tt>
+<br><tt>>>> vi.AddObject(s1)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p><tt>>>> s2 = Spheres('test', centers = v, radii = (0.4,), materials
+= col2)</tt>
+<br><tt>>>> vi.AddObject(s2)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<br>&nbsp;
+<br>&nbsp;
+<h3>
+Example Three:&nbsp; a simple surface and its normals</h3>
+This example starts by importing the function which we will use to read
+in a precalculated msms surface from the files 'surface.vertices' and 'surface.triangles':
+<p><tt>>>> from tutorialFunctions import readSurface</tt>
+<p>The function readSurface returns v, a list of vertices and t a list
+of triangles
+<br><tt>>>>&nbsp; v,t = readSurface ('surface')</tt>
+<p>We make a numeric array out of the vertices so we can easily separate
+vertices and normals
+<p><tt>>>> import Numeric</tt>
+<br><tt>>>> vn = Numeric.array(v)</tt>
+<p>We get a viewer:
+<p><tt>>>> from DejaVu import Viewer</tt>
+<br><tt>>>> vi = Viewer()</tt>
+<p>We add the surface to the viewer
+<br><tt>>>> from DejaVu.IndexedPolygons import IndexedPolygons</tt>
+<br><tt>>>> srf = IndexedPolygons('myFirstSurface', vertices = vn[:,:3],
+faces = t)</tt>
+<br><tt>>>> vi.AddObject(srf)</tt><tt></tt>
+<p>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>The surface composed of triangles should appear in camera 0.&nbsp;&nbsp;
+The buttons at the bottom of the Viewer GUI let you change this display.&nbsp;
+First make "~myFirstSurface" the current object.&nbsp; Then, click on the
+Front button.&nbsp; A drop-down menu appears with 4 radiobuttons: inherit,
+point, line or fill.&nbsp; Try changing the surface to Fill.&nbsp; While
+it is shown in this representation, experiment with the Shading menu.&nbsp;
+The Culling menu allows you to select which side of the surface is hidden
+(culled).&nbsp; Try rotating the object while the front is culled.&nbsp;
+Notice that if Front_and_Back is culled the object disappears!
+<br>To see the effects of selecting "INHERIT" for the Front representation,
+make "root" the current object and change its representation from line
+to fill or to point.
+<br>Notice what the surface looks like if Culling is set to None: If the
+Front and Back representations are both set to Line you see all the triangles
+in both the front and back.&nbsp; If you now change the Back representation
+to Fill, you will see the Front triangles on top of the Back shaded areas.
+Experiment with changing culling.
+<p>To make this example a little more interesting, we will add lines to
+represent the normals to each vertex , spheres to mark the center of each
+face and lines representing the normal to the center of each face:
+<p>To add the normals to each vertex (each point in pts which is a copy
+of vn):
+<br><tt>>>> from DejaVu.Polylines import Polylines</tt>
+<br><tt>>>> pts = vn.__copy__()</tt>
+<br><tt>>>> vn[:,3:6] = vn[:,:3]+vn[:,3:6]</tt>
+<br><tt>>>> pts = Numeric.reshape( vn, (-1,2,3) )</tt>
+<br><tt>>>> p = Polylines('normals', vertices = pts)</tt>
+<br><tt>>>> vi.AddObject(p)</tt>
+<br>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>To add the face centers (by computing the center of gravity of each
+triangle):
+<br><tt>>>> from DejaVu.Spheres import Spheres</tt>
+<br><tt>>>> pts = Numeric.take(vn[:,:3], t)</tt>
+<br><tt>>>> cg = Numeric.sum(pts, 1)/3.0</tt>
+<br><tt>>>> s = Spheres('faceCenters', centers=cg, radii=0.1 )</tt>
+<br><tt>>>> vi.AddObject(s)</tt>
+<br>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>To add the normals to the triangles placed on the face centers we just
+computed:
+<br>This is done by calculating the normals to the triangles:
+<br><tt>>>> from OpenGL import GL</tt>
+<br><tt>>>> vc = vn[:,:3].__copy__()</tt>
+<br><tt>>>> nf = GL.glTriangleNormals(vc, t, 'PER_FACE' )</tt>
+<p>Then by drawing lines from the center of the triangles to these points:
+<br><tt>>>> pts = Numeric.concatenate( (cg, cg+nf), 1 )</tt>
+<br><tt>>>> pts&nbsp; = Numeric.reshape(pts, (-1,2,3))</tt>
+<br><tt>>>> pf = Polylines('faceNormals', vertices = pts)</tt>
+<br><tt>>>> vi.AddObject(pf)</tt>
+<br>to see the new object, we redraw the scene:
+<br><tt>>>> vi.Redraw()</tt>
+<p>&nbsp;'normals' and 'faceNormals' have been show in the viewer as a
+collection of lines. 'faceCenters' has been added to the viewer and appears
+as a collection of spheres marking the centers of the triangles making
+up the surface. (NB:You may need to do a "Reset" if you transformed the
+surface in the viewer before these additions.) As discussed above, transformations
+are directed to the current object so that it is possible to transform
+'normals',&nbsp; 'faceNormals', or 'faceCenters' independently of&nbsp;
+'myFirstSurface.'&nbsp; If 'root' is the current object,&nbsp; everything
+in the viewer is transformed together.
+<br>&nbsp;
+<h3>
+Example Four:&nbsp; Callbacks and the event Manager</h3>
+This example illustrates the event Manager property of the camera.
+<br>&nbsp;
+<p>First get a handle to the event manager:
+<p><tt>>>> ehm=MyViewer.cameras[0].eventManager</tt>
+<p>The eventManager is a property of an individual camera.&nbsp; You can
+get a complete listing off all the callback functions bound to keys strokes
+existing in the event Manager at any time:
+<p><tt>>>> ehm.ListBindings()</tt>
+<p>or the list of all callbacks bound to any specific key stroke:
+<p><tt>>>> ehm.ListBindings('&lt;Button-1>')</tt>
+<br>&nbsp;
+<p>Predefined callback functions can be added to specific key strokes in
+the camera:
+<p><tt>>>> def mycallback1(event):</tt>
+<br><tt>...&nbsp;&nbsp;&nbsp;&nbsp; print 'mycallback1 Event at %d %d'
+% (event.x, event.y)</tt>
+<p><tt>>>> def mycallback2(event):</tt>
+<br><tt>...&nbsp;&nbsp;&nbsp;&nbsp; print 'mycallback2 Event at %d %d'
+% (event.x, event.y)</tt>
+<p><tt>>>> ehm.AddCallback("&lt;F1>", mycallback1)</tt>
+<p>Note that the callback function must have 'event' as its parameter and
+the key stroke must occur with the cursor over the camera.&nbsp; AddCallback
+adds this callback to whatever else may have been previously bound to this
+keystroke. Another function, SetCallback, replaces the previously bound
+funtions with the new one.&nbsp; It returns a list of the previous callbacks
+which can be stored and restored.
+<p><tt>>>> funcList = ehm.SetCallback("&lt;F1>", mycallback2)</tt>
+<br>&nbsp;
+<p>Now, funcList is a list:
+<p><tt>>>> funcList</tt>
+<br><tt>[&lt;function mycallback1 at 10345b68>]</tt>
+<p>and mycallback2 is bound to F1.&nbsp; mycallback1 could be restored
+as follows:
+<p><tt>>>>&nbsp; ehm.SetCallback("&lt;F1>", funcList)</tt>
+<p>Callback functions can be removed:
+<p><tt>>>>&nbsp; ehm.RemoveCallback("&lt;F1>", funcList)</tt>
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+</body>
+</html>

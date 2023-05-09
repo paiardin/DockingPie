@@ -1,0 +1,344 @@
+uniform sampler2D DepthTexture;
+uniform sampler2D RenderedTexture;//RGB...Should try RGBA ie fog, transparancy
+uniform sampler2D LuminanceTexture;
+uniform sampler2D RandomTexture; // for method 2
+uniform sampler2D DepthMaskTexture; // for method 2
+
+uniform float RenderedTextureWidth;
+uniform float RenderedTextureHeight;
+uniform float near;
+uniform float far;
+uniform float realfar;
+//uniform float fogE;
+//uniform float fogS;
+uniform int method;
+//OPTIONS TO EXPLORE
+uniform int do_noise;
+uniform int only_ssao;
+uniform int only_depth;
+uniform int mix_depth;
+uniform int use_mask_depth;
+uniform int show_mask_depth;
+uniform int negative;
+uniform float scale;
+uniform int samples;// = 3; //samples on the each ring (3-7)
+uniform int rings;// = 3; //ring count (2-8)
+uniform float aoCap;// = 1.0;
+uniform float aoMultiplier;// = 100.0;
+uniform float depthTolerance;// = 0.0000;
+uniform float aorange;// = 160.0;//60 units in space the AO effect extends to (this gets divided by the camera far range
+//FOG options
+uniform int fog;
+uniform int use_fog;
+uniform float correction;
+
+//need to handle transparancy and depthcuing/fog
+#define PI 3.14159265
+
+//method2 TO BE DONE
+//uniform float zFar;
+//uniform float SampleRad;
+//uniform float Intensity;
+//uniform float Scale;
+//uniform float Bias;
+float SampleRad=3.0;
+float Intensity=1.0;
+float Scale=1.0;
+float Bias=0.1;
+
+//varying var for method 1
+varying vec2 texCoords; 
+varying vec3 vCoords;
+varying vec2 vTexCoord;
+
+varying vec4 test;
+
+//varying var for method 2
+varying vec3 normal;
+//varying vec4 pos;
+
+float textureSize =RenderedTextureWidth; //size of the texture
+float texelSize = 1.0 / textureSize; //size of one texel 
+float width = RenderedTextureWidth; //texture width
+float height = RenderedTextureHeight; //texture height
+
+
+//int samples = 3; //samples on the each ring (3-7)
+//int rings = 3; //ring count (2-8)
+
+float random_size = 64.0; // size of random texture
+
+//vec2 texCoord = gl_TexCoord[0].xy;//st;
+
+
+vec2 getRandom(in vec2 uv){
+	float u = (fract(uv.x * (width/2.0))*0.25);
+	float v = (fract(uv.y * (height/2.0))*0.75);
+	return vec2(u,v);
+	}
+
+vec2 rand(in vec2 coord) {
+    //generating random noise 
+    float noiseX = (fract(sin(dot(coord ,vec2(12.9898,78.233))) * 43758.5453));
+    float noiseY = (fract(sin(dot(coord ,vec2(12.9898,78.233)*2.0)) * 43758.5453));
+    return vec2(noiseX,noiseY)*0.004;
+    }
+ 
+vec4 texture2DBilinear(in sampler2D textureSampler, in vec2 uv ){
+    // in vertex shaders you should use texture2DLod instead of texture2D
+    vec4 tl = texture2D(textureSampler, uv);
+    vec4 tr = texture2D(textureSampler, uv + vec2(texelSize, 0));
+    vec4 bl = texture2D(textureSampler, uv + vec2(0, texelSize));
+    vec4 br = texture2D(textureSampler, uv + vec2(texelSize , texelSize));
+    vec2 f = fract( uv.xy * textureSize ); // get the decimal part
+    vec4 tA = mix( tl, tr, f.x ); // will interpolate the red dot in the image
+    vec4 tB = mix( bl, br, f.x ); // will interpolate the blue dot in the image
+    return mix( tA, tB, f.y ); // will interpolate the green dot in the image
+    }
+
+
+float scaleNearFar(in float val, in float near, in float far){
+     float res = 0.0;
+     //res = 1.0 / (far + near -val*(far-near));
+     //if (val > 1.0){return 1.0;}
+     //if (val < 0.0){return 0.0;}
+     res = (2.0*near) / (far + near - val* (far-near));
+     return res;
+}
+
+float readDepth(in vec2 coord){
+    //linearisation of depth but already done 
+    vec4 val = texture2D(DepthTexture, coord );
+    return scaleNearFar(val.x,near,far);//(2.0*near) / (far + near - val.x* (far-near));
+    }
+
+float readMaskDepth(in vec2 coord){
+    //linearisation of depth but already done 
+    vec4 val = texture2D(DepthMaskTexture, coord );
+    return scaleNearFar(val.x,near,far);
+    }
+
+
+float compareDepths( in float depth1, in float depth2 ){
+    float diff = sqrt(clamp(1.0-(depth1-depth2) / (aorange/(far-near)),0.0,1.0));
+    float ao = min(aoCap,max(0.0,depth1-depth2-depthTolerance) * aoMultiplier) * diff;
+    return ao;
+    }
+
+float computeAO(in vec2 scrCoord){
+    float depth = readDepth(scrCoord);
+    float d;
+    float aspect = RenderedTextureWidth/RenderedTextureHeight;
+    vec2 noise = rand(scrCoord);//getRandom(srcCoord);//
+    float w;
+	float h;
+	if (do_noise == 1) {
+       w = (1.0 / RenderedTextureWidth)/clamp(depth,0.05,1.0)+(noise.x*(1.0-noise.x))*scale;
+       h = (1.0 / RenderedTextureHeight)/clamp(depth,0.05,1.0)+(noise.y*(1.0-noise.y))*scale;
+	   }
+    else {
+       w = (1.0 / RenderedTextureWidth)/clamp(depth,0.05,1.0)+0.001*scale;//+(noise.x*(1.0-noise.x));
+       h = (1.0 / RenderedTextureHeight)/clamp(depth,0.05,1.0)+0.001*scale;//+(noise.y*(1.0-noise.y));	
+	}    
+    float pw;
+    float ph;
+    
+    float ao;
+    float s;
+    
+    int ringsamples;
+    for (int i = 1; i <= rings; i += 1){   
+        ringsamples = i * samples;   
+        for (int j = 0 ; j < ringsamples ; j += 1)   {      
+            float step = PI*2.0 / float(ringsamples);      
+            pw = (cos(float(j)*step)*float(i));      
+            ph = (sin(float(j)*step)*float(i))*aspect;      
+            d = readDepth( vec2(scrCoord.s+pw*w,scrCoord.t+ph*h));      
+            ao += compareDepths(depth,d);      
+            s += 1.0;   
+            }
+        }
+    ao /= s;
+    ao = 1.0-ao;
+    return ao;
+    }
+
+float compareFog( in float depth1, in float depth2 ){
+    float diff = sqrt(clamp(1.0-(depth1-depth2) / (1.0/(far-near)),0.0,1.0));
+    //float ao = min(aoCap,max(0.0,depth1-depth2-depthTolerance) * aoMultiplier) * diff;
+    return diff;
+    }
+
+
+float getfog(in vec2 scrCoord) {
+	vec4 val = texture2D(DepthTexture, scrCoord );
+	float fogFactor = 1.0;
+	float f;
+	const float LOG2 = 1.442695;
+	float d0 = scaleNearFar(0.,near,realfar);//(2.0 * near) / (realfar + near);
+	float d1 = scaleNearFar(1.,near,realfar);//(2.0 * near) / (realfar + near - (realfar-near));
+	float d =  scaleNearFar(val.x,near,realfar);//(2.0 * near) / (realfar + near - val.x* (realfar-near));//readDepth(scrCoord);//val.x;//need real far
+	vec3 coord = vec3(scrCoord.x,scrCoord.y,val.x);
+	float fogc = length(coord); //val.x;//val.x;//length(coord); //distance from the camera ?
+	//GL_LINEAR
+        //float correction = 6.0;//scaleNearFar(60.0,near,realfar);
+	float st = d0 + ((gl_Fog.start + correction) / (realfar-near))*(d1-d0);
+	float en = d0 + ((gl_Fog.end + correction) / (realfar-near))*(d1-d0);
+	if (d<st) {
+	  f = 1.0;//(en-d) /(en-st);//1.0;
+	} else if (d>en) {
+	  f = 0.0;//was 0.0, avoid overlay of bg color
+	} else {
+	  f = (en-d) /(en-st);
+	}
+        if (val.x >= 1.0) {f = 1.0;}
+	fogFactor = clamp(f, 0.0, 1.0);
+	return fogFactor;
+}
+
+vec4 combineAO(in float ao,in vec2 scrCoord){
+    vec4 result = vec4(1.0,1.0,1.0,1.0);
+	vec3 white = vec3(1.0,1.0,1.0);
+    vec3 black = vec3(0.0,0.0,0.0);
+    vec3 treshold = vec3(0.2,0.2,0.2);
+	float d = 0.;
+	float md = 0.;
+	float fogf = 0.;
+	vec3 luminance = texture2D(LuminanceTexture, scrCoord).rgb;
+    luminance = clamp(max(black,luminance-treshold)+max(black,luminance-treshold)+max(black,luminance-treshold),0.0,1.0);
+    /*if (fog == 1) {
+	   if (use_fog == 1) {
+	      fogf = getfog(scrCoord);//0 no fog, 1 fog
+		  ao = 1. - ((1. - ao) * fogf);
+		  ao = fogf;//clamp(ao, 0.0, 1.0);
+		  }
+		} */   
+	if (use_mask_depth == 1){
+	   md = texture2D(DepthMaskTexture, scrCoord ).x;//readMaskDepth(scrCoord);
+	   if (d < 1.0) {
+	   	   d = texture2D(DepthTexture, scrCoord ).x;
+	       if (d == md ){
+		       ao = 1.0;//no ao white
+			   }
+		   }
+	   }	
+	result = vec4(mix(vec3(ao,ao,ao),luminance,black),1.0);
+	if (fog == 1) {
+	   if (use_fog == 1) {
+	      fogf = getfog(scrCoord); // 1 no fog, 0 fog
+		  //result = mix(gl_Fog.color, result, fogf );
+	      // we use sin(fogf*PI*.5)) to attenuate the AO slower when we are close to fog start
+	      // and faster toward fog end
+	      result = vec4(mix(gl_Fog.color.rgb,result.rgb,sin(fogf*PI*.5)),1.0);
+		  }
+		}
+	return result;
+    }
+
+float calcAO(in vec2 uv, in vec2 coord, in float depth, in vec3 norm){
+	//vec3 diff = texture2D(DepthTexture, uv + coord).xyz - pos;
+	float diff = readDepth(uv + coord) - depth;
+    //vec3 v = normalize(diff);
+	vec3 v = normalize(vec3(diff,diff,diff));
+	//float d = diff * Scale;
+    float d = length(vec3(diff,diff,diff)) * Scale;
+	//return max(0.0, dot(norm, v) - Bias) * (1.0 / (1.0 + d)) * Intensity;
+	return max(0.0, dot(norm, v) - Bias) * (1.0 / (1.0 + d)) * Intensity;
+    }
+
+/*float computeAONormal(in vec2 uv){
+	vec2 rand;
+	vec3 n;
+
+	vec2 vec[4];
+	vec[0] = vec2(1, 0);
+	vec[1] = vec2(-1, 0);
+	vec[2] = vec2(0, 1);
+	vec[3] = vec2(0, -1);
+		
+	vec2 randomMap = texture2D(RandomTexture, vec2(64,64) * uv / random_size).xy;
+	vec3 normalMap = normal.xyz;
+	//vec3 pos = texture2D(DepthTexture, uv).xyz;//depth 
+    float depth = readDepth(uv);
+	n = normalize(normalMap * 2.0 - 1.0);
+	rand = normalize(randomMap * 2.0 - 1.0);
+	
+	float ao = 0.0;
+ 	float rad = SampleRad / depth;
+
+	int iterations = int(mix(4.0, 1.0, - depth/far));
+	for (int i = 0; i < iterations; ++i) {
+		vec2 coord1 = reflect(vec[i], rand) * rad;
+		vec2 coord2 = vec2(coord1.x * 0.707 - coord1.y * 0.707, coord1.x * 0.707 + coord1.y * 0.707);
+  		
+		ao += calcAO(uv, coord1 * 0.25, depth, n);
+		ao += calcAO(uv, coord2 * 0.5,depth, n);
+		ao += calcAO(uv, coord1 * 0.75, depth, n);
+		ao += calcAO(uv, coord2, depth, n);	
+	    }
+	ao /= float(iterations) * 4.0;
+    return ao;
+    }
+*/
+
+
+vec4 Posterization(in  vec3  color){
+  float gamma = 0.5;
+  float numColors = 10.0;
+  vec3 c = pow(color, vec3(gamma, gamma, gamma));
+  c = c * numColors;
+
+  c = floor(c);
+
+  c = c / numColors;
+
+  c = pow(c, vec3(1.0/gamma));
+
+  return vec4(c, 1.0);
+
+}
+
+
+
+void main() {
+    vec4 result = vec4(0.0);
+	//vec2 coord=(test.xy/test.w+1.0)*0.5;
+    vec2 scrCoord = vec2 (1.0 / width, 1.0 / height) * gl_FragCoord.xy;
+	vec4 color = texture2D(RenderedTexture, scrCoord);    
+    float d = readDepth(scrCoord); 
+	float ao;
+	float fogf = 0.;
+	result = color ;
+    
+    if (method == 0){
+        ao = computeAO(scrCoord);
+		ao = clamp(ao,0.0,1.0);
+   		if ( ao > 1.0 ) {ao = 1.0 ;}
+       	if ( ao < 0.0 ) {ao = 0.0 ;}
+        if (d > 1.0 ) {ao = 1.0 ;}
+		if (d < 0.0 ) {ao = 0.0 ;}		
+        }
+
+	vec4 mixed = combineAO(ao,scrCoord);
+	
+	if (only_ssao == 1) {
+	    result = mixed;
+		}
+	else {
+	    result = vec4(color.rgb*mixed.rgb,1.0);//color.a
+	   }
+	if (show_mask_depth == 1){
+	   float d = readMaskDepth(scrCoord);//texture2D(DepthMaskTexture, scrCoord ).x;//readMaskDepth(scrCoord);
+	   result = vec4(d,d,d,1.0);//texture2D(DepthMaskTexture, scrCoord );
+	}
+	else if ( (only_depth == 1) || (mix_depth == 1) ){
+	   float d = readDepth(scrCoord);
+           if (negative == 1) {d = 1.0  - d;}
+	   result = vec4(d,d,d,1.0);
+           if (mix_depth == 1) {
+              result = vec4(color.rgb*result.rgb,1.0);
+          }
+	}
+
+    gl_FragColor = result;//result;//result;
+}

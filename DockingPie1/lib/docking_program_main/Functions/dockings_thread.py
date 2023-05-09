@@ -106,6 +106,91 @@ class _dialog_mixin:
             QtWidgets.QDialog.keyPressEvent(self, event)
 
 
+class DialogThread(_dialog_mixin, QtWidgets.QDialog):
+
+    """
+    A dialog from within to initialize Threads
+    """
+
+    def __init__(self, tab, main):
+
+        self.tab = tab
+        self.main = main
+
+        QtWidgets.QDialog.__init__(self, parent=self.tab)
+
+
+    def setup_thread(self, starting_function):
+
+        self.jobthread = JobThread(self)
+
+        # Setup event-signal actions
+        self.jobthread.set_params(self, self.tab, self.main, starting_function)
+
+
+    def on_button_click(self):
+
+        text = self.start_button.text()
+
+        if text == "Close":
+            self.on_closing_thread()
+        else:
+            self.jobthread.start()
+            self.setWindowTitle('Docking in process. Please wait ...')
+            #self.docking_progressbar.setFormat("Running...")
+            #self.initial_label.setText("")
+            self.start_button.setEnabled(False)
+            self.close_button.hide()
+
+
+    def close_dialog_prior_process(self):
+
+        self._terminate_threads()
+        self.close()
+
+    def _terminate_threads(self):
+        if self.jobthread.isRunning():
+            self.jobthread.terminate()
+
+    def closeEvent(self, evnt):
+        self._terminate_threads()
+        self.close()
+
+
+class JobThread(QtCore.QThread):
+
+    """
+    A Thread for Docking Processes
+    """
+
+    def __init__(self, tab):
+        super().__init__(tab)
+
+    # Signals.
+    emit_exception = QtCore.pyqtSignal(Exception)
+    update_single_docking_progressbar = QtCore.pyqtSignal(int)
+    update_consensus_docking_progressbar = QtCore.pyqtSignal(int)
+    process_completed = QtCore.pyqtSignal(object)
+    update_progress_text = QtCore.pyqtSignal(str)
+    user_asks_to_interrupt = QtCore.pyqtSignal()
+    interrupt = QtCore.pyqtSignal(object)
+
+
+    def set_params(self, dialog, tab, main, starting_function):
+
+        self.dialog = dialog
+        self.tab = tab
+        self.main = main
+
+        # The function to run when starting thread
+        self.starting_function = starting_function
+
+
+    @catch_errors_installer_threads
+    def run(self):
+
+        self.starting_function()
+
 
 class Dockings_dialog(_dialog_mixin, QtWidgets.QDialog):
 
@@ -148,6 +233,7 @@ class Dockings_dialog(_dialog_mixin, QtWidgets.QDialog):
         ### When multiple dockings must be run:
         # this variable is used to stop prior the starting of the next process if the user clicks on 'Cancel' button
         self.tab.user_asks_to_interrupt = False
+
 
     def initUI(self):
 
@@ -220,7 +306,6 @@ class Dockings_dialog(_dialog_mixin, QtWidgets.QDialog):
         self.start_button.setText("Close")
         self.start_button.setEnabled(True)
         self.complete_status = True
-
 
     def on_update_progress_text(self, text):
 
@@ -425,7 +510,7 @@ class Dockings_dialog(_dialog_mixin, QtWidgets.QDialog):
             self.on_closing_thread()
         else:
             self.docking_thread.start()
-            self.setWindowTitle('Docking in process. Please wait ...')
+            self.setWindowTitle('Running Job. Please wait ...')
             #self.docking_progressbar.setFormat("Running...")
             self.progressbar_label.setText("")
             self.start_button.setEnabled(False)
@@ -518,6 +603,7 @@ class Dockings_dialog(_dialog_mixin, QtWidgets.QDialog):
 
 
     def on_update_progressbar(self, value):
+
         """
         Updates the percentage in the progressbar.
         """
@@ -769,7 +855,8 @@ class Dockings_thread(QtCore.QThread):
                     last_docking = self.tab.last_docking,
                     results_file_name = self.tab.last_docking.results_file_name,
                     results_dict = docking_programs.results_dict,
-                    poses = self.tab.last_docking.poses)
+                    poses = self.tab.last_docking.poses,
+                    ligand = ligand)
 
                 self.update_results_tab.emit(docking_programs.VINA.results_tab_ui,
                 self.tab.last_docking,

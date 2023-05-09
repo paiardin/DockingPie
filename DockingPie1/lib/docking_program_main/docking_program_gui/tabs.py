@@ -51,9 +51,9 @@ from lib.docking_program_main.docking_program_gui.dialogs import *
 from lib.docking_program_main.docking_program_gui.widgets_utilities import *
 from lib.docking_program_main.Functions.threads import Protocol_exec_dialog
 from lib.docking_program_main.Functions.general_docking_func import Generate_Object, Calculate_RMSD, update_widget_with_pymol_object, get_current_sele, PDBQT_OptionsWindows
-from lib.docking_program_main.Functions.general_functions import OpenFromFile, Check_current_tab, Save_to_Csv, SelectAll, check_configuration
+from lib.docking_program_main.Functions.general_functions import OpenFromFile, Check_current_tab, Save_to_Csv, SelectAll, check_configuration, write_log_titles
 from lib.docking_program_main.Functions.installer import Installation, External_tools_installation_thread, External_tools_download_thread, External_components_dialog
-from lib.docking_program_main.Functions.dockings_thread import _dialog_mixin, Dockings_dialog, Dockings_thread
+from lib.docking_program_main.Functions.dockings_thread import _dialog_mixin, Dockings_dialog, Dockings_thread, DialogThread
 from lib.docking_program_main.docking_program_gui.frames import *
 # Plotting Tools
 from lib.docking_program_main.plots.plots_window import Plot_window_qt
@@ -80,6 +80,8 @@ except:
 # csv module
 import csv
 
+consensus_protocols_dict = {"Best Pose": "normsd_bestpose", "Mean Pose": "normsd_meanpose", "All Pose": "normsd_allpose", "All Pose RMSD": "paired"}
+reversed_consensus_protocols_dict = {v: k for k, v in consensus_protocols_dict.items()}
 
 class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
 
@@ -185,7 +187,6 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.grid_layout.addWidget(self.z_dim_label, 0, 6)
         self.grid_layout.addWidget(self.z_dim_widg, 0, 7)
 
-        ####
 
          # Settings
         self.settings_group_box = QtWidgets.QGroupBox("Settings")
@@ -193,10 +194,15 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.settings_group_box.setLayout(QtWidgets.QGridLayout())
 
         self.consensus_score_cb = QtWidgets.QComboBox()
+        self.consensus_score_cb.addItems(["RbR", "RbN", "RbV", "ECR", "LCR", "AASS", "zscore"])
         self.settings_group_box.layout().addWidget(self.consensus_score_cb, 0, 0)
 
+        self.consensus_protocol_cb = QtWidgets.QComboBox()
+        self.consensus_protocol_cb.addItems(["Best Pose", "Mean Pose", "All Pose", "All Pose RMSD"])
+        self.settings_group_box.layout().addWidget(self.consensus_protocol_cb, 1, 0)
+
         self.docking_program_check_list = []
-        idx = 0
+        idx = 1
         for dp in ["RxDock", "Vina", "Smina", "ADFR"]:
             self.cb = QtWidgets.QCheckBox(dp)
             self.docking_program_check_list.append(self.cb)
@@ -204,14 +210,18 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             self.settings_group_box.layout().addWidget(self.cb, idx, 0)
 
         # Run Consensus Docking
-        self.run_consensus_docking_button = QtWidgets.QPushButton("Run Consensus Button")
+        self.run_consensus_docking_button = QtWidgets.QPushButton("Run Docking")
+        self.run_consensus_docking_button = QtWidgets.QPushButton("Run Consensus Scoring")
         self.show_results_summary = QtWidgets.QPushButton("Show Results Summary")
         self.layout_data_analysis_tab.addWidget(self.run_consensus_docking_button, 4, 0)
         self.layout_data_analysis_tab.addWidget(self.show_results_summary, 4, 1)
-        self.run_consensus_docking_button.clicked.connect(self.run_consensus_job)
+
+        self.run_consensus_docking_button.clicked.connect(self.init_thread)
+        self.show_results_summary.clicked.connect(lambda: self.show_consensus_results_window(cs_job_index = self.cs_job_index,
+                                           consensus_score = self.consensus_score,
+                                           consensus_protocol = consensus_protocols_dict[self.consensus_protocol]))
 
 
-<<<<<<< Updated upstream
     def show_advanced_options_rec(self):
 
         self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs,
@@ -251,145 +261,715 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.pdbqt_options_window.pdbqt_options_window.close()
 
 
-=======
->>>>>>> Stashed changes
-    def run_consensus_job(self):
+    def init_thread(self):
+
+        '''
+        Check input parameters
+        '''
 
         ### Get general parameters
-        self.get_general_parameters()
+        empty = self.get_general_parameters()
+
+        if not empty:
+
+            '''
+            Initialize Thread for Consensus Job
+            '''
+
+            ## Setup a variable to check if the process must be interrupted
+            self.interrupt_process = False
+
+            ## Init DialogThread object
+            self.cs_job_dialog = DialogThread(self, self.docking_programs)
+
+            ## Setup the DialogThread - the main function of the thread is passed as input
+            self.cs_job_dialog.setup_thread(self.run_job)
+
+            ## Setup signal-event connection
+            self.cs_job_dialog.jobthread.update_single_docking_progressbar.connect(self.on_update_single_docking_progressbar)
+            self.cs_job_dialog.jobthread.emit_exception.connect(self.on_emit_exception)
+            self.cs_job_dialog.jobthread.update_progress_text.connect(self.on_update_progress_text)
+            self.cs_job_dialog.jobthread.process_completed.connect(self.on_process_completed)
+            self.cs_job_dialog.jobthread.interrupt.connect(self.on_interrupt_button_click)
+            self.cs_job_dialog.jobthread.update_consensus_docking_progressbar.connect(self.on_update_consensus)
+
+            ## Setup the layout
+            self.initThreadDialogUI(self.cs_job_dialog)
+
+            ## Execute
+            self.cs_job_dialog.setModal(True)
+            self.cs_job_dialog.exec_()
+
+
+    def close_dialog_prior_process(self):
+
+        '''
+        When the close button is clicked, this function is called to:
+        - remove job from dictionary
+        - emit a signal to 'interrupt'
+        '''
+
+        ## delete consensus job from dictionary
+        del self.docking_programs.consensus_job_dict[str(self.cs_job_index)]
+
+        self.cs_job_dialog.close()
+
+
+    def interrupt_button_clicked(self):
+
+        '''
+        When the interrupt button is clicked, this function is called to:
+        - set the 'self.interrupt_process' to True (this is needed to interrupt the successive steps)
+        - remove job from dictionary
+        - emit a signal to 'interrupt'
+        '''
+
+        self.interrupt_process = True
+
+        ## If the process has been interrupted, delete consensus job from dictionary
+        del self.docking_programs.consensus_job_dict[str(self.cs_job_index)]
+
+        self.cs_job_dialog.jobthread.interrupt.emit(self.subprocessobj)
+
+
+    def on_interrupt_button_click(self, process):
+
+        '''
+        Get signal to interrupt the process
+        '''
+
+        qm = QtWidgets.QMessageBox.question(self.docking_programs, 'Interrupting Docking Process', str('Are your really sure you want to interrupt the Docking Process?'), QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        if qm == QtWidgets.QMessageBox.Yes:
+
+            if sys.platform == "win32":
+                os.system("TASKKILL /F /PID " + str(process.pid))
+                ##self.cancel_button.setEnabled(False)
+
+            else:
+                ## self.cancel_button.setEnabled(False)
+                os.killpg(os.getpgid(process.pid), signal.SIGHUP)
+
+            ## Close Dialog
+            self.cs_job_dialog.close()
+
+            # ## Terminate Thread
+            if self.cs_job_dialog.jobthread.isRunning():
+                self.cs_job_dialog.jobthread.terminate()
+
+
+    def on_update_consensus(self, value):
+
+        '''
+        Get signal to update the consensus docking progressbar
+        '''
+
+        tot_steps = len(self.selected_docking_programs) + 1
+        perc = (100/tot_steps)*value
+        self.cs_job_dialog.consensus_docking_progressbar.setValue(perc)
+        self.cs_job_dialog.consensus_docking_progressbar.setFormat("Step {} of {}".format(value, tot_steps))
+
+
+    def on_update_single_docking_progressbar(self, value):
+
+        '''
+        Get signal to update the single docking progressbar
+        '''
+
+        self.cs_job_dialog.single_docking_progressbar.setValue(value)
+
+
+    def on_emit_exception(self, value):
+
+        """
+        Quit the threads and close the installation dialog.
+        """
+
+        # ## Terminate Thread
+        if self.cs_job_dialog.jobthread.isRunning():
+            self.cs_job_dialog.jobthread.terminate()
+
+        message = "There was an error: %s" % str(value)
+        if hasattr(value, "url"):
+            message += " (%s)." % value.url
+        else:
+            message += "."
+        message += " Quitting the Docking process."
+        print(message)
+        ##self.tab.show_error_message("Installation Error", message)
+
+        self.cs_job_dialog.close()
+
+
+    def on_update_progress_text(self, text):
+
+        '''
+        Get signal to update the text
+        '''
+
+        self.cs_job_dialog.initial_label.setText(text)
+
+
+    def on_process_completed(self, func):
+
+        '''
+        Get signal to close dialog, stop thread and run final step.
+        '''
+
+        # ## Close Dialog
+        self.cs_job_dialog.close()
+
+        ## Update with results
+        func()
+
+        # ## Terminate Thread
+        if self.cs_job_dialog.jobthread.isRunning():
+            self.cs_job_dialog.jobthread.terminate()
+
+
+    def initThreadDialogUI(self, dialog):
+
+        '''
+        Setup layout of the DialogThread.
+        The 'dialog' in input is a DialogThread Object
+        '''
+
+        ## set the dialog as self
+        parent_class = self
+        self = dialog
+
+        ## Windows setup
+        self.setWindowTitle('Initializing Docking Process ...')
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.CustomizeWindowHint)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
+
+        ## Layout
+        vertical_layout = QtWidgets.QVBoxLayout()
+
+        ## Single Docking progressbar
+        self.single_docking_progressbar = QtWidgets.QProgressBar(self)
+        # self.progress.setGeometry(0, 0, 340, 25)
+        self.single_docking_progressbar.setMaximum(51)
+        self.single_docking_progressbar.setValue(0)
+        vertical_layout.addWidget(self.single_docking_progressbar)
+
+        ## Consensus Docking progressbar
+        self.consensus_docking_progressbar = QtWidgets.QProgressBar(self)
+        self.consensus_docking_progressbar.setMaximum(100)
+        self.consensus_docking_progressbar.setValue(0)
+        self.consensus_docking_progressbar.setFormat("")
+        vertical_layout.addWidget(self.consensus_docking_progressbar)
+
+        ## Initial Label
+        text = "Click the button to start running the Docking Processes"
+        self.initial_label = QtWidgets.QLabel(text)
+        vertical_layout.addWidget(self.initial_label)
+
+        ## Starting button
+        horizontal_layout = QtWidgets.QHBoxLayout()
+        start_button_text = 'Start'
+        self.start_button = QtWidgets.QPushButton(start_button_text, self)
+        # self.start_button.setStyleSheet(label_style_2)
+        self.start_button.clicked.connect(self.on_button_click)
+        horizontal_layout.addWidget(self.start_button)
+        horizontal_layout.addStretch(1)
+
+        ## Button to close dialog before the process starts.
+        self.close_button = QtWidgets.QPushButton('Close', self)
+        # self.cancel_button.setStyleSheet(label_style_2)
+        self.close_button.clicked.connect(parent_class.close_dialog_prior_process)
+        horizontal_layout.addWidget(self.close_button)
+        horizontal_layout.addStretch(1)
+
+        ## Button to interrupt the process.
+        self.cancel_button = QtWidgets.QPushButton('Interrupt', self)
+        # self.cancel_button.setStyleSheet(label_style_2)
+        self.cancel_button.clicked.connect(parent_class.interrupt_button_clicked)
+        self.cancel_button.setEnabled(False)
+        horizontal_layout.addWidget(self.cancel_button)
+
+        vertical_layout.addLayout(horizontal_layout)
+
+        self.setLayout(vertical_layout)
+
+
+    def run_job(self):
+
+        ### init steps count
+        steps_count = 0
+        self.cs_job_dialog.jobthread.update_progress_text.emit("Getting Parameters") # Update text
+        self.cs_job_dialog.cancel_button.setEnabled(True)
+
+        ### Run dockings
+        for dp in self.selected_docking_programs:
+
+            ### Before any successive docking, it is checked whether the 'Interrupt' button has been pressed
+            if not self.interrupt_process:
+
+                self.cs_job_dialog.jobthread.update_progress_text.emit("Running Docking with: {}".format(dp)) # Update text
+                steps_count += 1
+                self.cs_job_dialog.jobthread.update_consensus_docking_progressbar.emit(steps_count) # Update consensus_docking progressbar
+                self.run_docking(dp)
+
+        self.cs_job_log_file.close()
+
+        ### Before proceeding with consensus docking, it is checked whether the 'Interrupt' button has been pressed
+        if not self.interrupt_process:
+
+            ### Run consensus
+            self.cs_job_dialog.jobthread.update_progress_text.emit("Starting Consensus Analysis") # Update text
+
+            steps_count += 1
+            self.cs_job_dialog.jobthread.update_consensus_docking_progressbar.emit(steps_count) # Update consensus_docking progressbar
+            self.run_consensus(self.consensus_protocol,self.consensus_score, self.cs_job_index)
+
+            ### Update consensus info
+            self.cs_job_dialog.jobthread.process_completed.emit(self.update_consensus_info)
+
+
+    def run_consensus(self, consensus_protocol, consensus_score, cs_job_index):
+
+        self.consensus_protocol = consensus_protocol
+        self.consensus_score = consensus_score
+        self.cs_job_index = cs_job_index
+
+        if 'Smina' in self.docking_programs.dp_specifics_dict[str(self.cs_job_index)] and self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['Smina']["successfull_runs"]:
+            smina_list = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['Smina']["successfull_runs"]
+        else:
+            smina_list = []
+
+        if 'ADFR' in self.docking_programs.dp_specifics_dict[str(self.cs_job_index)] and self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['ADFR']["successfull_runs"]:
+            adfr_list = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['ADFR']["successfull_runs"]
+        else:
+            adfr_list = []
+
+        if 'Vina' in self.docking_programs.dp_specifics_dict[str(self.cs_job_index)] and self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['Vina']["successfull_runs"]:
+            vina_list = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['Vina']["successfull_runs"]
+        else:
+            vina_list = []
+
+        if 'RxDock' in self.docking_programs.dp_specifics_dict[str(self.cs_job_index)] and self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['RxDock']["successfull_runs"]:
+            rxdock_list = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]['RxDock']["successfull_runs"]
+        else:
+            rxdock_list = []
+
+        ## Run consensus
+        self.consensus_run = ConsensusProtocol(self,
+        cs_job_index = self.cs_job_index,
+        rmsd_threshold = 1,
+        main = self.docking_programs,
+        consensus_tmp_dir = self.consensus_job_dir,
+        score_value = self.consensus_score,
+        smina_poset = "All",
+        rxdock_poset = "All",
+        vina_poset = "All",
+        adfr_poset = "All",
+        num_of_ligands_analyzed = self.get_max_number_of_ligands_analized(smina_list, vina_list, rxdock_list, adfr_list),
+        smina_runs_list = smina_list,
+        vina_runs_list = vina_list,
+        rxdock_runs_list = rxdock_list,
+        adfr_runs_list = adfr_list,
+        rmsd_protocol = consensus_protocols_dict[self.consensus_protocol],
+        all_runs_dict = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)])
+
+
+    def update_consensus_info(self):
+
+        # Make path to consensus file ('.csv')
+        file_name = self.make_consensus_file_name(self.cs_job_index, self.consensus_score, self.consensus_protocol)
+        path = os.path.join(self.docking_programs.consensus_job_dict[str(self.cs_job_index)]['directory'], file_name)
+
+        # Save consensus file
+        self.save_consensus_file(file_name, path, self.consensus_run.dataframe)
+
+        # Update 'consensus_job_dict'
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["consensus_clusters_pymol"] = self.consensus_run.load_in_pymol_dict
+
+        # Show results
+        self.show_consensus_results_window(cs_job_index = self.cs_job_index,
+                                           consensus_score = self.consensus_score,
+                                           consensus_protocol = consensus_protocols_dict[self.consensus_protocol],
+                                           dataframe = self.consensus_run.dataframe.to_numpy())
+
+
+    def save_consensus_file(self, file_name, path, dataframe):
+
+        if isinstance(dataframe, np.ndarray):
+            np.savetxt(path, self.array, delimiter=",")
+        else:
+            dataframe.to_csv(path, sep=",")
+
+
+        # Update 'consensus_job_dict' with information about the consensus protocols that have been computed
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["consensus_files"].append(path)
+
+
+    def make_consensus_file_name(self, cs_job_index, consensus_score, consensus_protocol):
+
+        file_name = "CJ_{consensus_job_id}_{consensus_score}_{consensus_protocol}.csv".format(consensus_job_id = cs_job_index, consensus_score = consensus_score, consensus_protocol = consensus_protocol)
+
+        return file_name
+
+
+    def show_consensus_results_window(self, cs_job_index, consensus_score, consensus_protocol, dataframe = None):
+
+        # If the dataframe is specified in input
+        if np.any(dataframe):
+            data_array = dataframe
+        else:
+            # If the dataframe is not specified in input, get last computed, if it exists
+            try:
+                data_array = self.consensus_run.dataframe.to_numpy()
+            except:
+                data_array = None
+
+        if np.any(data_array):
+
+            ## Make table
+            consensus_matrix_table = self.make_consensus_table(data_array)
+            #self.consensus_matrix_table.itemDoubleClicked.connect(lambda: self.on_click_matrix_table(self.consensus_matrix_table))
+
+            # Create window to put the generated matrix
+            self.consensus_results_window = NewWindow(parent = self.docking_programs,
+            title = "Consensus Matrix", upper_frame_title = "",
+            submit_command = self.close(), submit_button_text= "Update Consensus Table",
+            with_scroll = True)
+
+            # Create widget for the matrix
+            self.consensus_matrix_widget = QtWidgets.QWidget()
+            self.consensus_matrix_scroll = QtWidgets.QScrollArea()
+            self.consensus_matrix_scroll.setWidgetResizable(True)
+            self.consensus_matrix_scroll.setWidget(self.consensus_matrix_widget)
+
+            # Set the layout of the Scroll Area for the Table
+            self.consensus_matrix_scroll_layout = QtWidgets.QGridLayout()
+            self.consensus_matrix_widget.setLayout(self.consensus_matrix_scroll_layout)
+
+            # Add matrix to window
+            self.consensus_results_window.middle_layout_type.addWidget(consensus_matrix_table, 1, 2, 4, 1)
+
+            self.consensus_summary_string = self.make_consensus_label(job_index = cs_job_index,
+                                                                      score = consensus_score,
+                                                                      protocol = reversed_consensus_protocols_dict[consensus_protocol])
+            self.consensus_summary_string_label = QtWidgets.QLabel(self.consensus_summary_string)
+            self.consensus_results_window.middle_layout_type.addWidget(self.consensus_summary_string_label, 0, 2)
+
+            self.options_frame = OptionsFrame(parent=None,
+            main_window=self.docking_programs)
+
+            self.consensus_results_window.middle_layout_type.addWidget(self.options_frame, 1, 1)
+            frame_layout = self.options_frame.options_frame_layout
+
+            self.box_consensus_type_label = QtWidgets.QLabel("Consensus Score")
+            self.box_consensus_type = QtWidgets.QComboBox()
+            self.box_consensus_type.addItems(["RbR", "RbN", "RbV", "ECR", "LCR", "AASS", "zscore"])
+            index = self.box_consensus_type.findText(consensus_score)
+            self.box_consensus_type.setCurrentIndex(index)
+            frame_layout.addWidget(self.box_consensus_type_label, 0, 0, 1, 1)
+            frame_layout.addWidget(self.box_consensus_type, 0, 1, 1, 1)
+
+            self.box_consensus_protocol_label = QtWidgets.QLabel("Consensus Protocol")
+            self.box_consensus_protocol = QtWidgets.QComboBox()
+            self.box_consensus_protocol.addItems(["Best Pose", "Mean Pose", "All Pose", "All Pose RMSD"])
+            index = self.box_consensus_protocol.findText(reversed_consensus_protocols_dict[consensus_protocol])
+            self.box_consensus_protocol.setCurrentIndex(index)
+            frame_layout.addWidget(self.box_consensus_protocol_label, 1, 0, 1, 1)
+            frame_layout.addWidget(self.box_consensus_protocol, 1, 1, 1, 1)
+
+            self.consensus_job_cb_label = QtWidgets.QLabel("Consensus Job")
+            self.consensus_job_cb = QtWidgets.QComboBox()
+            self.consensus_job_cb.addItems([str(a) for a in self.docking_programs.consensus_job_dict])
+            index = self.consensus_job_cb.findText(str(cs_job_index))
+            self.consensus_job_cb.setCurrentIndex(index)
+            frame_layout.addWidget(self.consensus_job_cb_label, 2, 0, 1, 1)
+            frame_layout.addWidget(self.consensus_job_cb, 2, 1, 1, 1)
+
+            self.update_consensus_pb = QtWidgets.QPushButton("Update Consensus")
+            frame_layout.addWidget(self.update_consensus_pb, 3, 0, 1, 1)
+            self.update_consensus_pb.clicked.connect(self.recompute_consensus)
+
+            self.export_table_to_csv = QtWidgets.QPushButton("Export to '.csv'")
+            frame_layout.addWidget(self.export_table_to_csv, 4, 0, 1, 1)
+            self.export_table_to_csv.clicked.connect(lambda: self.save_table_to_csv(self.consensus_results_window.middle_layout_type))
+
+            self.view_log_btn = QtWidgets.QPushButton("View LOG")
+            frame_layout.addWidget(self.view_log_btn, 5, 0, 1, 1)
+            self.view_log_btn.clicked.connect(self.show_consensus_log)
+
+            self.consensus_results_window.show()
+
+        else:
+            QtWidgets.QMessageBox.warning(self.docking_programs, "Warning", "There isn't any calculation yet")
+
+
+    def show_consensus_log(self):
+        pass
+
+    def get_table_widget(self, layout):
+
+        for i in reversed(range(layout.count())):
+            obj = layout.itemAt(i).widget()
+            if str(type(obj)) == "<class 'lib.docking_program_main.tables.tables.TableView'>":
+                table = obj
+
+        return table
+
+
+    def make_consensus_label(self, protocol, score, job_index):
+
+        label = "Consensus Job: {} - Consensus Score: {} - Consensus Protocol: {}".format(job_index, score, protocol)
+
+        return label
+
+
+    def make_consensus_table(self, data_array):
+
+        consensus_matrix_table = TableView(parent=self, data=data_array,
+                                   column_labels = ["Ligand", "Values", "Consensus"],
+                                   row_labels = [],
+                                   row_labels_height=25,
+                                   sortable=True)
+
+        return consensus_matrix_table
+
+
+    def recompute_consensus(self):
+        ### Run consensus
+        self.run_consensus(self.box_consensus_protocol.currentText(), self.box_consensus_type.currentText(), self.consensus_job_cb.currentText())
+
+        file_name = self.make_consensus_file_name(self.consensus_job_cb.currentText(), self.box_consensus_type.currentText(), "best")
+        path = os.path.join(self.docking_programs.consensus_job_dict[str(self.consensus_job_cb.currentText())]['directory'], file_name)
+        self.save_consensus_file(file_name, path, self.consensus_run.dataframe)
+        consensus_table = self.make_consensus_table(self.consensus_run.dataframe.to_numpy())
+
+        for i in reversed(range(self.consensus_results_window.middle_layout_type.count())):
+            obj = self.consensus_results_window.middle_layout_type.itemAt(i).widget()
+            if str(type(obj)) == "<class 'lib.docking_program_main.tables.tables.TableView'>":
+                self.consensus_results_window.middle_layout_type.removeWidget(obj)
+                obj.deleteLater()
+                obj = None
+
+        self.consensus_results_window.middle_layout_type.addWidget(consensus_table, 1, 2, 4, 1)
+
+        consensus_label = self.make_consensus_label(protocol = self.box_consensus_protocol.currentText(),
+                                                    score = self.box_consensus_type.currentText(),
+                                                    job_index = self.consensus_job_cb.currentText())
+
+        for i in reversed(range(self.consensus_results_window.middle_layout_type.count())):
+            obj = self.consensus_results_window.middle_layout_type.itemAt(i).widget()
+            if str(type(obj)) == "<class 'PyQt5.QtWidgets.QLabel'>":
+                self.consensus_results_window.middle_layout_type.removeWidget(obj)
+                obj.deleteLater()
+                obj = None
+
+        label_widget = QtWidgets.QLabel(consensus_label)
+        self.consensus_results_window.middle_layout_type.addWidget(label_widget, 0, 2)
+
+
+
+    def save_table_to_csv(self, layout):
+
+        """
+        Saves the table data to a .csv file.
+        """
+
+        table = self.get_table_widget(layout)
+
+        self.table = table
+
+        # Let the user select the filepath.
+        filepath = asksaveasfile_qt("Save CSV file", name_filter="*.csv")
+
+        if not filepath:
+            return None
+
+        # try:
+        # Writes a .csv file on that path.
+        with open(filepath, 'w') as csv_fh:
+
+            writer = csv.writer(csv_fh, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+
+            if self.table.column_labels:
+                writer.writerow([" "] + self.table.column_labels)
+            else:
+                writer.writerow(self.table.column_labels)
+
+            for row_idx, row in enumerate(self.table.data):
+                if self.table.row_labels:
+                    writer.writerow([self.table.row_labels[row_idx]] + [str(v) for v in row])
+                else:
+                    writer.writerow([str(v) for v in row])
+
+        # except Exception as e:
+        #     print("- WARNING: could not write a csv file: %s" % str(e))
 
 
     def get_general_parameters(self):
 
-        self.receptor = [self.receptor_cb.currentText()] ## do as also the receptor is a list, so if in the future we would like to add the possibility to run with multiple receptors it is easier
+        self.receptor = [self.receptor_cb.currentText()] ## receptors taken as a list, so if in the future we would like to add the possibility to run with multiple receptors it is easier
         self.ligands = [i.text() for i in self.ligand_cb.selectedItems()]
-
         self.selected_docking_programs = [i.text() for i in self.docking_program_check_list if i.isChecked()]
 
-        ### Make consensus_job_<index> directory
-<<<<<<< Updated upstream
-        self.cs_job_index = len(self.docking_programs.consensus_job_dict)+1
-=======
-        self.cs_job_index = len(self.docking_programs.consensus_job_dict)
->>>>>>> Stashed changes
-        cs_job_dir_name = "consensus_job_" + str(self.cs_job_index)
-        self.consensus_job_dir = os.path.join(self.docking_programs.consensus_tmp_dir, cs_job_dir_name)
-        if os.path.isdir(self.consensus_job_dir):
-            shutil.rmtree(self.consensus_job_dir)
-        os.mkdir(self.consensus_job_dir)
+        stringa = ""
+        empty = False
 
-        ### Update consensus_job_dict
-<<<<<<< Updated upstream
-        '''
-        The dictionary is indexed by 'self.cs_job_index'
-        The keys of the dictionary are described as follows:
-        - 'directory': path to the consensus_job directory
-        - 'docking_programs': a list of the docking programs' names that have been selected
-        - 'receptors' and 'ligands': a dictionary indexed by input receptor/ligand that stores a list of prepared receptors/ligands
+        if not self.receptor[0]:
+            stringa += "- a valid receptor\n"
+            empty = True
 
-       {'1': {'directory': '<PATH/TO/TMP>/tmp/consensus_tmp/consensus_job_1',
-              'docking_programs': ['RxDock', 'Vina', 'Smina', 'ADFR'],
-              'receptors': {'1ol5': ['01_1ol5_RxDock', '02_1ol5_Vina', '03_1ol5_Smina', '04_1ol5_ADFR']},
-              'ligands': {}},
-        '2': {'directory': '<PATH/TO/TMP>/tmp/consensus_tmp/consensus_job_2',
-              'docking_programs': ['RxDock', 'Vina', 'Smina', 'ADFR'],
-              'receptors': {'1ol5': ['01_1ol5_RxDock', '02_1ol5_Vina', '03_1ol5_Smina', '04_1ol5_ADFR']},
-              'ligands': {'obj01': ['01_obj01_RxDock', '02_obj01_Vina', '03_obj01_Smina', '04_obj01_ADFR']}}}
+        if not self.ligands:
+            stringa += "- a valid ligand(s)\n"
+            empty = True
 
-        '''
-=======
->>>>>>> Stashed changes
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)] = {}
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["directory"] = self.consensus_job_dir
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["docking_programs"] = self.selected_docking_programs
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"] = {}
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"] = {}
+        if not self.selected_docking_programs:
+            stringa +=  "- at least one docking program"
+            empty = True
 
-        for rec in self.receptor:
-            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec] = []
-        for lig in self.ligands:
-            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig] = []
+        if empty:
+            QtWidgets.QMessageBox.warning(self.docking_programs, "Warning", "Invalid Inputs - Please select:\n{}".format(stringa))
 
-<<<<<<< Updated upstream
-        ### Fill a dictionary with specific infos for each docking program
-        self.dp_specifics_dict = {}
-        self.dp_specifics_dict[str(self.cs_job_index)] = {}
+        else:
+            ### Make consensus_job_<index> directory
+            self.cs_job_index = len(self.docking_programs.consensus_job_dict)+1
+            cs_job_dir_name = "consensus_job_" + str(self.cs_job_index)
+            self.consensus_job_dir = os.path.join(self.docking_programs.consensus_tmp_dir, cs_job_dir_name)
+            if os.path.isdir(self.consensus_job_dir):
+                shutil.rmtree(self.consensus_job_dir)
+            os.mkdir(self.consensus_job_dir)
 
-        for dp in self.selected_docking_programs:
-            self.dp_specifics_dict[str(self.cs_job_index)][dp] = {}
-            self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"] = os.path.join(self.consensus_job_dir, dp)
+            ### Update consensus_job_dict
+            '''
+            The dictionary is indexed by 'self.cs_job_index' (the consensus job index)
+            The keys of the dictionary are described as follows:
+            - 'directory': path to the consensus_job directory
+            - 'docking_programs': a list of the docking programs' names that have been selected
+            - 'receptors' and 'ligands': a dictionary indexed by input receptor/ligand that stores a list of prepared receptors/ligands
+            - 'consensus_files': a list of file names storing info about the consensus runs
 
-            self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_rec"] = []
-            self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_lig"] = []
+        {'1': {'directory': '<PATH/TO/TMP>/tmp/consensus_tmp/consensus_job_1',
+                'docking_programs': ['RxDock', 'Vina', 'Smina', 'ADFR'],
+                'receptors': {'1ol5': ['01_1ol5_RxDock', '02_1ol5_Vina', '03_1ol5_Smina', '04_1ol5_ADFR']},
+                'ligands': {}},
+                'successfull_runs' : [],
+                'consensus_files' :  []
+            '2': {'directory': '<PATH/TO/TMP>/tmp/consensus_tmp/consensus_job_2',
+                'docking_programs': ['RxDock', 'Vina', 'Smina', 'ADFR'],
+                'receptors': {'1ol5': ['01_1ol5_RxDock', '02_1ol5_Vina', '03_1ol5_Smina', '04_1ol5_ADFR']},
+                'ligands': {'obj01': ['01_obj01_RxDock', '02_obj01_Vina', '03_obj01_Smina', '04_obj01_ADFR']}}}
+            '''
 
-            if dp == "Vina" or dp == "Smina" or dp == "ADFR":
-                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"] = "pdb"
-                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"] = "pdb"
-                self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"] = True
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)] = {}
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["directory"] = self.consensus_job_dir
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["docking_programs"] = self.selected_docking_programs
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"] = {}
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"] = {}
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["successfull_runs"] = []
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["consensus_files"] = []
+            self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["consensus_clusters_pymol"] = {}
 
-            if dp == "RxDock":
-                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"] = "sdf"
-                self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"] = "mol2"
-                self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"] = False
-=======
-        ### Prepare specifics for each docking program
-        self.dp_specifics_dict = {}
-        for dp in self.selected_docking_programs:
-            self.dp_specifics_dict[dp] = {}
-            self.dp_specifics_dict[dp]["directory"] = os.path.join(self.consensus_job_dir, dp)
-            if dp == "Vina" or dp == "Smina" or dp == "ADFR":
-                self.dp_specifics_dict[dp]["format_ligand"] = "pdb"
-                self.dp_specifics_dict[dp]["format_receptor"] = "pdb"
-                self.dp_specifics_dict[dp]["generate_pdbqt"] = True
-            if dp == "RxDock":
-                self.dp_specifics_dict[dp]["format_ligand"] = "sdf"
-                self.dp_specifics_dict[dp]["format_receptor"] = "mol2"
-                self.dp_specifics_dict[dp]["generate_pdbqt"] = False
->>>>>>> Stashed changes
+            for rec in self.receptor:
+                self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec] = []
+            for lig in self.ligands:
+                self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig] = []
 
-            if os.path.isdir(os.path.join(self.consensus_job_dir, dp)):
-                shutil.rmtree(os.path.join(self.consensus_job_dir, dp))
-            os.mkdir(os.path.join(self.consensus_job_dir, dp))
+            ### Fill a dictionary with specific infos for each docking program - self.dp_specifics_dict
+            '''
+            The dictionary is indexed by 'self.cs_job_index' (the consensus job index)
+            The nested index is given by the docking program
+            The keys of the dictionary are described as follows:
+            - 'directory': path to the docking-program specific directory in the consensus job directory
+            - 'prepared_rec': a list of prepared receptors
+            - 'prepared_lig': a list of prepared ligands
+            - 'format_ligand': format needed by the 'prepare_receptors' function
+            - 'format_receptor': format needed by the 'prepare_ligands' function
+            - 'generate_pdbqt': boolean for the 'prepare_receptors' and 'prepare_ligands' functions
+            - <Name of the run>: is a dictionary storing:
+            --- 'docking_run': the docking object
+            --- 'docking_run_results_file': the parse_results_object
 
-        ### Run consensus
-        for dp in self.selected_docking_programs:
-<<<<<<< Updated upstream
-            self.run_consensus(dp)
+            {'1':
+            {'RxDock': {'directory': '/home/serena/.pymol/startup/DockingPie1/lib/docking_program_main/tmp/consensus_tmp/consensus_job_1/RxDock',
+            'prepared_rec': ['01_1ol5_RxDock'],
+            'prepared_lig': ['01_obj01_RxDock', '01_obj02_RxDock'],
+            'format_ligand': 'sdf',
+            'format_receptor': 'mol2',
+            'generate_pdbqt': False,
+            'successfull_runs' = ['Run_1_RxDock', 'Run_2_RxDock'],
+            'Run_1_RxDock': {'docking_run': <lib.docking_program_main.Functions.rxdock_functions.RxDock_docking object at 0x7f8c5e402690>,
+            'docking_run_results_file': <lib.docking_program_main.Functions.rxdock_functions.RxDock_parse_results object at 0x7f8cbdde46d0>},
+            'Run_2_RxDock': {'docking_run': <lib.docking_program_main.Functions.rxdock_functions.RxDock_docking object at 0x7f8c5e4028d0>,
+            'docking_run_results_file': <lib.docking_program_main.Functions.rxdock_functions.RxDock_parse_results object at 0x7f8c6151f8d0>}},
+
+            'Vina': {'directory': '/home/serena/.pymol/startup/DockingPie1/lib/docking_program_main/tmp/consensus_tmp/consensus_job_1/Vina', 'prepared_rec': ['02_1ol5_Vina'], 'prepared_lig': ['02_obj01_Vina', '02_obj02_Vina'], 'format_ligand': 'pdb', 'format_receptor': 'pdb', 'generate_pdbqt': True, 'Run_1_Vina': {'docking_run': <lib.docking_program_main.Functions.vina_functions.Vina_docking object at 0x7f8c6152d790>, 'docking_run_results_file': <lib.docking_program_main.Functions.vina_functions.Vina_Parse_Results object at 0x7f8c5dffed90>}, 'Run_2_Vina': {'docking_run': <lib.docking_program_main.Functions.vina_functions.Vina_docking object at 0x7f8c61535910>, 'docking_run_results_file': <lib.docking_program_main.Functions.vina_functions.Vina_Parse_Results object at 0x7f8c6153a9d0>}},
+            '''
+
+            self.docking_programs.dp_specifics_dict[str(self.cs_job_index)] = {}
+
+            for dp in self.selected_docking_programs:
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp] = {}
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"] = os.path.join(self.consensus_job_dir, dp)
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_rec"] = []
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_lig"] = []
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["successfull_runs"] = []
+
+                if dp == "Vina" or dp == "Smina" or dp == "ADFR":
+                    self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"] = "pdb"
+                    self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"] = "pdb"
+                    self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"] = True
+
+                if dp == "RxDock":
+                    self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"] = "sdf"
+                    self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"] = "mol2"
+                    self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"] = False
+
+                if os.path.isdir(os.path.join(self.consensus_job_dir, dp)):
+                    shutil.rmtree(os.path.join(self.consensus_job_dir, dp))
+                os.mkdir(os.path.join(self.consensus_job_dir, dp))
+
+            self.consensus_score = self.consensus_score_cb.currentText()
+            self.consensus_protocol = self.consensus_protocol_cb.currentText()
+
+            ### Make consensus_job_<index> log file
+            cs_job_log_file_name = "Consensus_Job:{}_{}_{}_LOG.txt".format(self.cs_job_index, self.consensus_score, "BestPose")
+            #cs_job_log_file_name = "consensus_job_" + str(self.cs_job_index) + "LOG.txt"
+            self.consensus_log_file_path = os.path.join(self.docking_programs.consensus_tmp_dir, cs_job_log_file_name)
+            self.cs_job_log_file = open(self.consensus_log_file_path, "w+")
+
+            write_log_titles(file = self.cs_job_log_file, title = "CONSENSUS JOB: {}".format(self.cs_job_index))
+            self.cs_job_log_file.write("Consensus Job Directory: {}\n".format(self.consensus_job_dir))
+
+            self.cs_job_log_file.write("Consensus Job Dictionary: {}\n".format(self.docking_programs.consensus_job_dict))
+            self.cs_job_log_file.write("Docking Jobs Dictionary: {}\n".format(self.docking_programs.dp_specifics_dict))
+            # self.cs_job_log_file.write("Consensus Score: {}\n".format(self.consensus_score))
+            # self.cs_job_log_file.write("Consensus Score: {}\n".format(self.consensus_protocol))
+
+        return empty
 
 
-    def run_consensus(self, dp):
-        #### TO DO - IN CONSENUS_PROTOCOL.PY
+    def get_max_number_of_ligands_analized(self, list1, list2, list3, list4):
+
+        # Given a set of lists, returns the length of the longest one
+
+        array = np.array([len(list1), len(list2), len(list3), len(list4)])
+
+        return array.max()
+
+
+    def run_docking(self, dp):
 
         for rec in self.receptor:
             self.prepare_receptors(rec = rec,
                                    docking_program = dp,
-                                   directory = self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
-                                   format = self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"],
-                                   generate_pdbqt = self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
-=======
-            self.run_single_consensus(dp)
-
-
-    def run_single_consensus(self, dp):
-        #### TO DO - IN CONSENUS_PROTOCOL.PY
-
-        for rec in self.receptor:
-
-            self.prepare_receptors(rec = rec,
-                                   docking_program = dp,
-                                   directory = self.dp_specifics_dict[dp]["directory"],
-                                   format = self.dp_specifics_dict[dp]["format_receptor"],
-                                   generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
->>>>>>> Stashed changes
+                                   directory = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
+                                   format = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"],
+                                   generate_pdbqt = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
 
         for lig in self.ligands:
-
             self.prepare_ligands(lig = lig,
                                  docking_program = dp,
-<<<<<<< Updated upstream
-                                 directory = self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
-                                 format = self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"],
-                                 generate_pdbqt = self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
+                                 directory = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
+                                 format = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"],
+                                 generate_pdbqt = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
 
         self.get_grid_dimensions()
 
@@ -398,18 +978,22 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             rec_file_name = [rec for rec in ready_receptors if re.search("RxDock", rec)][0]
             self.make_grid(rec_file_name)
 
-        for rec in self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_rec"]:
-            for lig in self.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_lig"]:
+        for rec in self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_rec"]:
+            for lig in self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["prepared_lig"]:
                 self.run_single_docking(dp, rec, lig)
 
 
     def run_single_docking(self, dp, rec, lig):
 
         if dp == "Vina":
+
+            tmp_dir = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]["Vina"]["directory"]
+
+            ## Setup Docking run with Vina
             self.vina_docking = Vina_docking(self,
             ligand = lig,
             receptor = rec,
-            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["Vina"]["directory"],
+            tmp_dir = tmp_dir,
             cavity = "consensus_grid",
             cavity_list = self.list_grid,
             main = self.docking_programs,
@@ -418,27 +1002,39 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             energy = 3,
             automatic = True)
 
-            f = open("stdout.txt", "w")
-            subprocess.run(self.vina_docking.run_docking_vina_settings, stdout = f, stderr = f)
-            f.close()
+            # Open a stdout file, where to store information about the process.
+            self.run_docking_process_stdout(function = self.vina_docking.run_docking_vina_settings)
 
-            if os.path.isfile(self.vina_docking.log_file_name):
-                os.remove('stdout.txt')
-            else:
-                os.rename('stdout.txt', self.vina_docking.log_file_name)
+            if os.path.isfile(self.vina_docking.results_file_name + ".pdbqt"):
 
-            self.vina_results = Vina_Parse_Results(self,
-            main = self.docking_programs,
-            results_file_name = self.vina_docking.results_file_name,
-            last_docking = self.vina_docking,
-            poses = self.vina_docking.poses)
+                self.adapt_names(self.vina_docking.results_file_name, lig, input_format = ".pdbqt")
+
+                self.vina_results = Vina_Parse_Results(self,
+                main = self.docking_programs,
+                results_file_name = self.vina_docking.results_file_name,
+                last_docking = self.vina_docking,
+                poses = self.vina_docking.poses,
+                ligand = lig)
+
+                cmd.group("Vina", members=self.vina_docking.results_file_name, action='auto')
+
+                # Update dp_specifics_dict
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["successfull_runs"].append(self.vina_docking.results_file_name)
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.vina_docking.results_file_name] = {}
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.vina_docking.results_file_name]["docking_run"] = self.vina_docking
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.vina_docking.results_file_name]["docking_run_results_file"] = self.vina_results
+
+            self.write_consensus_job_log(dp = dp, tmp_dir = tmp_dir, rec = rec, lig = lig)
+
 
         if dp == "Smina":
+
+            tmp_dir = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]["Smina"]["directory"]
 
             self.smina_docking = Smina_docking(self,
             ligand = lig,
             receptor = rec,
-            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["Smina"]["directory"],
+            tmp_dir = tmp_dir,
             cavity = "consensus_grid",
             cavity_list = self.list_grid,
             poses = 10,
@@ -448,27 +1044,37 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             rmsd = 1,
             main = self.docking_programs)
 
-            f = open("stdout.txt", "w")
-            subprocess.run(self.smina_docking.run_docking_smina_settings, stdout = f, stderr = f)
-            f.close()
+            self.run_docking_process_stdout(function = self.smina_docking.run_docking_smina_settings)
 
-            if os.path.isfile(self.smina_docking.log_file_name):
-                os.remove('stdout.txt')
-            else:
-                os.rename('stdout.txt', self.smina_docking.log_file_name)
+            if os.path.isfile(self.smina_docking.results_file_name  + ".pdb"):
 
-            self.smina_results = Smina_parse_results(self,
-            main = self.docking_programs,
-            results_file_name = self.smina_docking.results_file_name,
-            poses = self.smina_docking.poses,
-            ligand = lig)
+                self.adapt_names(self.smina_docking.results_file_name, lig, input_format = ".pdb")
+
+                self.smina_results = Smina_parse_results(self,
+                main = self.docking_programs,
+                results_file_name = self.smina_docking.results_file_name,
+                poses = self.smina_docking.poses,
+                ligand = lig)
+
+                #cmd.load(self.smina_docking.results_file_name + ".pdb")
+                cmd.group("Smina", members=self.smina_docking.results_file_name, action='auto')
+
+                # Update dp_specifics_dict
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["successfull_runs"].append(self.smina_docking.results_file_name)
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.smina_docking.results_file_name] = {}
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.smina_docking.results_file_name]["docking_run"] = self.smina_docking
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.smina_docking.results_file_name]["docking_run_results_file"] = self.smina_results
+
+            self.write_consensus_job_log(dp = dp, tmp_dir = tmp_dir, rec = rec, lig = lig)
 
         if dp == "RxDock":
+
+            tmp_dir = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]["RxDock"]["directory"]
 
             self.rxdock_docking = RxDock_docking(self,
             ligand = lig,
             receptor = rec,
-            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["RxDock"]["directory"],
+            tmp_dir = tmp_dir,
             pharma_restrains = False,
             tethered_docking = False,
             poses_box = str(10),
@@ -480,16 +1086,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             use_water = False,
             main = self.docking_programs)
 
-            # Run Docking Process in a different environment, to facilitate the interruption of the protocol
-            f = open('stdout.txt','w')
-            print(self.rxdock_docking.run_docking_rxdock_settings)
-            subprocess.run(self.rxdock_docking.run_docking_rxdock_settings, stdout = f, stderr = f)
-            f.close()
-
-            if os.path.isfile(self.rxdock_docking.log_file_name):
-                os.remove('stdout.txt')
-            else:
-                os.rename('stdout.txt', self.rxdock_docking.log_file_name)
+            self.run_docking_process_stdout(function = self.rxdock_docking.run_docking_rxdock_settings)
 
             if Path("results_tmp_name.sd").is_file():
 
@@ -501,7 +1098,6 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                 else:
                 # subprocess.run(["obabel", "-i", "sd", "results_tmp_name.sd", "-o", "sdf", "-O", "results_tmp_name.sdf"])
                 # subprocess.run(["obabel", "results_tmp_name.sdf", "-O", str(self.results_file_name + ".sdf"), "--sort", "SCORE"])
-
                     try:
                         f = open(str(self.rxdock_docking.results_file_name + ".sd"), "w")
                         subprocess.run(["sdsort", "-n", "-fSCORE", "results_tmp_name.sd"], stdout = f, check = True)
@@ -511,19 +1107,34 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                         os.remove(str(self.rxdock_docking.results_file_name + ".sd"))
                         os.rename("results_tmp_name.sd", str(self.rxdock_docking.results_file_name + ".sd"))
 
-            self.rxdock_results = RxDock_parse_results(self,
-            main = self.docking_programs,
-            results_file_name = self.rxdock_docking.results_file_name,
-            results_dict = self.docking_programs.results_dict,
-            poses = self.rxdock_docking.poses,
-            ligand = lig)
+            if os.path.isfile(self.rxdock_docking.results_file_name  + ".sd"):
+
+                self.rxdock_results = RxDock_parse_results(self,
+                main = self.docking_programs,
+                results_file_name = self.rxdock_docking.results_file_name,
+                results_dict = self.docking_programs.results_dict,
+                poses = self.rxdock_docking.poses,
+                ligand = lig)
+
+                cmd.load(self.rxdock_docking.results_file_name + ".sd")
+                cmd.group("RxDock", members=self.rxdock_docking.results_file_name, action='auto')
+
+                # Update dp_specifics_dict
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["successfull_runs"].append(self.rxdock_docking.results_file_name)
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.rxdock_docking.results_file_name] = {}
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.rxdock_docking.results_file_name]["docking_run"] = self.rxdock_docking
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.rxdock_docking.results_file_name]["docking_run_results_file"] = self.rxdock_results
+
+            self.write_consensus_job_log(dp = dp, tmp_dir = tmp_dir, pdbqt = False)
 
         if dp == "ADFR":
+
+            tmp_dir = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"]
 
             self.adfr_docking = ADFR_docking(self,
             ligand = lig,
             receptor = rec,
-            tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"],
+            tmp_dir = tmp_dir,
             cavity = "consensus_grid",
             cavity_list = self.list_grid,
             ga_evol = str(20),
@@ -533,17 +1144,13 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
             use_flex = False,
             main = self.docking_programs)
 
-            f = open('stdout.txt','w')
-            subprocess.run(self.adfr_docking.generate_grid_adfr_settings, stdout = f, stderr = f)
-            f.close()
+            self.run_docking_process_stdout(function = self.adfr_docking.generate_grid_adfr_settings, custom_file_name = "grid_stdout.txt")
 
-            f = open('stdout.txt','w')
-            subprocess.run(self.adfr_docking.run_docking_adfr_settings, stdout = f, stderr = f)
-            f.close()
+            self.run_docking_process_stdout(function = self.adfr_docking.run_docking_adfr_settings)
 
-            self.file_path = os.path.join(self.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"], self.adfr_docking.results_file_name_ext)
+            self.file_path = os.path.join(self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"], self.adfr_docking.results_file_name_ext)
 
-            for file in os.listdir(self.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"]):
+            for file in os.listdir(self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]["ADFR"]["directory"]):
                 temp = re.search("_out", file)
                 temp2 = re.search("_grid.log", file)
                 if temp:
@@ -551,13 +1158,165 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                 if temp2:
                     os.rename(file, str(file.replace("grid.log", "")) + "log.txt")
 
+            if os.path.isfile(self.adfr_docking.results_file_name + ".pdbqt"):
 
-            self.adfr_results = ADFR_parse_results(self,
-            main = self.docking_programs,
-            results_file_name = self.adfr_docking.results_file_name,
-            ligand = lig)
+                self.adapt_names(self.adfr_docking.results_file_name, lig, input_format = ".pdbqt")
+
+                self.adfr_results = ADFR_parse_results(self,
+                main = self.docking_programs,
+                results_file_name = self.adfr_docking.results_file_name,
+                ligand = lig)
+
+                #cmd.load(self.adfr_docking.results_file_name + ".pdbqt")
+                cmd.group("ADFR", members=self.adfr_docking.results_file_name, action='auto')
+
+                # Update dp_specifics_dict
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp]["successfull_runs"].append(self.adfr_docking.results_file_name)
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.adfr_docking.results_file_name] = {}
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.adfr_docking.results_file_name]["docking_run"] = self.adfr_docking
+                self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][dp][self.adfr_docking.results_file_name]["docking_run_results_file"] = self.adfr_results
+
+            self.write_consensus_job_log(dp = dp, tmp_dir = tmp_dir, rec = rec, lig = lig, grid_log = True)
 
 
+    def adapt_names(self, results_file_name, lig_name, input_format):
+
+        '''
+        This function is used to change the names "in green" in PyMOL, so these can match the original name of the ligand.
+        At the current time, April 2023, there isn't a suitable API do change it, so it is done by manipulating the files.
+        The inputs for the function are:
+        - The results file name
+        - The ligand name
+        '''
+
+        # Load file in pdbqt format
+        cmd.load(results_file_name + input_format)
+
+        # Export in sdf
+        cmd.save(results_file_name + ".sdf", results_file_name, format = 'sdf', state = 0)
+
+        # Remove object from PyMOL
+        cmd.delete(results_file_name)
+
+        # Change identifiers in the sdf file (in this way, the names in "green" are customized)
+
+        inputf = open(results_file_name + ".sdf", "r")
+        outputf = open("tmp.sdf", "w")
+
+        for line in inputf:
+            if re.search("Run_*_*", line):
+                outputf.write(lig_name.split("_")[1] + "\n")
+            else:
+                outputf.write(line)
+
+        inputf.close()
+        outputf.close()
+
+        os.remove(results_file_name + ".sdf")
+        os.rename("tmp.sdf", results_file_name + ".sdf")
+
+        # Load the new sdf file
+        cmd.load(results_file_name + ".sdf")
+
+
+    def write_consensus_job_log(self, dp, tmp_dir, rec = "", lig = "", pdbqt = True, grid_log = False):
+
+        write_log_titles(file = self.cs_job_log_file, title = dp)
+
+        if pdbqt:
+            ### Read LOG files and write in CONSENSUS LOG file
+            pdbqt_ligand_log = os.path.join(tmp_dir, "{}_PDBQT_LOG.txt".format(lig))
+            text_file = open(pdbqt_ligand_log, "r")
+            pdbqt_ligand_log_string = text_file.read()
+            text_file.close()
+
+            write_log_titles(file = self.cs_job_log_file, title = "PDBQT Ligand LOG", big = False)
+            self.cs_job_log_file.write("{}\n".format(pdbqt_ligand_log_string))
+
+            pdbqt_receptor_log = os.path.join(tmp_dir, "{}_PDBQT_LOG.txt".format(rec))
+            text_file = open(pdbqt_receptor_log, "r")
+            pdbqt_receptor_log_string = text_file.read()
+            text_file.close()
+
+            write_log_titles(file = self.cs_job_log_file, title = "PDBQT Receptor LOG", big = False)
+            self.cs_job_log_file.write("{}\n".format(pdbqt_receptor_log_string))
+
+        docking_log = os.path.join(tmp_dir, "stdout.txt")
+        text_file = open(docking_log, "r")
+        docking_log_string = text_file.read()
+        text_file.close()
+
+        if grid_log:
+            grid_log_file = os.path.join(tmp_dir, "grid_stdout.txt")
+            text_file = open(grid_log_file, "r")
+            grid_log_string = text_file.read()
+            text_file.close()
+
+            write_log_titles(file = self.cs_job_log_file, title = "Grid LOG", big = False)
+            self.cs_job_log_file.write("{}\n".format(grid_log_string))
+
+        write_log_titles(file = self.cs_job_log_file, title = "Docking LOG", big = False)
+        self.cs_job_log_file.write("{}\n".format(docking_log_string))
+
+
+    def run_docking_process_stdout(self, function, custom_file_name = ""):
+
+        '''
+        A function to run a process in a different environment.
+        To run a process in a different environment can help in facilitating the interruption of the protocol
+        '''
+
+        if custom_file_name:
+            file_name = custom_file_name
+        else:
+            file_name = 'stdout.txt'
+
+        ferr = open(file_name,'w+')
+        # Run Docking Process in a different environment, to facilitate the interruption of the protocol
+        if sys.platform == "win32":
+
+            CREATE_NO_WINDOW = 0x08000000
+
+            self.subprocessobj = subprocess.Popen(function,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
+            stdout = ferr)
+        else:
+            self.subprocessobj = subprocess.Popen(function,
+            preexec_fn=os.setsid,
+            stdout=ferr,
+            )
+
+        # 'Cancel' button to interrupt the process is enabled after a bit, to wait for effective begin of the process
+        ## time.sleep(0.5)
+        #self.tab.docking_dialog.cancel_button.setEnabled(True)
+
+        # To interrupt the process.
+        # process.Popen.communicate() would wait until the end of the process before to continue.
+        # Here process.Popen.communicate() is not used to ensure for the possibility to interrupt the protocol
+        # In any case, to wait until the end of the process before to continue, process.poll() is used
+
+        # In while loop, the file where the stdout is stored, is read to update progressbar
+        #
+        # For future developers: Use 'time.sleep(5)' if nothing is done in while loop
+        # 'time.sleep(5)' instead of 'pass' is used to reduce the number of time the process is checked.
+
+        # for line in ferr:
+        #     print(line)
+
+        ferr.flush()
+
+        bar_value = 0
+        current_size = os.path.getsize(file_name)
+        while self.subprocessobj.poll() is None:
+            time.sleep(0.5)
+            writing = open(file_name,'r')
+            for line in writing:
+                if line.startswith("*"):
+                    bar_value = line.count("*")
+                    self.cs_job_dialog.jobthread.update_single_docking_progressbar.emit(int(bar_value))
+            writing.close()
+
+        ferr.close()
 
 
     def make_grid(self, rec_file_name):
@@ -567,7 +1326,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                                reference_receptor = rec_file_name,
                                two_spheres_method = True,
                                reference_ligand_method = False,
-                               tmp_dir = self.dp_specifics_dict[str(self.cs_job_index)]["RxDock"]["directory"],
+                               tmp_dir = self.docking_programs.dp_specifics_dict[str(self.cs_job_index)]["RxDock"]["directory"],
                                x = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["x"],
                                y = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["y"],
                                z = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]["z"],
@@ -590,11 +1349,6 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         grid_key = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]
         # Make a list in the form of [x_pos, y_pos, z_pos, x, y, z, spacing]
         self.list_grid = [str(grid_key["x"]), str(grid_key["y"]), str(grid_key["z"]), str(grid_key["x_dim"]), str(grid_key["y_dim"]), str(grid_key["z_dim"]), str(grid_key["spacing"])]
-=======
-                                 directory = self.dp_specifics_dict[dp]["directory"],
-                                 format = self.dp_specifics_dict[dp]["format_ligand"],
-                                 generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
->>>>>>> Stashed changes
 
 
     def prepare_ligands(self, lig, docking_program, directory, format, generate_pdbqt):
@@ -613,20 +1367,10 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         cmd.delete(lig)
         cmd.load(tmp_path_name, lig)
 
-<<<<<<< Updated upstream
         if docking_program == "ADFR":
             self.pdbqt_options_dict_lig["add_h"] = True
 
         self.generated_ligand = Generate_Object(self, main = self.docking_programs,
-=======
-        self.pdbqt_options_dict_lig = {}
-        self.pdbqt_options_dict_lig["add_h"] = True
-        self.pdbqt_options_dict_lig["none_torsions"] = False
-        self.pdbqt_options_dict_lig["all_torsions"] = False
-        self.pdbqt_options_dict_lig["all_but_ga"] = True
-
-        self.generated_receptor = Generate_Object(self, main = self.docking_programs,
->>>>>>> Stashed changes
         prepared_objects_list = self.prepared_ligands,
         tmp_path = directory,
         format = format,
@@ -637,14 +1381,9 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         is_receptor = False,
         from_gui = False)
 
-<<<<<<< Updated upstream
         # Update dicts
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_ligand.new_strc_name)
-        self.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_lig"].append(self.generated_ligand.new_strc_name)
-=======
-        # Update dict
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_receptor.new_strc_name)
->>>>>>> Stashed changes
+        self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_lig"].append(self.generated_ligand.new_strc_name)
 
 
     def prepare_receptors(self, rec, docking_program, directory, format, generate_pdbqt):
@@ -668,21 +1407,8 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         file_path = tmp_path_name,
         is_receptor = True)
 
-<<<<<<< Updated upstream
         if docking_program == "ADFR":
             self.pdbqt_options_dict["add_h"] = True
-=======
-        ###
-        self.pdbqt_options_dict = {}
-        self.pdbqt_options_dict["add_h"] = True
-        self.pdbqt_options_dict["bonds"] = False
-        self.pdbqt_options_dict["add_gast"] = False
-        self.pdbqt_options_dict["remove_nonstd"] = False
-        self.pdbqt_options_dict["remove_water"] = True
-        self.pdbqt_options_dict["remove_lone_pairs"] = False
-        self.pdbqt_options_dict["remove_non_polar_H"] = False
-        self.pdbqt_options_dict["remove_non_protein"] = False
->>>>>>> Stashed changes
 
         self.generated_receptor = Generate_Object(self, main = self.docking_programs,
         prepared_objects_list = self.prepared_receptors,
@@ -695,15 +1421,9 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         is_receptor = True,
         from_gui = False)
 
-<<<<<<< Updated upstream
         # Update dicts
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
-        self.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_rec"].append(self.generated_receptor.new_strc_name)
-=======
-        # Update dict
-        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
-
->>>>>>> Stashed changes
+        self.docking_programs.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_rec"].append(self.generated_receptor.new_strc_name)
 
     def get_current_sele(self):
 
@@ -711,10 +1431,10 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                          self.x_widg,
                          self.y_widg,
                          self.z_widg,
-                         self.spacing_widg,
                          self.x_dim_widg,
                          self.y_dim_widg,
-                         self.z_dim_widg
+                         self.z_dim_widg,
+                         self.spacing_widg
                          )
 
     def clear_rec_widg(self):
@@ -1100,6 +1820,21 @@ class DataAnalysisTab(QtWidgets.QWidget):
 
 
     def consensus_func(self):
+
+        print("smina_poset")
+        print(self.smina_frame.label_box.currentText())
+
+        print("rxdock_poset")
+        print(self.rxdock_frame.label_box.currentText())
+
+        print("smina_runs_list")
+        print(self.smina_runs_list)
+
+        print("rxdock_poset")
+        print(self.vina_runs_list)
+
+        print("rmsd_protocol")
+        print(self.rmsd_protocol)
 
         # All lists are provided to the ConsensusProtocol, even if empty
         self.consensus_run = ConsensusProtocol(self,
@@ -2532,15 +3267,10 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
     def show_pdbqt_options_window(self):
 
-<<<<<<< Updated upstream
         self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
                                                     submit_func = self.apply_pdbqt_options)
         self.pdbqt_options_window.fill_window(obj_type = "receptor", options_dict = self.pdbqt_options_dict)
         self.pdbqt_options_window.show_window()
-=======
-        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
-                             obj_type = "receptor", options_dict = self.pdbqt_options_dict)
->>>>>>> Stashed changes
 
         # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
         # title = "PDBQT options window", upper_frame_title = "Select Options",
@@ -2879,18 +3609,11 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
     def show_pdbqt_options_window(self):
 
-<<<<<<< Updated upstream
         self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
                                                     submit_func = self.apply_pdbqt_options)
 
         self.pdbqt_options_window.fill_window(obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
         self.pdbqt_options_window.show_window()
-=======
-        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
-                             obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
-
-        self.pdbqt_options_dict_lig = pdbqt_options_window.options_dict
->>>>>>> Stashed changes
 
         # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
         # title = "PDBQT options window", upper_frame_title = "Select Options",

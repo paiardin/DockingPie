@@ -1,0 +1,395 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Michel">
+   <meta name="GENERATOR" content="Mozilla/4.61C-SGI [en] (X11; U; IRIX64 6.5 IP30) [Netscape]">
+   <title>KeyConcepts</title>
+</head>
+<body bgcolor = "#FFFFFF">
+
+<h1>
+Keys Concepts from the DejaVu Package:</h1>
+INDEX:
+<ul>
+<li>
+<a href="#Viewer Class">The Viewer Class</a></li>
+
+<li>
+<a href="#Current">Current...</a></li>
+
+<ul>
+<li>
+<a href="#Current Object">Current object</a></li>
+
+<li>
+<a href="#Current Camera">Current camera</a></li>
+
+<li>
+<a href="#Current clipping">Current clipping plane</a></li>
+
+<li>
+<a href="#Current Light">Current light</a></li>
+</ul>
+
+<li>
+<a href="#Transformations and inheritance:">Transformations, Inheritance
+and Root Object</a></li>
+
+<ul>
+<li>
+<a href="#Reset:">Reset</a></li>
+
+<li>
+<a href="#Normalize:">Normalize</a></li>
+
+<li>
+<a href="#Center:">Center</a></li>
+</ul>
+
+<li>
+<a href="#Generating Transformations with the Mouse">Generating Transformations
+with the Mouse</a></li>
+
+<li>
+<a href="#GUI">GUI </a><a href="#Mouse Binding">overview</a></li>
+
+<ul>
+<li>
+<a href="#Mouse Binding">Selecting the object type transformed using the
+mouse</a></li>
+
+<li>
+<a href="#Object property">Object List Box</a></li>
+
+<li>
+<a href="#Property">Property Panels</a></li>
+
+<ul>
+<li>
+<a href="#Object property">Object property panel</a></li>
+
+<li>
+<a href="#camera property">Camera property panel</a></li>
+
+<li>
+<a href="#clipping plane property">Clipping plane property panel</a></li>
+
+<li>
+<a href="#light property">Light property panel</a></li>
+</ul>
+</ul>
+</ul>
+This document reviews a few of the basic concepts of the DejaVu package.
+<h2>
+<a NAME="Viewer Class"></a>1 - The Viewer Class</h2>
+The Viewer-object is probably the most "sophisticated" object in DejaVu.
+In fact it is a fully functional visualization application providing control
+over a&nbsp; fair number of rendering parameters such as, depth cueing,
+rendering modes (points, lines, polygons), shading modes (flat, gouraud),
+multiple light sources, arbitrary clipping planes etc, geometris to visualize
+can be handed to a viewer object to be displayed and transformed. The Viewer-object
+also has default mouse bindings for the trackball object which allow the
+user not only to rotate, translate, or scale the scene, or individual geometries,
+but also to rotate and translate the camera position (i.e. the viewer's
+position), the positions of the light sources, or the positions of the
+clipping planes. The "<a href="#Mouse Binding">mouse binding buttons</a>"
+in the GUI&nbsp; bind the mouse to the current object, camera, or light
+actually transformed when mouse motion generates 3D transformations.
+<br>DejaVu was built around the idea that one should be able to instantiate
+a viewer and hand it objects that would actually know how to render themselves.
+All geometry classes included in DejaVu (polygon, polylines, spheres, labels
+etc...) inherit from the Geom base class and implement their own displayFunction
+method that gets called by the Viewer each time the object has to be drawn.
+This means that anyone can create objects that suitable to be passed to
+a Viewer instance (as long as they inherit from the Geom class).
+<br>Being heavily influenced by the AVS (Advanced Visualization System)
+architecture (as well as by my numerous previous viewing programs) I decided
+that geometries inside a Viewer would build a tree-like structure in which
+3D transformations (rotation, translation, scale) are inherited by children
+objects. I also played with the idea of inheritance of rendering properties,
+even though that is only partially implemented.
+<h2>
+<a NAME="Current"></a>2 - Current object, camera, light, clipping plane:</h2>
+As people started to use the Viewer (initially only made of a Camera),
+they quickly requested a GUI that would let them modify properties of the
+objects in the Viewer at the click of a button. This was done in a quick
+and dirty way (creating all kinds of problems!). Anyway, since the GUI
+allows modifications of the properties of the geometries, cameras, light
+sources and clipping planes, the Viewer has to have a&nbsp; <a href="#Current Object">current-object</a>,
+<a href="#Current Camera">current-camera</a>,
+<a href="#Current Light">current-light</a>, and <a href="#Current clipping">current
+clipping-plane </a>which will undergo the changes initialed using the GUI.
+Pointers to the current items (object, camera, clipping plane and light)
+are available as members of the viewer object.
+<blockquote>
+<h3>
+<a NAME="Current Object"></a>Current object:</h3>
+The current-object can be selected in the GUI by right-clicking on its
+name in the object listbox. Another way to select an geometry (i.e. an
+object) is to right click on its geometry. The name of the current object
+is highlighted in the GUI. The viewer instance also has a member called
+currentObject pointing to that object. This handle can be used to set the
+current-object programmatically.&nbsp; To select the root object, click
+on the background.
+<h3>
+<a NAME="Current Camera"></a>Current camera:</h3>
+This concept is only meaningful when multiple cameras are used, else the
+default camera is always the current one. The current-camera is the one
+that has a red outline. To select a camera to be the current one, right-click
+on its background. NOTE: right-clicking on the background of the current
+camera means something different: it means make the root object the current
+object.
+<br>&nbsp;
+<h3>
+<a NAME="Current clipping"></a>Current clipping plane:</h3>
+The Viewer supports <a href="#clipping plane property">arbitrary clipping
+planes.</a> Their number depends on your OpenGL implementation.&nbsp; Clipping
+planes are activated on a per-object basis. They can be inherited by children,
+i.e. turning on the first clipping plane while Object A is the current
+object will activate this clipping plane for Object A <u>only.</u>&nbsp;
+The current clipping plane can be selected either using the <a href="#clipping plane property">clipping
+plane property panel</a> in the GUI or by right-clicking on the geometry
+representing a clipping plane in a&nbsp; camera (if it is visible). The
+current clipping plane can be determined by looking at the <a href="#clipping plane property">clipping
+plane property panel</a> or by examining the Viewer's member called currentClip
+that points to that clipping plane.
+<br>&nbsp;
+<h3>
+<a NAME="Current Light"></a>Current light:</h3>
+An instance of a viewer contains a <a href="#light property">light-model
+object</a> that provides an interface to the OpenGL Lighting Model.&nbsp;
+It also maintains a list of independent light source objects. Currently
+only directional light-sources are supported.&nbsp; The current-light can
+be selected either using the <a href="#light property">light property panel</a>
+in the GUI or by right-clicking on the geometry representing a light source
+(if it is visible). The current light can be determined by looking at the
+<a href="#light property">light
+property panel</a> or by examining the Viewer's member called currentLight
+that points to that light source object.</blockquote>
+
+<h2>
+<a NAME="Transformations and inheritance:"></a>3 - Transformations, Inheritance
+and Root Object:</h2>
+As I said before, the geometries are organized in a tree-like structure.
+There is a special object called the Root Object which is always present,
+cannot be deleted and is the parent of all other geometries in the viewer.
+Every node in that tree (i.e. every geometry) stores its own transformations
+(i.e. rotation, translation, scale, pivot point). It is important to understand
+that the transformations assigned to a given node are applied to all the
+children of that node. This is called the transformation inheritance. Since
+every geometry in the scene has to be a descendant of the 'root' object,
+root becomes naturally a place holder for the "world's transformation".
+In other words, applying a rotation to the root object is the same as rotating
+the whole scene.
+<br>By default, mouse click-and-drag actions will generate 3D transformations
+(<a href="KeyConcepts.html#Mouse Binding">see Mouse Default Bindings</a>
+). These transformations are always applied to the current object (that
+is if the trackball is currently bound to transform geometries see "<a href="#Mouse Binding">mouse
+binding buttons</a>"). By selecting another object than root you can alter
+this object's transformation. When doing this, sibling nodes of the currently
+selected one are NOT transformed. Finally, right below the <a href="#List Object">object
+list box</a> you can see a group of three buttons called reset, normalize
+and center. These buttons always apply to the current object and have the
+following functions:
+<blockquote>
+<h3>
+<a NAME="Reset:"></a>Reset:</h3>
+This button resets the transformation of the current object. Its rotation
+becomes identity, its translation the vector (0.,0.,0.) and its scale the
+vector (1.,1.,1.). Nothing changes for parent nodes of children, they all
+keep their own transformations untouched.
+<h3>
+<a NAME="Normalize:"></a>Normalize:</h3>
+I would advise using this only on the root object. However, applied to
+another currentObject, this is what should happen. This function translates
+and scales the bounding box of the geometries in the sub tree rooted at
+the current object in such a way that the bounding box roughly fills the
+Camera. When applied to root, this gives you a nice view of the whole scene.&nbsp;
+When applied to another object in the scene, its bounding box should fill
+the camera.
+<h3>
+<a NAME="Center:"></a>Center:</h3>
+This button sets the center of rotation of the current object to the center
+of gravity of all the vertices found in that geometry and all its children.
+For instance, when applied to the root it sets the center of rotation of
+the "world" to be the center of gravity of the scene.</blockquote>
+
+<h3>
+<a NAME="Generating Transformations with the Mouse"></a>4 - Generating
+Transformations with the Mouse</h3>
+
+<center>Mouse default bindings</center>
+
+<center><table BORDER COLS=2 WIDTH="80%" BGCOLOR="#FFCCCC" NOSAVE >
+<tr>
+<td>Middle-button</td>
+
+<td>rotation</td>
+</tr>
+
+<tr>
+<td>Right-button</td>
+
+<td>XY-translation</td>
+</tr>
+
+<tr>
+<td>Shift + Middle-button</td>
+
+<td>scale</td>
+</tr>
+
+<tr>
+<td>Shift + Right-button</td>
+
+<td>Z-translation</td>
+</tr>
+</table></center>
+
+<p>Because of the perspective, the Z-translation looks like a scaling operation,
+but it is not. You can tell
+<br>the difference by doing a Z-translation away from you. You will see
+the object fade in the fog ...!
+<p>You can set the rotation center of the current object by picking on
+any vertex in the scene while
+<br>holding down the Shift key.
+<br>&nbsp;
+<br>&nbsp;
+<center><table BORDER COLS=2 WIDTH="80%" BGCOLOR="#FFCCCC" NOSAVE >
+<tr>
+<td>Shift + Left-button</td>
+
+<td>set rotation center to picked vertex</td>
+</tr>
+</table></center>
+
+<h2>
+<a NAME="GUI"></a>5 - GUI overview:</h2>
+<img SRC="./images/arcViGUI.jpg" align=TEXTTOP>
+<br>&nbsp;First of all the GUI shown here is optional. A Viewer can be
+instantiated without a GUI and its cameras can actually even be embedded
+inside other Tk widgets. The Default GUI is essentially separated in 3
+parts: the mouse binding buttons at he top, the object list box in the
+center and the property panels at the bottom.
+<ol>
+<h3>
+<a NAME="Mouse Binding"></a>Mouse Binding Buttons:</h3>
+The GUI presents a row of buttons under <i>Transform </i>which allow the
+user to direct transformations to the current Object, the current Camera,
+the current Clipping plane, the current Light or the current Texture. Normally&nbsp;
+"<i>Object</i>" is selected (I call transformation a rotation, translation
+or scale operation). This means that the callback functions of the camera's
+trackball are bound to the functions transforming the current object's
+position. Some of these functions can also be achieved by clicking actions
+inside Cameras.
+<br>&nbsp;
+<h3>
+<a NAME="List Object"></a>Object List Box:</h3>
+This widget shows the tree-like structure of geometries present in a Viewer.
+Children are indented using the a number of '~' symbols showing their distance
+to the root object. The '~' symbol is not part of the object's name. Names
+have to be unique and if a same name is given to two different geometries,
+the Viewer will concatenate a '.x' where x is an integer to the object
+name to make the name unique.
+<br>When an object is added to a Viewer its parent can be specified. If
+omitted, 'root' is assumed to be the parent.
+<h3>
+<a NAME="Property"></a>Property panels:</h3>
+There is a property panel for the current object, camera as well as for
+clipping planes and light sources. Only one of these panels is visible
+at a time. The one shown is selected using the buttons in the "Properties
+Panel Menu" box.
+<h4>
+<a NAME="Object property"></a>Object property panel</h4>
+<img SRC="annObj_PropPanel.jpg" height=386 width=556 align=TEXTTOP>
+<p>The drawing mode menu for front-facing polygons lets you choose inherit,
+in which case the polygons are drawn in the same mode as their parent,
+or as points, lines or with a filled representation.&nbsp; There may also
+be an outline mode which appears only if your OpenGL provides the OffsetPolygon
+extension.
+<br><img SRC="frontMenu.jpg" height=94 width=100 align=TEXTTOP>
+<p>The drawing mode menu for back-facing polygons adds the possibility
+of the back polygons being represented with the same mode selected for
+the front.
+<br><img SRC="backMenu.jpg" height=118 width=102 align=TEXTTOP>
+<p>The shading mode menu selections are for the current object to be shaded
+with an inherited shading mode, with flat shading which shades the entire
+polygon with one color, with smooth shading which uses gourot shading or
+not at all.
+<br><img SRC="shadeMenu.jpg" height=97 width=107 align=TEXTTOP>
+<br>&nbsp;
+<p>The culling mode menu selections are to select which polygons to be
+culled in the same mode as in the current object's parent, to do no culling,
+to cull the back-facing polygons, to cull the front-facing polygons or
+to cull all of them (which makes the object disappear!)
+<br><img SRC="cullingMenu.jpg" height=119 width=174 align=TEXTTOP>
+<h4>
+<a NAME="camera property"></a>Camera property panel</h4>
+<img SRC="annCam_PropPanel.jpg" height=315 width=592 align=TEXTTOP>
+<p><font color="#CC33CC">(1)</font> The bounding box of the current object
+by default is not shown.&nbsp; You can use this menu to show the bounding
+box alone or with the current object.&nbsp; This bounding box has the special
+property that it remains orthogonal to the axes of the viewer even if the
+object it bounds is rotated.&nbsp; If the current object is root, the bounding
+box encompasses all of the objects in the scene.
+<br><font color="#CC33CC">(2)</font> In auto spin mode the object continues
+its motion after the mouse button has been released.&nbsp; This motion
+continues until the next mouse button click.
+<br><font color="#CC33CC">(3)</font> Scene antialiasing uses the standard
+OpenGl scene jittering to achieve antialiasing.&nbsp; You can select how
+much jittering is done from these values: 0, 2, 3, 4, 8, 15, 24 and 66.
+<br><font color="#CC33CC">(4) </font>This displays the color editor which
+allows you to modify the background color of the current camera.
+<br><font color="#CC33CC">(5)</font> The line represents the z-axis with
+the Viewer at the left and infinity at the right. The triangles may be
+dragged any where in this range. The left blue triangle on the top of the
+line sets the position of the near clipping plane while the top right blue
+triangle sets the position of the far clipping plane.&nbsp; By changing
+the positions of these two triangles, you can display selected sections
+along the z-axis.&nbsp; The bottom left triangle represents the plane along
+the z-axis where fog starts and the bottom right triangle the plane for
+100% fog.&nbsp; Linear fog is implemented between these two.
+<br>&nbsp;
+<h4>
+<a NAME="clipping plane property"></a>Clipping plane property panel</h4>
+<img SRC="annClip_PropPanel.jpg" height=332 width=574 align=TEXTTOP>
+<br><font color="#CC33CC">(1) </font>The number of lights&nbsp; depends
+on your OpenGL implementation.
+<br><font color="#CC33CC">(2)&nbsp; </font>The on button lets the user
+turn on or off the current clipping plane on a per object basis.&nbsp;
+If it is on, the current plane will clip the current object, hiding one
+side.&nbsp; The side button lets you toggle which side of the current object,
+as divided by the current clipping plane, is hidden.&nbsp; The inh button
+sets whether the children of the current object will inherit the type of
+clipping performed by the current clipping plane.&nbsp; The disp button
+lets you toggle whether the current clipping plane is displayed in the
+scene.&nbsp; The radiobuttons under current let you select the current
+clipping plane.
+<br>&nbsp;
+<h4>
+<a NAME="light property"></a>Light property panel</h4>
+<img SRC="annLight_PropPanel.jpg" height=327 width=593 align=TEXTTOP>
+<br>&nbsp;
+<p><font color="#CC33CC">(1)</font> The default OpenGL Lighting Model (see
+<u>OpenGL Programming Guide</u> ,M. Woo, J. Neider and T. Davis, Reading,
+MA: Addison-Wesley Developers Press,&nbsp; 1997. pages 193-195) is based
+on three concepts: global ambient light, whether the viewpoint position
+is local to the scene or infinite distance away and whether lighting calculations
+should be done differently for front and back faces of objects.&nbsp; The
+default ambient light can be changed with the color editor. The location
+of the viewpoint affects how the highlights on objects are calculated.&nbsp;
+The Viewer uses the infinite distance viewpoint by default&nbsp; but this
+can be changed to use a local viewer. The Viewer uses front face lighting
+calculations as the default.&nbsp; It is slower to calculate lighting for
+both sides of the polygons, but this may be useful in special cases.
+<br><font color="#CC33CC">(2)</font> These buttons allow the selection
+of the current light.&nbsp; Currently only directional light sources are
+supported.&nbsp; The bottom three buttons always apply to the currently
+selected light. The Light On button toggles the light on and off.&nbsp;
+Show Lights button toggles whether a line is drawn in the Camera showing
+the direction of the current light. Edit Light Color displays a color editor
+which can be used to change the color of the current light.</ol>
+
+</body>
+</html>

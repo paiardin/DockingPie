@@ -878,7 +878,7 @@ class OptionsFrame(QtWidgets.QFrame, PyMOLInteractions):
 
 
     """
-    A class to represent a Frame layout, in which docking options are specified.
+    A class to represent a Frame layout.
     """
 
 
