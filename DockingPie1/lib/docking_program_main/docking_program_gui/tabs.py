@@ -211,6 +211,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.run_consensus_docking_button.clicked.connect(self.run_consensus_job)
 
 
+<<<<<<< Updated upstream
     def show_advanced_options_rec(self):
 
         self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs,
@@ -250,6 +251,8 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.pdbqt_options_window.pdbqt_options_window.close()
 
 
+=======
+>>>>>>> Stashed changes
     def run_consensus_job(self):
 
         ### Get general parameters
@@ -264,7 +267,11 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         self.selected_docking_programs = [i.text() for i in self.docking_program_check_list if i.isChecked()]
 
         ### Make consensus_job_<index> directory
+<<<<<<< Updated upstream
         self.cs_job_index = len(self.docking_programs.consensus_job_dict)+1
+=======
+        self.cs_job_index = len(self.docking_programs.consensus_job_dict)
+>>>>>>> Stashed changes
         cs_job_dir_name = "consensus_job_" + str(self.cs_job_index)
         self.consensus_job_dir = os.path.join(self.docking_programs.consensus_tmp_dir, cs_job_dir_name)
         if os.path.isdir(self.consensus_job_dir):
@@ -272,6 +279,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         os.mkdir(self.consensus_job_dir)
 
         ### Update consensus_job_dict
+<<<<<<< Updated upstream
         '''
         The dictionary is indexed by 'self.cs_job_index'
         The keys of the dictionary are described as follows:
@@ -289,6 +297,8 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
               'ligands': {'obj01': ['01_obj01_RxDock', '02_obj01_Vina', '03_obj01_Smina', '04_obj01_ADFR']}}}
 
         '''
+=======
+>>>>>>> Stashed changes
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)] = {}
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["directory"] = self.consensus_job_dir
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["docking_programs"] = self.selected_docking_programs
@@ -300,6 +310,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         for lig in self.ligands:
             self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig] = []
 
+<<<<<<< Updated upstream
         ### Fill a dictionary with specific infos for each docking program
         self.dp_specifics_dict = {}
         self.dp_specifics_dict[str(self.cs_job_index)] = {}
@@ -320,6 +331,21 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                 self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"] = "sdf"
                 self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"] = "mol2"
                 self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"] = False
+=======
+        ### Prepare specifics for each docking program
+        self.dp_specifics_dict = {}
+        for dp in self.selected_docking_programs:
+            self.dp_specifics_dict[dp] = {}
+            self.dp_specifics_dict[dp]["directory"] = os.path.join(self.consensus_job_dir, dp)
+            if dp == "Vina" or dp == "Smina" or dp == "ADFR":
+                self.dp_specifics_dict[dp]["format_ligand"] = "pdb"
+                self.dp_specifics_dict[dp]["format_receptor"] = "pdb"
+                self.dp_specifics_dict[dp]["generate_pdbqt"] = True
+            if dp == "RxDock":
+                self.dp_specifics_dict[dp]["format_ligand"] = "sdf"
+                self.dp_specifics_dict[dp]["format_receptor"] = "mol2"
+                self.dp_specifics_dict[dp]["generate_pdbqt"] = False
+>>>>>>> Stashed changes
 
             if os.path.isdir(os.path.join(self.consensus_job_dir, dp)):
                 shutil.rmtree(os.path.join(self.consensus_job_dir, dp))
@@ -327,6 +353,7 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
 
         ### Run consensus
         for dp in self.selected_docking_programs:
+<<<<<<< Updated upstream
             self.run_consensus(dp)
 
 
@@ -339,11 +366,27 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
                                    directory = self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
                                    format = self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_receptor"],
                                    generate_pdbqt = self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
+=======
+            self.run_single_consensus(dp)
+
+
+    def run_single_consensus(self, dp):
+        #### TO DO - IN CONSENUS_PROTOCOL.PY
+
+        for rec in self.receptor:
+
+            self.prepare_receptors(rec = rec,
+                                   docking_program = dp,
+                                   directory = self.dp_specifics_dict[dp]["directory"],
+                                   format = self.dp_specifics_dict[dp]["format_receptor"],
+                                   generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
+>>>>>>> Stashed changes
 
         for lig in self.ligands:
 
             self.prepare_ligands(lig = lig,
                                  docking_program = dp,
+<<<<<<< Updated upstream
                                  directory = self.dp_specifics_dict[str(self.cs_job_index)][dp]["directory"],
                                  format = self.dp_specifics_dict[str(self.cs_job_index)][dp]["format_ligand"],
                                  generate_pdbqt = self.dp_specifics_dict[str(self.cs_job_index)][dp]["generate_pdbqt"])
@@ -547,6 +590,11 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         grid_key = self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["grid"]
         # Make a list in the form of [x_pos, y_pos, z_pos, x, y, z, spacing]
         self.list_grid = [str(grid_key["x"]), str(grid_key["y"]), str(grid_key["z"]), str(grid_key["x_dim"]), str(grid_key["y_dim"]), str(grid_key["z_dim"]), str(grid_key["spacing"])]
+=======
+                                 directory = self.dp_specifics_dict[dp]["directory"],
+                                 format = self.dp_specifics_dict[dp]["format_ligand"],
+                                 generate_pdbqt = self.dp_specifics_dict[dp]["generate_pdbqt"])
+>>>>>>> Stashed changes
 
 
     def prepare_ligands(self, lig, docking_program, directory, format, generate_pdbqt):
@@ -565,10 +613,20 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         cmd.delete(lig)
         cmd.load(tmp_path_name, lig)
 
+<<<<<<< Updated upstream
         if docking_program == "ADFR":
             self.pdbqt_options_dict_lig["add_h"] = True
 
         self.generated_ligand = Generate_Object(self, main = self.docking_programs,
+=======
+        self.pdbqt_options_dict_lig = {}
+        self.pdbqt_options_dict_lig["add_h"] = True
+        self.pdbqt_options_dict_lig["none_torsions"] = False
+        self.pdbqt_options_dict_lig["all_torsions"] = False
+        self.pdbqt_options_dict_lig["all_but_ga"] = True
+
+        self.generated_receptor = Generate_Object(self, main = self.docking_programs,
+>>>>>>> Stashed changes
         prepared_objects_list = self.prepared_ligands,
         tmp_path = directory,
         format = format,
@@ -579,9 +637,14 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         is_receptor = False,
         from_gui = False)
 
+<<<<<<< Updated upstream
         # Update dicts
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_ligand.new_strc_name)
         self.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_lig"].append(self.generated_ligand.new_strc_name)
+=======
+        # Update dict
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["ligands"][lig].append(self.generated_receptor.new_strc_name)
+>>>>>>> Stashed changes
 
 
     def prepare_receptors(self, rec, docking_program, directory, format, generate_pdbqt):
@@ -605,8 +668,21 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         file_path = tmp_path_name,
         is_receptor = True)
 
+<<<<<<< Updated upstream
         if docking_program == "ADFR":
             self.pdbqt_options_dict["add_h"] = True
+=======
+        ###
+        self.pdbqt_options_dict = {}
+        self.pdbqt_options_dict["add_h"] = True
+        self.pdbqt_options_dict["bonds"] = False
+        self.pdbqt_options_dict["add_gast"] = False
+        self.pdbqt_options_dict["remove_nonstd"] = False
+        self.pdbqt_options_dict["remove_water"] = True
+        self.pdbqt_options_dict["remove_lone_pairs"] = False
+        self.pdbqt_options_dict["remove_non_polar_H"] = False
+        self.pdbqt_options_dict["remove_non_protein"] = False
+>>>>>>> Stashed changes
 
         self.generated_receptor = Generate_Object(self, main = self.docking_programs,
         prepared_objects_list = self.prepared_receptors,
@@ -619,9 +695,15 @@ class ConsensusScoringTab(QtWidgets.QWidget, PyMOLInteractions):
         is_receptor = True,
         from_gui = False)
 
+<<<<<<< Updated upstream
         # Update dicts
         self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
         self.dp_specifics_dict[str(self.cs_job_index)][docking_program]["prepared_rec"].append(self.generated_receptor.new_strc_name)
+=======
+        # Update dict
+        self.docking_programs.consensus_job_dict[str(self.cs_job_index)]["receptors"][rec].append(self.generated_receptor.new_strc_name)
+
+>>>>>>> Stashed changes
 
     def get_current_sele(self):
 
@@ -2450,10 +2532,15 @@ class ReceptorTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets, Import_fr
 
     def show_pdbqt_options_window(self):
 
+<<<<<<< Updated upstream
         self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
                                                     submit_func = self.apply_pdbqt_options)
         self.pdbqt_options_window.fill_window(obj_type = "receptor", options_dict = self.pdbqt_options_dict)
         self.pdbqt_options_window.show_window()
+=======
+        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
+                             obj_type = "receptor", options_dict = self.pdbqt_options_dict)
+>>>>>>> Stashed changes
 
         # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
         # title = "PDBQT options window", upper_frame_title = "Select Options",
@@ -2792,11 +2879,18 @@ class LigandTab(QtWidgets.QWidget, PyMOLInteractions, HandleWidgets):
 
     def show_pdbqt_options_window(self):
 
+<<<<<<< Updated upstream
         self.pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
                                                     submit_func = self.apply_pdbqt_options)
 
         self.pdbqt_options_window.fill_window(obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
         self.pdbqt_options_window.show_window()
+=======
+        pdbqt_options_window = PDBQT_OptionsWindows(tab = self, main = self.docking_programs_child_tabs,
+                             obj_type = "ligand", options_dict = self.pdbqt_options_dict_lig)
+
+        self.pdbqt_options_dict_lig = pdbqt_options_window.options_dict
+>>>>>>> Stashed changes
 
         # self.pdbqt_options_window = NewWindow(parent = self.docking_programs_child_tabs,
         # title = "PDBQT options window", upper_frame_title = "Select Options",
