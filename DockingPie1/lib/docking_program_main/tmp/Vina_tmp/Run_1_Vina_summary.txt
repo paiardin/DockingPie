@@ -1,0 +1,5 @@
+Exhaustiveness: 8
+Energy Range: 3
+Ligand: 01_obj01_Vina
+Receptor: 01_1ol5_Vina
+Cavity: Grid Center_1

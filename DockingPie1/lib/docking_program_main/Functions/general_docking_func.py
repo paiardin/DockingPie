@@ -673,6 +673,7 @@ class Generate_Object:
             U_options_string = ' '
             self.receptors_settings.extend(["-U", U_options_string])
 
+        print(self.receptors_settings)
         if sys.platform == "win32":
 
             with open(self.pdbqt_log_file_name, "w") as pdbqt_file:

@@ -1040,6 +1040,17 @@ class ResultsFrame(QtWidgets.QFrame, PyMOLInteractions):
                     self.summary_text_area.setPlainText(open(str(self.summary_file)).read())
                     self.summary_text_area.setReadOnly(True)
 
+                pdbqt_temp = True
+                # IF pdbqt_temp:
+                # if Path(self.summary_file).is_file():
+                #
+                #     self.summary_label = QtWidgets.QLabel("Summary")
+                #     self.options_frame_all.options_frame_layout.addWidget(self.summary_label, 0, 1)
+                #     self.summary_text_area = QtWidgets.QPlainTextEdit()
+                #     self.options_frame_all.options_frame_layout.addWidget(self.summary_text_area, 1, 1)
+                #     self.summary_text_area.setPlainText(open(str(self.summary_file)).read())
+                #     self.summary_text_area.setReadOnly(True)
+
             else:
 
                 if Path(self.summary_file).is_file():
@@ -1089,6 +1100,13 @@ class ResultsFrame(QtWidgets.QFrame, PyMOLInteractions):
         self.log_window.middle_layout_type.addWidget(self.summary_text_area, 1, 1)
         self.summary_text_area.setPlainText(open(str(self.summary_file)).read())
         self.summary_text_area.setReadOnly(True)
+
+        self.pdbqt_log_label = QtWidgets.QLabel("PDBQT Log file")
+        self.log_window.middle_layout_type.addWidget(self.pdbqt_log_label, 0, 2)
+        self.pdbqt_log_text_area = QtWidgets.QPlainTextEdit()
+        self.log_window.middle_layout_type.addWidget(self.pdbqt_log_text_area, 1, 2)
+        self.pdbqt_log_text_area.setPlainText(open(str(self.summary_file)).read())
+        self.pdbqt_log_text_area.setReadOnly(True)
 
         self.log_window.show()
 
