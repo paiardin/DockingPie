@@ -668,7 +668,7 @@ class Installation():
 
             subprocess.run(["chmod", "755", "install.sh"], check = True)
             subprocess.run(["./install.sh", "-d", tmp_path_adfr], check =  True)
-
+            subprocess.run(["chmod", "-R", "755", tmp_path_bin], check = True)
             subprocess.run(["chmod", "755", archos], check = True)
 
             path_to_adfr = os.path.join(self.tab.docking_programs.path_to_ADFR)
