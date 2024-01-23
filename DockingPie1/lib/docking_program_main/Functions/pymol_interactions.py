@@ -732,9 +732,8 @@ class PyMOLInteractions:
         cmd.center(pymol_object_name)
 
 
-
-#Creating a new class: AtomSelect which calls the class Select
 class AtomSelect(Select):
+    
     #Using the method accept_atom available for the Select class
     def accept_atom(self, atom):
         #Selecting all not-disordered atoms and those disordered with the alternative positions labelled 'A'
