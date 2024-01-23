@@ -733,6 +733,19 @@ class PyMOLInteractions:
 
 
 
+#Creating a new class: AtomSelect which calls the class Select
+class AtomSelect(Select):
+    #Using the method accept_atom available for the Select class
+    def accept_atom(self, atom):
+        #Selecting all not-disordered atoms and those disordered with the alternative positions labelled 'A'
+        if (not atom.is_disordered()) or atom.get_altloc() == "A":
+            # Eliminating alt location ID
+            atom.set_altloc(" ")
+            return True
+        else:
+            return False
+
+
 class Load_Object:
 
 
@@ -751,6 +764,16 @@ class Load_Object:
             file_path = self.file_path,
             is_receptor = self.is_receptor
             )
+
+            parsed_file_handle = open(self.file_path, "r")
+            self.parsed_biopython_structure = PDBParser(PERMISSIVE=1, QUIET=True).get_structure(self.file_name, parsed_file_handle)
+            parsed_file_handle.close()
+            io = PDBIO()
+            io.set_structure(self.parsed_biopython_structure)
+            io.save(self.file_path, select=AtomSelect())
+
+            cmd.delete(pymol_obj)
+            cmd.load(self.file_path, pymol_obj)
 
             # Create a nested dictionary for each loaded object with its information
             objects_dict[self.file_name] = {}
