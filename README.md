@@ -23,6 +23,7 @@ https://forms.gle/uh9YcREhGku2V75E6
 - Fixed inaccessible configuration resources from GitHub (GitHub censorship)
 - Now compatible with Vina 1.2.3 
 
+## [03/2024] - DOCKINGPIE IS CURRENTLY UNDER MAINTENANCE 
 
 ## Known Issue 
 
