@@ -10,7 +10,7 @@ At the current, and first release, the implemented docking programs are **Smina*
 
 Providing an easy interface to four docking programs, DockingPie is particularly suited as a platform to carry out **consensus docking and scoring analyses**.
 
-## [03/2024] - DOCKINGPIE IS CURRENTLY UNDER MAINTENANCE 
+## [03/2024] - DOCKINGPIE IS CURRENTLY UNDER MAINTENANCE
 
 ## Known Issue 
 
