@@ -16,13 +16,6 @@ DockingPie is constantly improving and, as great supporters of open source, we a
 
 https://forms.gle/uh9YcREhGku2V75E6
 
-## NEWS 
-
-26 November 2022 - Release of DockingPie 1.2.1
-
-- Fixed inaccessible configuration resources from GitHub (GitHub censorship)
-- Now compatible with Vina 1.2.3 
-
 ## [03/2024] - DOCKINGPIE IS CURRENTLY UNDER MAINTENANCE 
 
 ## Known Issue 
