@@ -605,7 +605,7 @@ class Installation():
 
     def start_spyrmsd_installation(self):
 
-        self.rosconda("install -c conda-forge spyrmsd")
+        self.rosconda("install -c conda-forge spyrmsd --solver=classic")
 
         # try:
         #
@@ -620,7 +620,7 @@ class Installation():
 
     def start_openbabel_installation(self):
 
-        self.rosconda("install -c conda-forge openbabel")
+        self.rosconda("install -c conda-forge openbabel --solver=classic")
 
         # try:
         #
@@ -634,7 +634,7 @@ class Installation():
 
     def start_rxdock_installation(self):
 
-        self.rosconda("install -c bioconda rxdock")
+        self.rosconda("install -c bioconda rxdock --solver=classic")
 
         # try:
         #     pymol.externing.conda("install -c bioconda rxdock")
@@ -811,4 +811,3 @@ class Installation():
 
         else:
             self.installation_completed = False
-
