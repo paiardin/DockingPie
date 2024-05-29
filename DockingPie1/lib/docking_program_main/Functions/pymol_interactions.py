@@ -764,16 +764,17 @@ class Load_Object:
             is_receptor = self.is_receptor
             )
 
-            parsed_file_handle = open(self.file_path, "r")
-            self.parsed_biopython_structure = PDBParser(PERMISSIVE=1, QUIET=True).get_structure(self.file_name, parsed_file_handle)
-            parsed_file_handle.close()
-            io = PDBIO()
-            io.set_structure(self.parsed_biopython_structure)
-            io.save(self.file_path, select=AtomSelect())
+            if self.receptor:
+                with open(self.file_path) as parsed_file_handle:
+                    self.parsed_biopython_structure = PDBParser(PERMISSIVE=1, QUIET=False).get_structure(self.file_name, parsed_file_handle)
+            
+                io = PDBIO()
+                io.set_structure(self.parsed_biopython_structure)
+                io.save(self.file_path, select=AtomSelect())
 
-            cmd.delete(pymol_obj)
-            cmd.load(self.file_path, pymol_obj)
-
+                cmd.delete(pymol_obj)
+                cmd.load(self.file_path, pymol_obj)
+          
             # Create a nested dictionary for each loaded object with its information
             objects_dict[self.file_name] = {}
             objects_dict[self.file_name]["parsed_object"] = self.object
