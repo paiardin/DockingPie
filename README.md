@@ -72,6 +72,12 @@ Website: [Structural Bioinformatics Group at Sapienza](http://schubert.bio.uniro
 
 | PyMOL version |          Operating system          |         PyMOL source             |      
 |:-------------:|:----------------------------------:|:--------------------------------:|
+|     3.0.0     | Linux (Ubuntu 22.04.3 LTS), 64-bit |          Incentive               |
+|     3.0.0     | Windows (v.11), 64-bit             |          Incentive               |
+|     3.0.0     | MacOS (High Sierra and above)      |          Incentive               |
+|     2.6.0     | Linux (Ubuntu 22.04.3 LTS), 64-bit |          Incentive               |
+|     2.6.0     | Windows (v.11), 64-bit             |          Incentive               |
+|     2.6.0     | MacOS (High Sierra and above)      |          Incentive               |
 |     2.5.7     | Linux (Ubuntu 22.04.3 LTS), 64-bit |          Incentive               |
 |     2.5.7     | Windows (v.11), 64-bit             |          Incentive               |
 |     2.5.7     | MacOS (High Sierra v.10.13.6)      |          Incentive               |
