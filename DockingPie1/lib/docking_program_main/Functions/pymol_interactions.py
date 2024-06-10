@@ -764,7 +764,7 @@ class Load_Object:
             is_receptor = self.is_receptor
             )
 
-            if self.receptor:
+            if self.is_receptor:
                 with open(self.file_path) as parsed_file_handle:
                     self.parsed_biopython_structure = PDBParser(PERMISSIVE=1, QUIET=False).get_structure(self.file_name, parsed_file_handle)
             
